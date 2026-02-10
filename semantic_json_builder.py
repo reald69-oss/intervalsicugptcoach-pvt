@@ -1442,11 +1442,11 @@ def build_semantic_json(context):
                     "totalDistance": semantic["distance_km"],
                 })
 
-            debug(
-                context,
-                f"[WEEKLY] ✅ Aggregated {len(weekly_phases)} weeks → "
-                f"{semantic['distance_km']} km / {semantic['hours']} h / {semantic['tss']} TSS"
-            )
+                debug(
+                    context,
+                    f"[WEEKLY] ✅ Aggregated {len(weekly_phases)} weeks "
+                    f"(weekly breakdown only — totals sourced from Tier-2 context)"
+                )
 
         else:
             debug(context, "[WEEKLY] ❌ No valid df_src found for weekly aggregation")
