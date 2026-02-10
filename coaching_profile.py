@@ -63,6 +63,7 @@ RENDERER_PROFILES = {
         },
         "interpretation_rules": [
             "Interpretations may be descriptive or conditional, not predictive.",
+            "If semantic.wbal_summary.temporal_pattern exists, render a one-line anaerobic load timeline using block symbols (▂ ▃ ▇) mapped to none/low/moderate/high.",
         ],
         "allowed_enrichment": [
             "Restate semantic interpretation fields.",

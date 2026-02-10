@@ -45,6 +45,52 @@ from textwrap import dedent
 # Helpers
 # ---------------------------------------------------------
 
+def classify_wbal_pattern(row: dict) -> dict:
+    """
+    Classify W′ engagement pattern for a single activity.
+    Deterministic, Tier-2 safe.
+    """
+    wprime = row.get("icu_pm_w_prime")
+    max_dep = row.get("icu_max_wbal_depletion")
+    joules = row.get("icu_joules_above_ftp")
+    duration = row.get("moving_time") or 0
+    strain = row.get("strain_score") or 0
+    IF = row.get("IF") or 0
+
+    if not wprime or not max_dep or not joules:
+        return {
+            "wbal_engagement": "none",
+            "wbal_pattern": "none",
+            "wbal_depth_pct": 0.0,
+        }
+
+    depth_pct = max_dep / wprime
+    density = joules / max(duration, 1)
+
+    # --- engagement ---
+    if depth_pct < 0.15:
+        engagement = "light"
+    elif depth_pct < 0.35:
+        engagement = "moderate"
+    else:
+        engagement = "heavy"
+
+    # --- pattern ---
+    if joules < 0.1 * wprime:
+        pattern = "single"
+    elif density > 5 and strain > 100:
+        pattern = "stochastic"
+    elif duration > 3600 and depth_pct > 0.3:
+        pattern = "progressive"
+    else:
+        pattern = "repeated"
+
+    return {
+        "wbal_engagement": engagement,
+        "wbal_pattern": pattern,
+        "wbal_depth_pct": round(depth_pct, 3),
+    }
+
 def resolve_metric_confidence(metric_key, context, cheat_sheet):
     rules = cheat_sheet.get("metric_confidence", {}).get(metric_key)
     if not rules:
@@ -1238,8 +1284,10 @@ def build_semantic_json(context):
             if "start_date_local" in ev:
                 ev["start_date_local"] = convert_to_str(ev["start_date_local"])
 
-            # ✅ Skip events that are completely empty
+            # ✅ Skip events that are completely empty / add w bal
             if ev:
+                wbal_fields = classify_wbal_pattern(ev)
+                ev.update(wbal_fields)
                 semantic["events"].append(ev)
 
         # ✅ Add meta info for structured UI rendering
@@ -1498,15 +1546,47 @@ def build_semantic_json(context):
                     wbal_pct = df_ev["icu_max_wbal_depletion"] / df_ev["icu_pm_w_prime"]
                     anaerobic_pct = df_ev["icu_joules_above_ftp"] / df_ev["icu_pm_w_prime"]
 
-                semantic["wbal_summary"] = {
-                    "mean_wbal_depletion_pct": round(float(wbal_pct.mean()), 3),
-                    "mean_anaerobic_contrib_pct": round(float(anaerobic_pct.mean()), 3),
-                    "sessions_with_wbal_data": int(len(df_ev)),
-                    "basis": "per-session mean (W′-capable sessions only)",
-                    "window": "weekly",
-                }
+            # --- derive per-day engagement ---
+            df_ev["date"] = pd.to_datetime(df_ev["start_date_local"]).dt.date
+            df_ev["depth_pct"] = df_ev["icu_max_wbal_depletion"] / df_ev["icu_pm_w_prime"]
 
+            daily = (
+                df_ev.groupby("date")
+                .agg({
+                    "depth_pct": "max",
+                    "icu_joules_above_ftp": "sum"
+                })
+                .reset_index()
+            )
 
+            def day_level(depth):
+                if depth < 0.15:
+                    return "low"
+                elif depth < 0.35:
+                    return "moderate"
+                else:
+                    return "high"
+
+            daily["engagement"] = daily["depth_pct"].apply(day_level)
+
+            semantic["wbal_summary"] = {
+                "mean_wbal_depletion_pct": round(float(wbal_pct.mean()), 3),
+                "mean_anaerobic_contrib_pct": round(float(anaerobic_pct.mean()), 3),
+                "sessions_with_wbal_data": int(len(df_ev)),
+                "basis": "per-session mean (W′-capable sessions only)",
+                "window": "weekly",
+
+                # 🔑 NEW
+                "temporal_pattern": {
+                    str(r["date"]): r["engagement"]
+                    for _, r in daily.iterrows()
+                },
+                "dominant_pattern": (
+                    "clustered_weekend"
+                    if daily["engagement"].tail(2).isin(["high"]).any()
+                    else "distributed"
+                )
+            }
 
     # =========================================================
     # SEASON / SUMMARY → weekly peak session model (UNCHANGED)

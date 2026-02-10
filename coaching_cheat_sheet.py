@@ -47,6 +47,17 @@ CHEAT_SHEET["thresholds"] = {
     "HRVBalance": {"green": [1.0, 1.3],"amber": [0.9, 1.0],"red": [0.0, 0.9]},
     "HRVStability": {"green": (0.85, 1.0), "amber": (0.7, 0.85)},
     "HRVTrend": {"green": (0.0, 5.0), "amber": (-2.0, 0.0)},
+    # --- W′ Balance / Anaerobic Load (Weekly) ---
+    "WBalDepletion": {
+        "green": (0.0, 0.25),
+        "amber": (0.25, 0.45),
+        "red": (0.45, 1.0),
+    },
+    "AnaerobicContribution": {
+        "green": (0.0, 0.70),
+        "amber": (0.70, 0.90),
+        "red": (0.90, 1.0),
+    },
     # ================== POLARISATION THRESHOLDS ==================
     # IMPORTANT SEMANTIC NOTE:
     # - "Polarisation" (power-based) follows the Seiler ratio definition:
@@ -313,6 +324,21 @@ CHEAT_SHEET["context"] = {
         "≥0.80 = polarised, 0.65–0.79 = pyramidal, <0.65 = threshold-heavy. "
         "⚙️ *Cross-discipline index — lower precision, but best overall summary of load contrast.*"
     ),
+    "WBalDepletion": (
+        "Mean weekly W′ balance depletion expressed as a fraction of total W′ capacity. "
+        "Represents how deeply anaerobic reserves are typically drawn during W′-capable sessions. "
+        "<25% indicates light or controlled anaerobic exposure; >45% indicates repeated deep depletion."
+    ),
+
+    "AnaerobicContribution": (
+        "Proportion of work above critical power relative to total W′ capacity during W′-engaged sessions. "
+        "Values >0.90 indicate highly anaerobic-dominant intensity distribution when intensity is present."
+    ),
+
+    "WBalPattern": (
+        "Temporal distribution pattern of W′ depletion across the reporting window. "
+        "Used to identify clustering (e.g. weekend stacking) versus evenly distributed anaerobic stress."
+    ),
 }
 
 CHEAT_SHEET["coaching_links"] = {
@@ -352,6 +378,20 @@ CHEAT_SHEET["coaching_links"] = {
         "Add endurance-focused sessions or recovery days to preserve a healthy 80/20 ratio. "
         "Ideal global range ≥0.78 for mixed-sport athletes."
     ),
+    "WBalDepletion": (
+        "High W′ depletion (>45%) indicates repeated deep anaerobic stress. "
+        "If clustered, monitor recovery closely; if sustained week-over-week, consider redistributing intensity."
+    ),
+
+    "AnaerobicContribution": (
+        "Very high anaerobic contribution (>90%) means intensity sessions are highly glycolytic. "
+        "This is appropriate for race-specific or VO₂ blocks but should not dominate base phases."
+    ),
+
+    "WBalPattern": (
+        "Clustered anaerobic patterns (e.g. weekend stacking) increase short-term fatigue risk "
+        "but can be effective when followed by sufficient recovery."
+    ),
 }
 
 CHEAT_SHEET["display_names"] = {
@@ -359,6 +399,9 @@ CHEAT_SHEET["display_names"] = {
     "PolarisationIndex": "Polarisation Index (Power-based, normalized)",
     "Polarisation_fused": "Polarisation Index (Fused HR+Power, sport-specific)",
     "Polarisation_combined": "Polarisation Index (Combined HR+Power, multi-sport)",
+    "WBalDepletion": "W′ Balance Depletion (Weekly Mean)",
+    "AnaerobicContribution": "Anaerobic Contribution (W′-engaged)",
+    "WBalPattern": "Anaerobic Load Pattern",
 }
 
 CHEAT_SHEET["advice"] = {
@@ -670,6 +713,21 @@ CHEAT_SHEET["future_colors"] = {
     "high_risk": "#ff6666"
 }
 
+CHEAT_SHEET["wbal_patterns"] = {
+    "even": {
+        "label": "Evenly Distributed",
+        "description": "Anaerobic load spread consistently across the week."
+    },
+    "clustered_weekend": {
+        "label": "Weekend Clustered",
+        "description": "Anaerobic stress concentrated late in the week."
+    },
+    "single_day_spike": {
+        "label": "Single-Day Spike",
+        "description": "One dominant anaerobic session defines weekly load."
+    },
+}
+
 # ============================================================
 # 🔎 Metric Confidence & Applicability Rules (Contextual Model)
 # ============================================================
@@ -737,7 +795,27 @@ CHEAT_SHEET["metric_confidence"] = {
             "Combined polarisation is a global summary metric and "
             "should never trigger corrective actions on its own."
         )
-    }
+    },
+    # --- W bal -------
+    "WBalDepletion": {
+    "default": "contextual",
+    "high_confidence_when": {
+        "phases": ["Build", "Peak"],
+        "min_intensity_sessions": 2,
+        "min_sessions": 4,
+    },
+    "notes": (
+        "W′ balance metrics are only meaningful when sufficient supra-threshold "
+        "work is present. Low values during base or recovery are expected."
+    ),
+    },
+
+    "AnaerobicContribution": {
+        "default": "contextual",
+        "high_confidence_when": {
+            "min_intensity_sessions": 2,
+        },
+    },
 }
 
 
