@@ -91,6 +91,42 @@ def classify_wbal_pattern(row: dict) -> dict:
         "wbal_depth_pct": round(depth_pct, 3),
     }
 
+def classify_event_efficiency(ev: dict) -> dict:
+    """
+    Classify per-activity efficiency using icu_efficiency_factor.
+    Event-native, deterministic, renderer-safe.
+    """
+
+    ef = ev.get("icu_efficiency_factor")
+
+    if ef is None:
+        return {
+            "event_efficiency": "unknown",
+            "event_efficiency_value": None,
+        }
+
+    try:
+        ef = float(ef)
+    except Exception:
+        return {
+            "event_efficiency": "unknown",
+            "event_efficiency_value": None,
+        }
+
+    # Thresholds aligned with CHEAT_SHEET EfficiencyFactor bands
+    if 1.8 <= ef <= 2.2:
+        state = "efficient"
+    elif 1.5 <= ef < 1.8 or 2.2 < ef <= 2.5:
+        state = "moderate"
+    else:
+        state = "inefficient"
+
+    return {
+        "event_efficiency": state,
+        "event_efficiency_value": round(ef, 3),
+    }
+
+
 def resolve_metric_confidence(metric_key, context, cheat_sheet):
     rules = cheat_sheet.get("metric_confidence", {}).get(metric_key)
     if not rules:
@@ -1285,10 +1321,14 @@ def build_semantic_json(context):
             if "start_date_local" in ev:
                 ev["start_date_local"] = convert_to_str(ev["start_date_local"])
 
-            # ✅ Skip events that are completely empty / add w bal
+            # ✅ Skip events that are completely empty / add w bal / eff
             if ev:
                 wbal_fields = classify_wbal_pattern(ev)
+                eff_fields = classify_event_efficiency(ev)
+
                 ev.update(wbal_fields)
+                ev.update(eff_fields)
+
                 semantic["events"].append(ev)
 
         # ✅ Add meta info for structured UI rendering
