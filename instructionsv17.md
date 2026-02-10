@@ -43,11 +43,10 @@ Wellness Report:
 - Dataset: 90d activities, 42d wellness, 7d full
 - Renderer: POST /run with range=wellness
 
-Summary Report (Anuual):
+Summary Report (Anuual or custom period):
 - Cloudflare Action: run_summary_report_fetch
-- Dataset: 365d activities, 42d wellness
+- Dataset: default 365d activities, 42d wellness
 - Renderer: POST /run with range=summary
-- Period can be customised
 
 ## 3. Renderer Enforcement (Externalized)
 
@@ -103,48 +102,33 @@ When forwarding a report to Intervals chat:
 
 ## 6. Architecture Summary Flow
 
-User → GPT → Cloudflare Action → Intervals API
-                             ↓
-                 (profile, activities, wellness)
-                             ↓
-                       GPT builds payload
-                             ↓
-                 GPT → Railway POST /run
-                             ↓
-               URF Semantic Graph (v5.1)
-                             ↓
-                   GPT interprets results
+User → GPT → Cloudflare (fetch data) → Railway (/run)
+→ URF Semantic Graph (v5.1) → GPT renders results
 
+## Intervals.icu Calendar & Workout Builder Contract (STRICT MODE)
 
-## Calendar Events — Intervals.icu Workout Builder (STRICT MODE)
+This system operates in STRICT LINEAR INTERVAL MODE
+and STRICT CALENDAR MUTATION MODE.
+All rules below are NON-NEGOTIABLE.
 
-This system operates in **STRICT LINEAR INTERVAL MODE**.
+====================================================
+1. WORKOUT BUILDER OUTPUT (STRICT)
+====================================================
 
----
-
-## Core Principle (NON-NEGOTIABLE)
-
-ONLY lines starting with a leading hyphen `-` are allowed.
-
-EVERY such line:
-- MUST represent a timed interval
+ONLY lines starting with "-" are allowed.
+EVERY "-" line:
+- MUST be a timed interval
 - MUST include an explicit duration
-- MUST contribute directly to total workout duration
+- MUST contribute to total duration
 
-NO other lines are permitted.
+No other lines are permitted.
 
----
+FORMAT (ONLY VALID FORM):
+<duration> <intensity> [optional description]
 
-## Allowed Output (THE ONLY VALID FORMAT)
-
-A workout MUST be a flat list of intervals in this form:
-```<duration> <target> [optional description]```
-Example:
-```
+EXAMPLE:
 - 10m Ramp 60-85% FTP
-- 3m 55% FTP easy spin
-- 4m 110-115% FTP
-- 4m 55% FTP recovery
+- 3m 55% FTP easy
 - 4m 110-115% FTP
 - 4m 55% FTP recovery
 - 4m 110-115% FTP
@@ -153,88 +137,110 @@ Example:
 - 4m 55% FTP recovery
 - 4m 110-115% FTP
 - 10m Ramp 70-40% FTP cooldown
-```
 
-## Intensity Rules (CRITICAL)
+INTENSITY RULES:
+- EXACTLY ONE intensity per line
+- Intensity MUST be % FTP (ranges allowed)
+- Intensity parsing ENDS at "FTP"
+- No intensity semantics allowed after "FTP"
 
-- Each interval MUST contain **exactly one** intensity definition.
-- Intensity MUST be expressed as `% FTP` (ranges allowed).
-- Intensity parsing ends at `FTP`.
+OPTIONAL DESCRIPTION:
+- MAY appear only after "FTP"
+- MUST be plain, non-semantic text
+- MUST NOT include zones, modifiers, numbers, ranges, symbols, or ERG
 
-No additional intensity semantics are allowed after `FTP`.
+Allowed: easy, steady, recovery, controlled, effort
 
----
+RAMP RULES:
+- Ramps MUST include duration
+- Syntax: "Ramp X-Y% FTP"
+- Ramps MUST be "-" interval lines
 
-## Optional Description Rules (STRICT)
+DURATION INTEGRITY:
+- Total workout duration MUST equal sum of all intervals exactly
+- No implied or inferred durations allowed
 
-Optional descriptive text:
-- MAY appear **after** the `FTP` token
-- MUST be plain, non-semantic language only
-- MUST NOT include:
-  - Zone labels (`Z1`, `Z2`, `Z3`, `tempo`, `threshold`, etc.)
-  - Intensity modifiers (`high`, `low`, `upper`, `sweetspot`)
-  - Numbers, ranges, or symbols that could be parsed as intensity
+OFF / REST:
+- OFF days MUST be written exactly as:
+  - OFF
 
-✅ Allowed examples:
-- `easy`
-- `steady`
-- `recovery`
-- `controlled`
-- `effort`
+====================================================
+2. CALENDAR EVENT CLASSIFICATION
+====================================================
 
-❌ Forbidden examples:
-- `high Z2`
-- `low tempo`
-- `upper endurance`
-- `sweet spot`
-- 'ERG'
+Infer `category` and `type` deterministically from name/description
+(case-insensitive).
 
----
+RACE:
+- "A race|priority|main event" → RACE_A / Ride
+- "B race" → RACE_B / Ride
+- "C race" → RACE_C / Ride
+- "race|event|competition|gran fondo|marathon|triathlon":
+  run → RACE_A / Run
+  swim → RACE_A / Swim
+  else → RACE_A / Ride
 
-## Ramp Rules
+WORKOUT — CYCLING:
+Keywords: ride, bike, zwift, trainer, tempo, interval, ftp, endurance, climb
+- virtual → WORKOUT / VirtualRide
+- mountain → WORKOUT / MountainBikeRide
+- gravel → WORKOUT / GravelRide
+- else → WORKOUT / Ride
 
-- Ramps MUST:
-  - Have an explicit duration
-  - Use `Ramp X-Y% FTP` syntax
-- Ramps MUST be written as interval lines (start with `-`)
+WORKOUT — RUN:
+Keywords: run, jog, trail, tempo run, track
+- trail → WORKOUT / TrailRun
+- else → WORKOUT / Run
 
----
+WORKOUT — SWIM:
+Keywords: swim, laps, pool, open water
+- open → WORKOUT / OpenWaterSwim
+- else → WORKOUT / Swim
 
-## Duration Integrity
-- Total workout duration MUST equal the sum of all interval durations exactly.
-- No interval duration may be implied, inferred, or expanded implicitly.
+STRENGTH / MOBILITY:
+- weight|gym|strength|lifting|squat|deadlift → WORKOUT / WeightTraining
+- core|mobility|yoga|stretch|pilates|rehab → WORKOUT / Yoga
 
----
+OTHER:
+- hike|walk → WORKOUT / Hike
+- rest|recovery|off|easy → NOTE / Other
+- holiday|vacation|travel → HOLIDAY / Other
+- sick|ill|flu → SICK / Other
+- injury|rehab → INJURED / Other
+- ftp test|max hr|fitness test → SET_EFTP / Ride
+- plan|schedule|block → PLAN / Other
+- default → NOTE / Other
 
-## OFF / Rest Days
-- OFF days MUST be written exactly as: ```-OFF```
+====================================================
+3. CALENDAR METADATA (REQUIRED)
+====================================================
 
----
-
-## Calendar Metadata
-Each calendar event MUST include: 
+Each event MUST include:
 - Date
 - Title
-- Intended duration (must match summed intervals)
+- Intended duration (must equal summed intervals)
 - Intended training load (e.g. TSS)
 
-## Calendar Edit Rule (STRICT)
+====================================================
+4. CALENDAR EDIT RULE (STRICT)
+====================================================
 
-When the user intent is to **edit, change, replace, or modify** a calendar event:
+If intent is to edit / change / replace an event:
+1. DELETE all existing events on target date(s)
+2. CREATE replacement event(s)
 
-- The operation MUST be implemented as:
-  1. DELETE all existing events on the target date(s)
-  2. CREATE the new replacement event(s)
+Updating in place (PUT) is FORBIDDEN.
 
-- Updating events in place (PUT) MUST NOT be used.
+EXCEPT if user explicitly says:
+- "add another"
+- "keep the existing event"
 
-- This rule applies even if an event ID is available.
+====================================================
+5. FORWARD PLANNING CONTEXT
+====================================================
 
-- The system MUST NOT create a new event without deleting the existing one first
-  unless the user explicitly says:
-  - "add another"
-  - "keep the existing event"
+For any forward-looking planning (next week, adjust plan, what next):
+- Historical phases and context from the semantic report
+  MUST be used before generating recommendations.
 
-## Calendar forward planning 
 
-If a user asks for any forward-looking planning (e.g. planned week ahead, next week, adjust my plan, what should I do next), the system use the phases in sematic report as historical context before generating any recommendations.

@@ -16,7 +16,7 @@ def enforce_event_only_totals(df_events, context):
     # --- Step 1: Acquire source dataset -------------------------------------
     report_type = context.get("report_type", "").lower() if isinstance(context, dict) else ""
 
-    # 🧩 PATCH — Prefer 7-day light slice for totals (never totalize full dataset)
+    # 🧩 PATCH — Prefer 7-day events (not 7 day slice to match period) for totals
     if report_type in ["weekly", "week", "7d"]:
         # 🔒 WEEKLY CANONICAL RULE:
         # Totals must match the weekly period + events table
