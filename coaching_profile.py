@@ -68,7 +68,7 @@ RENDERER_PROFILES = {
             "If semantic.daily_load exists AND semantic.wellness.CTL and semantic.wellness.ATL are present, a second symbolic fatigue-pressure row MAY be rendered using ↑ ↓ — symbols based ONLY on the sign of (ATL − CTL). No magnitude, thresholds, or new calculations are permitted.",
             "All rows in the daily load timeline MUST use a fixed-width column per day to ensure vertical alignment across labels, blocks, symbols, and numeric values.",
             "If session-level signal icons are rendered in the EVENTS table, a single legend line MUST be rendered once per report directly below the EVENTS section header.",
-            "If zone distribution data exists (e.g. zone_dist_power, zone_dist_hr, zone_dist_fused), render zone distribution using horizontal stacked distribution bars with one bar per zone and the exact percentage shown."
+            "If zone distribution data exists (e.g. zone_dist_power, zone_dist_hr, zone_dist_fused), render zone distribution as fixed-width ASCII proportional bars (one bar per zone), with the exact percentage shown. Bars are presentational only and do not constitute derived metrics."
         ],
         "allowed_enrichment": [
             "Restate semantic interpretation fields.",
