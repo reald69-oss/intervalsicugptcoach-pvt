@@ -320,7 +320,6 @@ CHEAT_SHEET["coaching_links"] = {
     "ACWR": "If ACWR > 1.5, reduce intensity and focus on recovery to avoid overload. If ACWR < 0.8, gradually increase training load with controlled progression to build endurance.",
     "Monotony": "If Monotony > 2.5, introduce more variation in training or implement a deload week to reduce repetitive stress.",
     "Strain": "If Strain > 3000, monitor for signs of overreach and consider more rest or deloading. If Strain > 3500, consider reducing volume or intensity temporarily.",
-    "RecoveryIndex": "If RecoveryIndex is low (<0.7), ensure adequate rest and recovery, and avoid heavy training loads.",
     "FatigueTrend": "If FatigueTrend is negative (e.g., below -0.2), this indicates a recovering state. Continue with controlled training load and focus on recovery to ensure sustained progress. Avoid aggressive increases in load.",
     "FatOxEfficiency": "If FatOxEfficiency is low (<0.6), focus on improving aerobic base with longer, low-intensity efforts.",
     "ZQI": "If ZQI > 20%, review pacing strategy; excessive high-intensity time could indicate erratic pacing or overtraining. Aim for 5-15% ZQI for balanced training.",
@@ -435,7 +434,7 @@ CHEAT_SHEET["advice"] = {
     },
     # --- Recovery Index ---
     "RecoveryIndex": {
-        "poor": "⚠ Recovery Index poor ({:.2f}) — insert deload or reduce intensity.",
+        "poor": "⚠ Recovery Index suppressed ({:.2f}) — prioritise sleep, nutrition, and reduce intensity density.",
         "moderate": "🟠 Recovery Index moderate ({:.2f}) — monitor fatigue trend.",
         "healthy": "✅ Recovery Index healthy ({:.2f})."
     },
@@ -748,6 +747,36 @@ if "IFDrift" in CHEAT_SHEET["advice"]:
     CHEAT_SHEET["advice"]["EfficiencyDrift"] = CHEAT_SHEET["advice"]["IFDrift"]
 if "IFDrift" in CHEAT_SHEET["thresholds"]:
     CHEAT_SHEET["thresholds"]["EfficiencyDrift"] = CHEAT_SHEET["thresholds"]["IFDrift"]
+
+CHEAT_SHEET["primary_messages"] = {
+    "build_deload": {
+        "status": (
+            "Your training structure and durability are improving, "
+            "but recovery is lagging slightly."
+        ),
+        "action": (
+            "Take a short 10–15% deload to consolidate gains."
+        ),
+        "next": (
+            "Once recovered, resume progression with slightly more "
+            "intensity contrast and continued Zone 2 focus."
+        ),
+    },
+
+    "overreach_deload": {
+        "status": (
+            "Training load has exceeded recovery capacity and fatigue "
+            "is accumulating."
+        ),
+        "action": (
+            "Apply a stronger 30–40% deload to restore recovery."
+        ),
+        "next": (
+            "Resume training conservatively once recovery stabilises."
+        ),
+    },
+}
+
 
 
 # === Cheat Sheet Accessor ===

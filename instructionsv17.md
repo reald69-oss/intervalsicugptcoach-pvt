@@ -237,4 +237,4 @@ When the user intent is to **edit, change, replace, or modify** a calendar event
 
 ## Calendar forward planning 
 
-If a user asks for any forward-looking planning (e.g. planned week ahead, next week, adjust my plan, what should I do next), the system MUST obtain and use a Season (90-day) report as context before generating any recommendations.
+If a user asks for any forward-looking planning (e.g. planned week ahead, next week, adjust my plan, what should I do next), the system use the phases in sematic report as historical context before generating any recommendations.

@@ -300,6 +300,8 @@ def evaluate_actions(context):
     debug(context, "[T2-ACTIONS] Derived metrics integrated")
 
     actions = []
+    primary_message = None
+    secondary_actions = []  # reserved for future phase-specific actions
 
     # ---------------- Metric Context Summary ----------------
     metric_links = CHEAT_SHEET.get("coaching_links", {})
@@ -386,13 +388,75 @@ def evaluate_actions(context):
         actions.append("⚠ Improve Zone 2 efficiency — extend duration or adjust IF.")
 
     # ---------------- Recovery / Load Balance ----------------
+#    ri = context.get("RecoveryIndex", 1.0)
+#    acwr = context.get("ACWR", 1.0)
+#    if ri < heur["recovery_floor"]:
+#        if acwr > heur["acwr_upper"]:
+#            actions.append(f"⚠ Apply 30–40 % deload (ACWR={acwr:.2f}).")
+#        else:
+#            actions.append(f"⚠ Apply 10–15 % deload (ACWR={acwr:.2f}).")
+
+    # ---------------- Stateful DELOAD latch ----------------
     ri = context.get("RecoveryIndex", 1.0)
     acwr = context.get("ACWR", 1.0)
-    if ri < heur["recovery_floor"]:
+
+    phase = (
+        context.get("current_phase")
+        or (context.get("phases", [{}])[-1].get("phase") if context.get("phases") else "")
+    )
+
+    last_phase = context.get("phases", [{}])[-1]
+    ctl_slope = (
+        last_phase.get("calc_context", {}).get("ctl_slope")
+        if isinstance(last_phase.get("calc_context"), dict)
+        else context.get("ctl_slope")
+    )
+
+    deload = context.get("_deload_state", {
+        "active": False,
+        "triggered_on": None,
+        "reason": None,
+    })
+
+    failed_adaptation = (
+        ri < heur["recovery_floor"]
+        and ctl_slope is not None
+        and ctl_slope <= 0
+    )
+
+    phase_allows = phase not in ("Base", "Early Base")
+
+    if not deload["active"] and failed_adaptation and phase_allows:
+        deload["active"] = True
+        deload["triggered_on"] = context.get("period", {}).get("end")
+        deload["reason"] = "Recovery suppressed with no fitness gain"
+
+        msg_key = "build_deload"
         if acwr > heur["acwr_upper"]:
-            actions.append(f"⚠ Apply 30–40 % deload (ACWR={acwr:.2f}).")
-        else:
-            actions.append(f"⚠ Apply 10–15 % deload (ACWR={acwr:.2f}).")
+            msg_key = "overreach_deload"
+
+        primary_message = CHEAT_SHEET.get("primary_messages", {}).get(msg_key)
+
+    elif deload["active"]:
+        actions.append("🟡 Deload in progress — allow recovery before resuming load.")
+
+    context["_deload_state"] = deload
+
+    # ---------------- Reset DELoad latch ----------------
+    if (
+        deload["active"]
+        and deload.get("triggered_on") != context.get("period", {}).get("end")
+    ):
+        recovered = (
+            ri >= heur["recovery_floor"]
+            and acwr <= heur["acwr_upper"]
+        )
+
+        if recovered:
+            deload["active"] = False
+            deload["reason"] = None
+            actions.append("🟢 Recovery restored — deload complete, resume progression.")
+
 
     # ---------------- Fatigue Trend ----------------
     ft_range = heur["fatigue_delta_green"]
@@ -479,7 +543,26 @@ def evaluate_actions(context):
     if metric_contexts:
         actions.extend(["---", "📊 Metric-based Feedback:"] + metric_contexts)
 
+    final_actions = []
+
+    if primary_message and all(k in primary_message for k in ("status", "action", "next")):
+        final_actions.extend([
+            "### Current status",
+            primary_message["status"],
+            "",
+            "### Primary action",
+            primary_message["action"],
+            "",
+            "### Once recovered",
+            primary_message["next"],
+            "",
+            "---",
+        ])
+
+    final_actions.extend(actions)
+
     context["derived_metrics"] = derived
-    context["actions"] = actions
+    context["actions"] = final_actions
     return context
+
 
