@@ -1320,7 +1320,7 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     # 🪜 Weekly Phases Summary (URF v5.2 canonical)
     # ---------------------------------------------------------
-    if semantic["meta"]["report_type"] in ("season", "summary"):
+    if semantic["meta"]["report_type"] in ("season", "summary", "weekly"):
         # --- Force authoritative dataset for season/summary totals ---
         if "df_light" in context and isinstance(context["df_light"], pd.DataFrame) and len(context["df_light"]) > 100:
             df_ref = context["df_light"]
@@ -1902,21 +1902,21 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     # 🧹 CLEANUP — ensure only one authoritative actions section
     # ---------------------------------------------------------
-    if "insight_view" in semantic and isinstance(semantic["insight_view"], dict):
-        if "actions" in semantic["insight_view"]:
-            del semantic["insight_view"]["actions"]
+#    if "insight_view" in semantic and isinstance(semantic["insight_view"], dict):
+#        if "actions" in semantic["insight_view"]:
+#            del semantic["insight_view"]["actions"]
 
-    if "actions" in semantic and isinstance(semantic["actions"], list):
-        semantic.setdefault("meta", {})
-        semantic["meta"]["has_actions"] = bool(semantic["actions"])
+#    if "actions" in semantic and isinstance(semantic["actions"], list):
+#        semantic.setdefault("meta", {})
+#        semantic["meta"]["has_actions"] = bool(semantic["actions"])
 
     # ----------------------------------------------------------
     # Cleanup Phases for weekly and wellness
     # ----------------------------------------------------------
-    if semantic["meta"]["report_type"] in ("weekly", "wellness"):
-        if "insight_view" in semantic and "phases" in semantic["insight_view"]:
-            del semantic["insight_view"]["phases"]
-            debug(context, "[SEMANTIC] Pruned phases from insight_view (short-term report)")
+#    if semantic["meta"]["report_type"] in ("weekly", "wellness"):
+#        if "insight_view" in semantic and "phases" in semantic["insight_view"]:
+#            del semantic["insight_view"]["phases"]
+#            debug(context, "[SEMANTIC] Pruned phases from insight_view (short-term report)")
 
     # ---------------------------------------------------------
     # 🧩 Echo render options for transparency
@@ -1943,9 +1943,9 @@ def build_semantic_json(context):
 
 
     # ---------------------------------------------------------
-    # 🌍 Season / Summary → full weekly + roll-up
+    # 🌍 Season / Summary / Weekly → full weekly + roll-up
     # ---------------------------------------------------------
-    if report_type in ("season", "summary"):
+    if report_type in ("season", "summary", "weekly"):
         raw_weeks = semantic.get("weekly_phases", [])
         if not raw_weeks:
             debug(context, "[PHASES] ⚠️ No weekly data; skipping normalisation")
@@ -2199,7 +2199,7 @@ def build_semantic_json(context):
             # 📈 Season / Summary Trend Metrics (URF-canonical)
             # MUST run AFTER final semantic["phases"] is built
             # ---------------------------------------------------------
-            if report_type in ("season", "summary") and semantic.get("phases"):
+            if report_type in ("season", "summary", "weekly") and semantic.get("phases"):
                 df = pd.DataFrame(semantic["phases"])
 
                 def slope(series):

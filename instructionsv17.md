@@ -47,6 +47,7 @@ Summary Report (Anuual):
 - Cloudflare Action: run_summary_report_fetch
 - Dataset: 365d activities, 42d wellness
 - Renderer: POST /run with range=summary
+- Period can be customised
 
 ## 3. Renderer Enforcement (Externalized)
 
@@ -186,6 +187,7 @@ Optional descriptive text:
 - `low tempo`
 - `upper endurance`
 - `sweet spot`
+- 'ERG'
 
 ---
 
@@ -221,7 +223,7 @@ Each calendar event MUST include:
 When the user intent is to **edit, change, replace, or modify** a calendar event:
 
 - The operation MUST be implemented as:
-  1. DELETE all existing events on the target date(s) by ID
+  1. DELETE all existing events on the target date(s)
   2. CREATE the new replacement event(s)
 
 - Updating events in place (PUT) MUST NOT be used.
@@ -232,3 +234,7 @@ When the user intent is to **edit, change, replace, or modify** a calendar event
   unless the user explicitly says:
   - "add another"
   - "keep the existing event"
+
+## Calendar forward planning 
+
+If a user asks for any forward-looking planning (e.g. planned week ahead, next week, adjust my plan, what should I do next), the system MUST obtain and use a Season (90-day) report as context before generating any recommendations.
