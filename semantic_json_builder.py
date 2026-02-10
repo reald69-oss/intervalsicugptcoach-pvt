@@ -1982,26 +1982,6 @@ def build_semantic_json(context):
 
     semantic["context_ref"] = context
 
-
-    # ---------------------------------------------------------
-    # 🧹 CLEANUP — ensure only one authoritative actions section
-    # ---------------------------------------------------------
-#    if "insight_view" in semantic and isinstance(semantic["insight_view"], dict):
-#        if "actions" in semantic["insight_view"]:
-#            del semantic["insight_view"]["actions"]
-
-#    if "actions" in semantic and isinstance(semantic["actions"], list):
-#        semantic.setdefault("meta", {})
-#        semantic["meta"]["has_actions"] = bool(semantic["actions"])
-
-    # ----------------------------------------------------------
-    # Cleanup Phases for weekly and wellness
-    # ----------------------------------------------------------
-#    if semantic["meta"]["report_type"] in ("weekly", "wellness"):
-#        if "insight_view" in semantic and "phases" in semantic["insight_view"]:
-#            del semantic["insight_view"]["phases"]
-#            debug(context, "[SEMANTIC] Pruned phases from insight_view (short-term report)")
-
     # ---------------------------------------------------------
     # 🧩 Echo render options for transparency
     # ---------------------------------------------------------
