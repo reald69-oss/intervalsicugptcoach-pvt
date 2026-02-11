@@ -117,7 +117,8 @@ def normalize_prefetched_context(data):
                         "and are not accessible via the Intervals API. "
                         "No training metrics (time, distance, load) are available "
                         "to generate a report. "
-                        "Connect Garmin/Wahoo/Zwift etc directly or upload FIT files."
+                        "Connect Garmin/Wahoo/Zwift etc directly or upload FIT files. "
+                        "OR see https://forum.intervals.icu/t/import-all-data-from-strava/81068"
                     ),
                 )
 
@@ -318,7 +319,8 @@ async def run_audit_with_data(request: Request):
                 "message": (
                     "Your Intervals.icu account is connected only via Strava. "
                     "Intervals.icu is not allowed to expose Strava-sourced activities via its API. "
-                    "Connect Garmin/Wahoo/Zwift etc directly or upload FIT files."
+                    "Connect Garmin/Wahoo/Zwift etc directly or upload FIT files. "
+                    "or see https://forum.intervals.icu/t/import-all-data-from-strava/81068"
                 ),
                 "athlete_id": athlete.get("id"),
                 "activities_returned": 0
