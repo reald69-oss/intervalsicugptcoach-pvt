@@ -983,16 +983,21 @@ def run_report(
         # ============================================================
         dfw = context.get("df_wellness")
 
-        if dfw is not None:
+        if isinstance(dfw, pd.DataFrame) and not dfw.empty:
             try:
+                # 🔒 Remove duplicate columns to prevent Pandas warning
+                dfw_clean = dfw.loc[:, ~dfw.columns.duplicated()].copy()
+
                 # Expose full daily wellness records
                 context["wellness_daily"] = (
-                    dfw
+                    dfw_clean
                     .dropna(how="all")
                     .to_dict(orient="records")
                 )
+
             except Exception as e:
                 debug(context, f"[WELLNESS-EXPOSE] failed: {e}")
+
 
         semantic_output = build_semantic_json(context)  # Ensure semantic_output is generated
 
