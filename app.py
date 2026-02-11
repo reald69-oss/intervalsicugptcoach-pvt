@@ -249,6 +249,7 @@ def normalize_prefetched_context(data):
         debug(context, f"[NORM] ❌ Normalization failed: {e}")
         raise
 
+    return context  
 
 # ============================================================
 # 🧠 CORE RUN FUNCTION
