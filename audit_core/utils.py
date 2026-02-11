@@ -15,8 +15,8 @@ import os
 
 RAILWAY_ENV = os.getenv("RAILWAY_ENVIRONMENT_NAME", "").lower()
 
-# Enable debug only in staging
-IS_DEBUG_ENV = RAILWAY_ENV == "staging"
+# Explicitly suppress debug in production
+IS_DEBUG_ENV = RAILWAY_ENV != "production"
 
 # ------------------------------------------------------------
 # Global state
