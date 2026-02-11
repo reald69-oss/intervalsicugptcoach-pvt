@@ -122,6 +122,25 @@ def normalize_prefetched_context(data):
                     ),
                 )
 
+        # 🔒 STRAVA STUB FILTER — remove unusable API stub rows
+        if not df_light.empty and "_note" in df_light.columns:
+
+            strava_note_text = "STRAVA activities are not available via the API"
+
+            is_strava_stub = (
+                df_light["_note"]
+                .fillna("")
+                .eq(strava_note_text)
+            )
+
+            stub_count = int(is_strava_stub.sum())
+
+            if stub_count > 0:
+                debug(context, f"[NORM] Removing {stub_count} STRAVA API stub activities")
+
+                df_light = df_light.loc[~is_strava_stub].copy()
+
+
         # ─────────────────────────────────────────────
         # 🩺 Ensure baseline columns exist for Tier-0 stability
         # ─────────────────────────────────────────────
