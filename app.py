@@ -127,19 +127,30 @@ def normalize_prefetched_context(data):
 
             strava_note_text = "STRAVA activities are not available via the API"
 
-            is_strava_stub = (
-                df_light["_note"]
-                .fillna("")
-                .eq(strava_note_text)
-            )
+            # Remove stubs from LIGHT
+            before_light = len(df_light)
+            df_light = df_light[
+                df_light["_note"].fillna("") != strava_note_text
+            ].copy()
 
-            stub_count = int(is_strava_stub.sum())
+            removed_light = before_light - len(df_light)
 
-            if stub_count > 0:
-                debug(context, f"[NORM] Removing {stub_count} STRAVA API stub activities")
+            # Remove stubs from FULL (if column exists)
+            if "_note" in df_full.columns:
+                before_full = len(df_full)
+                df_full = df_full[
+                    df_full["_note"].fillna("") != strava_note_text
+                ].copy()
+                removed_full = before_full - len(df_full)
+            else:
+                removed_full = 0
 
-                df_light = df_light.loc[~is_strava_stub].copy()
-
+            if removed_light > 0:
+                debug(
+                    context,
+                    f"[NORM] Removed {removed_light} STRAVA stub rows (light), "
+                    f"{removed_full} (full)"
+                )
 
         # ─────────────────────────────────────────────
         # 🩺 Ensure baseline columns exist for Tier-0 stability
