@@ -6,21 +6,17 @@ import sys
 import datetime
 import os
 # ------------------------------------------------------------
-# 🌍 Auto-detect Railway environment
+# 🌍 Auto-detect Railway environment (staging vs production)
 # ------------------------------------------------------------
 
-# Railway sets this automatically:
-#   production service  → RAILWAY_ENVIRONMENT=production
-#   staging service     → RAILWAY_ENVIRONMENT=staging
+# Railway provides:
+#   RAILWAY_ENVIRONMENT_NAME=staging
+#   RAILWAY_ENVIRONMENT_NAME=production
 
-RAILWAY_ENV = (
-    os.getenv("RAILWAY_ENVIRONMENT")
-    or os.getenv("ENVIRONMENT")
-    or ""
-).lower()
+RAILWAY_ENV = os.getenv("RAILWAY_ENVIRONMENT_NAME", "").lower()
 
-# Debug enabled everywhere except explicit production
-IS_DEBUG_ENV = RAILWAY_ENV != "production"
+# Enable debug only in staging
+IS_DEBUG_ENV = RAILWAY_ENV == "staging"
 
 # ------------------------------------------------------------
 # Global state
