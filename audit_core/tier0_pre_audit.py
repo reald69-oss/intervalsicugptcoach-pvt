@@ -896,36 +896,13 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
             )
 
         # --- Validate before serializing ---
-        report_type = str(report_type).lower().strip()
-
-        requires_snapshot = report_type in ["weekly", "season", "wellness"]
-
-        if requires_snapshot:
-            if source_df.empty:
-                raise AuditHalt(
-                    f"❌ Tier-0: snapshot source empty before serialization "
-                    f"(report_type={report_type})"
-                )
-
-            if "type" not in source_df.columns:
-                raise AuditHalt(
-                    f"❌ Tier-0: missing 'type' column in source_df before snapshot_7d_json "
-                    f"(columns={list(source_df.columns)})"
-                )
-        else:
-            # summary
-            if source_df.empty:
-                debug(
-                    context,
-                    f"[T0] Snapshot slice empty — allowed for report_type={report_type}"
-                )
-
-            if not source_df.empty and "type" not in source_df.columns:
-                raise AuditHalt(
-                    f"❌ Tier-0: missing 'type' column in source_df "
-                    f"(columns={list(source_df.columns)})"
-                )
-
+        if source_df.empty:
+            raise AuditHalt(f"❌ Tier-0: snapshot source empty before serialization (report_type={report_type})")
+        if "type" not in source_df.columns:
+            raise AuditHalt(
+                f"❌ Tier-0: missing 'type' column in source_df before snapshot_7d_json "
+                f"(columns={list(source_df.columns)})"
+            )
 
     # --- Serialize for Tier-1 ---
     # --- Fallback handling for season mode ---
@@ -943,8 +920,20 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
             f"[T0] snapshot_7d_json set ({context.get('report_type')}, {len(source_df)} rows)"
         )
     else:
-        context["snapshot_7d_json"] = "[]"
-        debug(context, "[T0] snapshot_7d_json set to empty array")
+        # 🔒 Schema-safe snapshot using df_full structure
+        if "df_full" in context and isinstance(context["df_full"], pd.DataFrame):
+            fallback_df = context["df_full"].head(0).copy()
+        else:
+            # ultimate safety fallback (should never trigger)
+            fallback_df = pd.DataFrame(columns=["id", "type"])
+
+        context["snapshot_7d_json"] = fallback_df.to_json(orient="records")
+
+        debug(
+            context,
+            f"[T0] snapshot_7d_json set to schema-safe empty snapshot "
+            f"(columns={list(fallback_df.columns)})"
+        )
 
     # --- Step 4: Fetch wellness with adaptive chunking + meta-retry ---
     wellness_days = context.get("range", {}).get("wellnessDays", 42)
