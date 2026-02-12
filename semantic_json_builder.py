@@ -2799,8 +2799,9 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     SECTION ORDER (INSTRUCTIONAL — DO NOT NUMBER HEADERS):
     {chr(10).join(manifest_lines)}
 
-    End with a factual closing note on recovery or adaptation
-    based strictly on the provided data.
+    End with a factual coaching closing note on recovery or adaptation
+    based strictly on the provided data. For Weekly and Season reports, if performance_intelligence.training_state
+    is present in the semantic JSON, use it to anchor the closing interpretation.
     """).strip()
 
     return prompt
