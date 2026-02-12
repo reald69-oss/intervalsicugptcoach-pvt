@@ -363,17 +363,11 @@ async def run_audit_with_data(request: Request):
 
         # Abort only if NO activity data at all
         if (not light or len(light) == 0) and (not full or len(full) == 0):
-            print(f"[STAGING] ⚠️ No activities found for requested range")
-            return JSONResponse({
-                "status": "ok",
-                "report_type": report_range,
-                "output_format": "semantic_json",
-                "semantic_graph": {},
-                "compliance": {},
-                "message": f"No activities found between {data.get('start')} and {data.get('end')}",
-            })
-
-
+            raise AuditHalt(
+                "No activities found in the requested date range.",
+                code="NO_ACTIVITIES_RANGE",
+                severity="soft"
+            )
         # now run the unified audit (SAFE WRAPPED)
         try:
             with redirect_stdout(buffer):
@@ -384,17 +378,17 @@ async def run_audit_with_data(request: Request):
                     **prefetch_context
                 )
         except Exception as e:
-            from audit_core.errors import AuditHalt
 
             if isinstance(e, AuditHalt):
                 sys.stderr.write("\n🛑 AUDIT HALTED (safe intercept)\n")
                 sys.stderr.write(str(e) + "\n")
                 sys.stderr.flush()
 
+                halt_payload = e.to_dict()
+
                 return JSONResponse({
-                    "status": "halted",
+                    **halt_payload,
                     "report_type": report_range,
-                    "message": str(e),
                     "semantic_graph": {},
                     "compliance": {},
                     "logs": buffer.getvalue()[-20000:]
@@ -424,8 +418,24 @@ async def run_audit_with_data(request: Request):
         })
 
     except Exception as e:
+
         import traceback
         import sys
+
+        if isinstance(e, AuditHalt):
+            sys.stderr.write("\n🛑 AUDIT HALTED (outer intercept)\n")
+            sys.stderr.write(str(e) + "\n")
+            sys.stderr.flush()
+
+            halt_payload = e.to_dict()
+
+            return JSONResponse({
+                **halt_payload,
+                "report_type": report_range,
+                "semantic_graph": {},
+                "compliance": {},
+                "logs": buffer.getvalue()[-20000:]
+            })
 
         sys.stderr.write("\n🔥 UNHANDLED EXCEPTION IN /run\n")
         sys.stderr.write(traceback.format_exc())
