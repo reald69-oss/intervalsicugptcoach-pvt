@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 import os, sys, io, json, math, pandas as pd, numpy as np
 from datetime import datetime, timedelta, date
 from contextlib import redirect_stdout
+from audit_core.errors import AuditHalt
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audit_core"))
@@ -373,14 +374,34 @@ async def run_audit_with_data(request: Request):
             })
 
 
-        # now run the unified audit
-        with redirect_stdout(buffer):
-            report, compliance = run_report(
-                reportType=report_range,
-                output_format=fmt,
-                include_coaching_metrics=True,
-                **prefetch_context
-            )
+        # now run the unified audit (SAFE WRAPPED)
+        try:
+            with redirect_stdout(buffer):
+                report, compliance = run_report(
+                    reportType=report_range,
+                    output_format=fmt,
+                    include_coaching_metrics=True,
+                    **prefetch_context
+                )
+        except Exception as e:
+            from audit_core.errors import AuditHalt
+
+            if isinstance(e, AuditHalt):
+                sys.stderr.write("\n🛑 AUDIT HALTED (safe intercept)\n")
+                sys.stderr.write(str(e) + "\n")
+                sys.stderr.flush()
+
+                return JSONResponse({
+                    "status": "halted",
+                    "report_type": report_range,
+                    "message": str(e),
+                    "semantic_graph": {},
+                    "compliance": {},
+                    "logs": buffer.getvalue()[-20000:]
+                })
+
+            raise  # re-raise unexpected errors
+
 
         logs = buffer.getvalue()
         if fmt in ("json","semantic"):
