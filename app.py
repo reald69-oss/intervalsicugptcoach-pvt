@@ -347,7 +347,8 @@ async def run_audit_with_data(request: Request):
         if has_athlete and no_activities:
             return JSONResponse({
                 "status": "blocked",
-                "error_code": "STRAVA_API_RESTRICTED",
+                "error_type": "STRAVA_API_RESTRICTED",
+                "severity": "hard",
                 "message": (
                     "Your Intervals.icu account is connected only via Strava. "
                     "Intervals.icu is not allowed to expose Strava-sourced activities via its API. "
@@ -420,7 +421,6 @@ async def run_audit_with_data(request: Request):
     except Exception as e:
 
         import traceback
-        import sys
 
         if isinstance(e, AuditHalt):
             sys.stderr.write("\n🛑 AUDIT HALTED (outer intercept)\n")
@@ -447,7 +447,6 @@ async def run_audit_with_data(request: Request):
 
 def error_response(e: Exception, buffer=None, status_code:int=500):
     import traceback
-    import sys
 
     trace = traceback.format_exc()
 
