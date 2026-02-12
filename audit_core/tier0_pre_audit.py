@@ -1167,7 +1167,33 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
         raise AuditHalt("❌ Tier-0 invariant violated: df_master is not a DataFrame")
 
     if context["df_master"].empty:
-        raise AuditHalt("❌ Tier-0 invariant violated: df_master is empty at exit")
+
+        light = context.get("activities_light")
+        full = context.get("activities_full")
+
+        # Case 1 — no activities returned at all
+        if (not light or len(light) == 0) and (not full or len(full) == 0):
+            raise AuditHalt(
+                "No training activities found in the selected date range.",
+                code="NO_ACTIVITIES_RANGE",
+                severity="soft"
+            )
+
+        # Case 2 — light exists but full is empty
+        if light and len(light) > 0 and (not full or len(full) == 0):
+            raise AuditHalt(
+                "Activities detected, but detailed data could not be retrieved.",
+                code="FULL_DATASET_EMPTY",
+                severity="soft"
+            )
+
+        # Case 3 — activities were filtered out internally
+        raise AuditHalt(
+            "Activities were found but none matched the report criteria.",
+            code="ACTIVITIES_FILTERED_OUT",
+            severity="soft"
+        )
+
 
     return (
         context["df_master"],
