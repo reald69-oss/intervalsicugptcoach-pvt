@@ -484,7 +484,7 @@ def evaluate_actions(context):
     th = CHEAT_SHEET["thresholds"]
     adv = CHEAT_SHEET["advice"]
     dur = context.get("Durability", 1.0)
-    lir = context.get("LoadIntensityRatio", 0.0)
+    lir = context.get("LoadIntensityRatio", None)
     er = context.get("EnduranceReserve", 1.0)
     drift = context.get("IFDrift", 0.0)
 
@@ -494,12 +494,13 @@ def evaluate_actions(context):
     elif dur >= th["Durability"]["green"][0]:
         actions.append(adv["Durability"]["improving"].format(dur))
     # LIR
-    if lir > th["LIR"]["amber"][0]:
-        actions.append(adv["LIR"]["high"].format(lir))
-    elif lir < th["LIR"]["green"][0]:
-        actions.append(adv["LIR"]["low"].format(lir))
-    else:
-        actions.append(adv["LIR"]["balanced"].format(lir))
+    if isinstance(lir, (int, float)) and not np.isnan(lir):
+        if lir > th["LIR"]["amber"][0]:
+            actions.append(adv["LIR"]["high"].format(lir))
+        elif lir < th["LIR"]["green"][0]:
+            actions.append(adv["LIR"]["low"].format(lir))
+        else:
+            actions.append(adv["LIR"]["balanced"].format(lir))
     # Endurance Reserve
     if er < th["EnduranceReserve"]["amber"][0]:
         actions.append(adv["EnduranceReserve"]["depleted"].format(er))
