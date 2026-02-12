@@ -306,11 +306,15 @@ def finalize_and_validate_render(context, reportType="weekly"):
     })
     #debug(context, f"[DEBUG] report_header injected: {context['report_header']}")
 
-    print(
+    import logging
+
+    logger = logging.getLogger("urflog")
+    logger.setLevel(logging.INFO)
+
+    logger.info(
         f"[EXEC] report_header injected → {context.get('report_header')} "
         f"| report_type={context.get('report_type')} "
-        f"| athlete={context.get('athlete', {}).get('name','unknown')}",
-        flush=True
+        f"| athlete={context.get('athlete', {}).get('name','unknown')}"
     )
 
     # --- Step 5: Canonical Propagation and Report Render ---
