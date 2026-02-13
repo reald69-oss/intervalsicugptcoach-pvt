@@ -306,13 +306,6 @@ def finalize_and_validate_render(context, reportType="weekly"):
     })
     #debug(context, f"[DEBUG] report_header injected: {context['report_header']}")
 
-    sys.stderr.write(
-        f"[EXEC] report_header injected → {context.get('report_header')} "
-        f"| report_type={context.get('report_type')} "
-        f"| athlete={context.get('athlete', {}).get('name','unknown')}\n"
-    )
-    sys.stderr.flush()
-
     # --- Step 5: Canonical Propagation and Report Render ---
     debug(context, "[DEBUG-FINALIZER] pre-render load_metrics:", context.get("load_metrics"))
 
