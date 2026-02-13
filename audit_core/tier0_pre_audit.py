@@ -1161,40 +1161,50 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
 
     # 🔒 Tier-0 invariant: df_master must already exist and be valid
     if "df_master" not in context:
-        raise AuditHalt("❌ Tier-0 invariant violated: df_master missing at exit")
+        raise AuditHalt("Tier-0 invariant violated: df_master missing at exit")
 
     if not isinstance(context["df_master"], pd.DataFrame):
-        raise AuditHalt("❌ Tier-0 invariant violated: df_master is not a DataFrame")
+        raise AuditHalt("Tier-0 invariant violated: df_master is not a DataFrame")
 
     if context["df_master"].empty:
 
         light = context.get("activities_light")
         full = context.get("activities_full")
 
-        # Case 1 — no activities returned at all
-        if (not light or len(light) == 0) and (not full or len(full) == 0):
+        def is_empty(obj):
+            if obj is None:
+                return True
+            if isinstance(obj, pd.DataFrame):
+                return obj.empty
+            if isinstance(obj, (list, dict, tuple, set)):
+                return len(obj) == 0
+            return False
+
+        light_empty = is_empty(light)
+        full_empty = is_empty(full)
+
+        if light_empty and full_empty:
             raise AuditHalt(
                 "No training activities found in the selected date range.",
                 code="NO_ACTIVITIES_RANGE",
                 severity="soft"
             )
 
-        # Case 2 — light exists but full is empty
-        if light and len(light) > 0 and (not full or len(full) == 0):
+        if not light_empty and full_empty:
             raise AuditHalt(
                 "Activities detected, but detailed data could not be retrieved.",
                 code="FULL_DATASET_EMPTY",
                 severity="soft"
             )
 
-        # Case 3 — activities were filtered out internally
+        # Default empty case
         raise AuditHalt(
             "Activities were found but none matched the report criteria.",
             code="ACTIVITIES_FILTERED_OUT",
             severity="soft"
         )
 
-
+    # 🔒 Canonical return — only reached if df_master is valid
     return (
         context["df_master"],
         wellness,
@@ -1202,6 +1212,8 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
         context.get("auditPartial"),
         context.get("auditFinal"),
     )
+
+
 
 # ============================================================
 # 🔄 EXPORTED: expand_zones (public helper for zone expansion)
