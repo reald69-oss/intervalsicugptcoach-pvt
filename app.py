@@ -397,6 +397,25 @@ async def run_audit_with_data(request: Request):
             prefetch_context["end"] = end
             print(f"[STAGING] Injected start/end into prefetch_context: {start} → {end}")
 
+        # --- EARLY HEADER INJECTION (pre-run safety) ---
+        athlete_profile = prefetch_context.get("athleteProfile", {})
+
+        prefetch_context["report_header"] = {
+            "athlete": athlete_profile.get("name", "Unknown Athlete"),
+            "discipline": athlete_profile.get("discipline", "cycling"),
+            "report_type": report_range,
+            "framework": "Unified_Reporting_Framework_v5.1",
+            "timezone": athlete_profile.get("timezone", "Europe/Zurich"),
+            "date_range": f"{start} → {end}" if start and end else "unknown",
+        }
+
+        sys.stderr.write(
+            f"[EXEC] report_header injected (pre-run) → {prefetch_context['report_header']} "
+            f"| report_type={report_range} "
+            f"| athlete={prefetch_context['report_header'].get('athlete','unknown')}\n"
+        )
+        sys.stderr.flush()
+
         light = prefetch_context.get("activities_light")
         full  = prefetch_context.get("activities_full")
 
@@ -483,6 +502,7 @@ async def run_audit_with_data(request: Request):
             return JSONResponse({
                 **halt_payload,
                 "report_type": report_range,
+                "report_header": prefetch_context.get("report_header"),
                 "semantic_graph": {},
                 "compliance": {},
                 "logs": buffer.getvalue()[-20000:]
