@@ -713,7 +713,13 @@ def build_semantic_json(context):
         # ---------------------------------------------------------
         
         "daily_load": [
-            {"date": row["date"], "tss": float(row["icu_training_load"])}
+            {
+                "date": str(row.get("date")),
+                "tss": float(row["icu_training_load"])
+                if row.get("icu_training_load") not in (None, "")
+                and not pd.isna(row.get("icu_training_load"))
+                else 0.0
+            }
             for _, row in getattr(context.get("df_daily"), "iterrows", lambda: [])()
         ] if context.get("df_daily") is not None else [],
 
