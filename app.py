@@ -389,7 +389,22 @@ async def run_audit_with_data(request: Request):
         end = data.get("end")
 
         # normalize prefetched JSON into pandas-friendly context
-        prefetch_context = normalize_prefetched_context(data)
+        try:
+            prefetch_context = normalize_prefetched_context(data)
+        except HTTPException as e:
+            return JSONResponse(
+                status_code=e.status_code,
+                content={
+                    "status": "error",
+                    "error_type": "STRAVA_API_RESTRICTED",
+                    "severity": "hard",
+                    "message": e.detail,
+                    "report_type": report_range,
+                    "semantic_graph": {},
+                    "compliance": {},
+                    "logs": ""
+                }
+            )
 
         # ✅ NEW — inject start/end into context for Tier-0 summary to work
         if start and end:
