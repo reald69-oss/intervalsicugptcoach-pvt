@@ -33,12 +33,15 @@ Supports both:
 • /run_season
 • /run_wellness
 • /run_summary
+• /run_data_quality
 
 Query parameters:
   ?staging=1          → routes to Railway staging environment
   ?owner=xyz          → optional owner identifier for staging keys
   ?render=gpt         → enables GPT-rendered Markdown output
                          (includes both Markdown + semantic JSON)
+  ?test=strava        → simulate STRAVA-only account
+                        (removes usable activities and returns friendly error)
 
 ───────────────────────────────────────────────
 🏗️  MODES
@@ -70,7 +73,22 @@ PREFETCH MODE (REMOTE)
   python report.py --range weekly --prefetch --staging (RAILWAY STAGING JSON) - this would get sent to GPT
   python report.py --range season --prefetch --gpt (RAILWAY JSON AND GPT MD)
   python report.py --range summary --start 2025-01-01 --end 2025-12-31 (LOCAL JSON)
-  python report.py --range weekly --prefetch --staging --owner xxxx --strava-test (this test strips activities to replicate STRAVA ONLY source and retruns friendly error msg)
+  python report.py --range weekly --prefetch --staging --owner xxxx --strava-test
+    → simulates STRAVA-only account and returns friendly data-source error
+
+| CLI flag             | Worker param   | Test scenario                              | Expected result                                                            |
+| -------------------- | -------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
+| `--strava-test stub` | `test=strava`  | All activities are STRAVA API stub rows    | Hard stop: `STRAVA_API_RESTRICTED` (422) with friendly data-source message |
+| `--strava-test 1`    | `test=strava1` | Only light activities present (no full)    | Soft halt: insufficient detailed data (`FULL_DATASET_EMPTY` or similar)    |
+| `--strava-test 2`    | `test=strava2` | Full dataset empty after filtering         | Soft halt: no usable activities in range                                   |
+| `--strava-test 3`    | `test=strava3` | Activities present but missing key metrics | Degraded data quality state, report continues with warnings                |
+| `--strava-test 4`    | `test=strava4` | Partial wellness or athlete metadata       | Degraded data quality score, report still generated                        |
+| `--strava-test 5`    | `test=strava5` | Mixed valid + stub activities              | Report runs, data quality flagged with `strava_stub_detected`              |
+
+
+  DATA QUALITY REPORT
+  python report.py --range data_quality --prefetch
+   -> this gets data quality report
 
 ───────────────────────────────────────────────
 🧠 NOTES
@@ -165,7 +183,16 @@ def fetch_remote_report(report_type, fmt="semantic", staging=False, owner=None, 
     if end:
         params.append(f"end={end}")
     if strava_test:
-        params.append("test=strava")
+        # Accept: stub, 1–5
+        if strava_test == "stub":
+            params.append("test=strava-stub")
+        elif strava_test in ["1", "2", "3", "4", "5"]:
+            params.append(f"test=strava{strava_test}")
+        else:
+            raise ValueError(
+                "Invalid --strava-test value. Use: stub, 1,2,3,4,5"
+            )
+
 
     query = "&".join(params)
     url = f"{base}?{query}" if query else base
@@ -177,7 +204,17 @@ def fetch_remote_report(report_type, fmt="semantic", staging=False, owner=None, 
 
     print(f"[REMOTE] Fetching {report_type} report (staging={staging}, gpt={gpt}) → {url}")
     resp = requests.get(url, headers=headers, timeout=120)
-    resp.raise_for_status()
+
+    # Accept semantic error responses (422) from Worker
+    try:
+        data = resp.json()
+    except Exception:
+        resp.raise_for_status()
+        raise
+
+    # Only raise if truly unexpected
+    if resp.status_code >= 500:
+        resp.raise_for_status()
 
     Path("reports").mkdir(exist_ok=True)
     env_tag = "staging" if staging else "prod"
@@ -427,7 +464,7 @@ def fetch_debug_report(report_type="weekly", staging=False):
 def main():
     parser = argparse.ArgumentParser(description="Generate audit reports for different data ranges.")
     parser.add_argument("--range", type=str.lower,
-                        choices=["weekly", "season", "wellness", "summary"],
+                        choices=["weekly", "season", "wellness", "summary", "data_quality"],
                         default="weekly")
     parser.add_argument("--output", type=str, default=None)
     parser.add_argument("--format", type=str.lower,
@@ -446,8 +483,20 @@ def main():
                         help="Request GPT-rendered report from Cloudflare Worker (adds ?render=gpt)")
     parser.add_argument("--debug", action="store_true",
                         help="Run any report type in debug mode (via Railway /debug endpoint if available)")
-    parser.add_argument("--strava-test", action="store_true",
-                    help="Simulate Strava-only account (passes ?test=strava to Worker)")
+    parser.add_argument(
+        "--strava-test",
+        type=str,
+        choices=["stub", "1", "2", "3", "4", "5"],
+        help=(
+            "Simulate Strava-only scenarios:\n"
+            "  stub → all activities are STRAVA API stubs (hard stop)\n"
+            "  1    → light-only dataset, no full activities\n"
+            "  2    → full dataset empty after filtering\n"
+            "  3    → activities present but missing key metrics\n"
+            "  4    → partial wellness or athlete metadata\n"
+            "  5    → mixed valid + stub activities (degraded state)"
+        )
+    )
 
     args = parser.parse_args()
 

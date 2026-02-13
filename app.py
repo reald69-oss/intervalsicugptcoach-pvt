@@ -12,6 +12,8 @@ import os, sys, io, json, math, pandas as pd, numpy as np
 from datetime import datetime, timedelta, date
 from contextlib import redirect_stdout
 from audit_core.errors import AuditHalt
+from collections import Counter
+
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audit_core"))
@@ -668,12 +670,29 @@ def data_quality_audit(ctx: dict) -> dict:
     datasets = {}
 
     athlete = ctx.get("athlete", {})
-    light = ctx.get("activities_light", [])
-    full = ctx.get("activities_full", [])
-    wellness = ctx.get("wellness", [])
+    light = ctx.get("activities_light", []) or []
+    full = ctx.get("activities_full", []) or []
+    wellness = ctx.get("wellness", []) or []
 
     dq_flags = ctx.get("data_quality_flags", {})
     strava_stub_detected = dq_flags.get("strava_stub_detected", False)
+
+    # --------------------------------------------------
+    # Basic report header
+    # --------------------------------------------------
+    meta = ctx.get("meta", {})
+    report_type = ctx.get("report_type", "unknown")
+    period = ctx.get("period") or meta.get("period")
+
+    report_header = {
+        "report_type": report_type,
+        "framework": meta.get("framework", "URF"),
+        "athlete_id": athlete.get("id"),
+        "athlete_name": athlete.get("name"),
+        "timezone": athlete.get("timezone"),
+        "period": period,
+        "generated_at": datetime.utcnow().isoformat() + "Z"
+    }
 
     # --------------------------------------------------
     # Athlete
@@ -707,7 +726,7 @@ def data_quality_audit(ctx: dict) -> dict:
 
     datasets["light"] = {
         "present": light_ok,
-        "count": len(light) if isinstance(light, list) else 0,
+        "count": len(light),
         "issues": light_issues
     }
 
@@ -722,7 +741,7 @@ def data_quality_audit(ctx: dict) -> dict:
 
     datasets["full"] = {
         "present": full_ok,
-        "count": len(full) if isinstance(full, list) else 0,
+        "count": len(full),
         "issues": [] if full_ok else ["no_full_activities"]
     }
 
@@ -737,7 +756,7 @@ def data_quality_audit(ctx: dict) -> dict:
 
     datasets["wellness"] = {
         "present": wellness_ok,
-        "count": len(wellness) if isinstance(wellness, list) else 0,
+        "count": len(wellness),
         "issues": [] if wellness_ok else ["missing_wellness_timeseries"]
     }
 
@@ -748,20 +767,131 @@ def data_quality_audit(ctx: dict) -> dict:
         flags.append("strava_stub_detected")
 
     # --------------------------------------------------
+    # Coverage metrics
+    # --------------------------------------------------
+    expected_days = ctx.get("window_days", 7)
+
+    def unique_days(records):
+        days = set()
+        for r in records:
+            d = r.get("date") or r.get("start_date_local")
+            if d:
+                days.add(str(d)[:10])
+        return len(days)
+
+    coverage = {
+        "light_activity_days": unique_days(light),
+        "full_activity_days": unique_days(full),
+        "wellness_days": unique_days(wellness),
+        "expected_days": expected_days
+    }
+
+    # --------------------------------------------------
+    # Source breakdown
+    # --------------------------------------------------
+    source_counter = Counter()
+    for act in full:
+        src = act.get("source")
+        if src:
+            source_counter[src] += 1
+
+    sources = dict(source_counter)
+
+    # --------------------------------------------------
+    # Sport distribution
+    # --------------------------------------------------
+    sport_counter = Counter()
+    for act in full:
+        t = act.get("type")
+        if t:
+            sport_counter[t] += 1
+
+    sport_distribution = dict(sport_counter)
+
+    # --------------------------------------------------
+    # Field integrity
+    # --------------------------------------------------
+    power_count = 0
+    hr_count = 0
+    tss_count = 0
+
+    for act in full:
+        if act.get("icu_average_watts") or act.get("average_watts"):
+            power_count += 1
+        if act.get("average_heartrate"):
+            hr_count += 1
+        if act.get("icu_training_load"):
+            tss_count += 1
+
+    field_integrity = {
+        "activities_total": len(full),
+        "activities_with_power": power_count,
+        "activities_with_hr": hr_count,
+        "activities_with_tss": tss_count,
+        "missing_power_count": len(full) - power_count,
+        "missing_hr_count": len(full) - hr_count
+    }
+
+    # --------------------------------------------------
+    # Timeline checks
+    # --------------------------------------------------
+    dates = []
+    for act in full:
+        d = act.get("start_date_local")
+        if d:
+            dates.append(str(d)[:10])
+
+    timeline_checks = {
+        "first_activity": min(dates) if dates else None,
+        "last_activity": max(dates) if dates else None,
+        "activity_days": len(set(dates)) if dates else 0
+    }
+
+    # --------------------------------------------------
     # State classification
     # --------------------------------------------------
     if score >= 80:
         state = "ok"
+        trust_level = "high"
     elif score >= 50:
         state = "degraded"
+        trust_level = "moderate"
     else:
         state = "invalid"
+        trust_level = "low"
 
+    # --------------------------------------------------
+    # Recommended actions
+    # --------------------------------------------------
+    actions = []
+
+    if "athlete_invalid" in flags:
+        actions.append("Athlete profile incomplete — check account sync.")
+
+    if "light_missing" in flags or "full_missing" in flags:
+        actions.append("No activities detected — verify device connections.")
+
+    if "wellness_missing" in flags:
+        actions.append("No wellness data — enable HRV or resting HR tracking.")
+
+    if strava_stub_detected:
+        actions.append("Connect Garmin/Wahoo/Zwift directly or upload FIT files.")
+
+    # --------------------------------------------------
+    # Return
+    # --------------------------------------------------
     return {
+        "report_header": report_header,
         "score": score,
         "state": state,
+        "trust_level": trust_level,
         "datasets": datasets,
         "flags": flags,
+        "coverage": coverage,
+        "sources": sources,
+        "sport_distribution": sport_distribution,
+        "field_integrity": field_integrity,
+        "timeline_checks": timeline_checks,
+        "actions": actions,
         "strava_stub_detected": strava_stub_detected
     }
-
