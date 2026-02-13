@@ -118,8 +118,24 @@ def normalize_prefetched_context(data):
         df_light = safe_df(data.get("activities_light"))
         df_full  = safe_df(data.get("activities_full"))
         df_well  = safe_df(data.get("wellness"))
-        athlete  = data.get("athlete", {})
+
+        athlete = data.get("athlete") or {}
         calendar = data.get("calendar", {})
+
+        # 🔒 CONTRACT INVARIANT — athlete must have an id
+        if not isinstance(athlete, dict):
+            raise AuditHalt(
+                "Athlete profile missing or invalid.",
+                code="ATHLETE_PROFILE_INVALID",
+                severity="hard"
+            )
+
+        if "id" not in athlete:
+            raise AuditHalt(
+                "Athlete profile missing ID.",
+                code="ATHLETE_ID_MISSING",
+                severity="hard"
+            )
 
         # 🔒 GUARD: Abort if ALL rows are STRAVA API stubs (exact note match)
         if not df_light.empty and "_note" in df_light.columns:
