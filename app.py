@@ -74,16 +74,44 @@ def normalize_prefetched_context(data):
     context = {}
     try:
         def safe_df(obj):
-            if not obj:
+            if obj is None:
                 return pd.DataFrame()
+
+            # Already a dataframe
+            if isinstance(obj, pd.DataFrame):
+                return obj
+
+            # Single dict → wrap into list
+            if isinstance(obj, dict):
+                obj = [obj]
+
+            # Not list-like → empty
+            if not isinstance(obj, (list, tuple)):
+                return pd.DataFrame()
+
             df = pd.DataFrame(obj)
+
             if "start_date_local" in df.columns:
-                df["start_date_local"] = pd.to_datetime(df["start_date_local"], errors="coerce").dt.tz_localize(None)
+                df["start_date_local"] = pd.to_datetime(
+                    df["start_date_local"], errors="coerce"
+                ).dt.tz_localize(None)
+
             if "date" in df.columns:
-                df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.tz_localize(None)
-            num_cols = [c for c in df.columns if any(x in c.lower() for x in ["distance","moving_time","tss","load","icu_training_load","if","vo2max"])]
+                df["date"] = pd.to_datetime(
+                    df["date"], errors="coerce"
+                ).dt.tz_localize(None)
+
+            num_cols = [
+                c for c in df.columns
+                if any(x in c.lower() for x in [
+                    "distance","moving_time","tss",
+                    "load","icu_training_load","if","vo2max"
+                ])
+            ]
+
             for c in num_cols:
                 df[c] = pd.to_numeric(df[c], errors="coerce")
+
             return df
 
         # Light / Full / Wellness
@@ -110,7 +138,6 @@ def normalize_prefetched_context(data):
                     "[GUARD] All activities are STRAVA API stubs — aborting."
                 )
 
-                from fastapi import HTTPException
                 raise HTTPException(
                     status_code=422,
                     detail=(
@@ -253,9 +280,9 @@ def normalize_prefetched_context(data):
 
 
         debug(context, f"[NORM] activities_light={len(df_light)} full={len(df_full)} wellness={len(df_well)} athlete_keys={list(athlete.keys()) if athlete else 'none'}")
-    except HTTPException:
-        # Let FastAPI handle it
-        raise
+    except HTTPException as e:
+        raise e
+
 
     except Exception as e:
         debug(context, f"[NORM] ❌ Normalization failed: {e}")
@@ -359,16 +386,29 @@ async def run_audit_with_data(request: Request):
                 "activities_returned": 0
             })
 
-        light = prefetch_context.get("activities_light", [])
-        full  = prefetch_context.get("activities_full", [])
+        light = prefetch_context.get("activities_light")
+        full  = prefetch_context.get("activities_full")
+
+        light_empty = (
+            light is None or
+            (isinstance(light, list) and len(light) == 0) or
+            (isinstance(light, pd.DataFrame) and light.empty)
+        )
+
+        full_empty = (
+            full is None or
+            (isinstance(full, list) and len(full) == 0) or
+            (isinstance(full, pd.DataFrame) and full.empty)
+        )
 
         # Abort only if NO activity data at all
-        if (not light or len(light) == 0) and (not full or len(full) == 0):
+        if light_empty and full_empty:
             raise AuditHalt(
                 "No activities found in the requested date range.",
                 code="NO_ACTIVITIES_RANGE",
                 severity="soft"
             )
+
         # now run the unified audit (SAFE WRAPPED)
         try:
             with redirect_stdout(buffer):
