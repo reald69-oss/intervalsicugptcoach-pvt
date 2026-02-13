@@ -400,13 +400,16 @@ async def run_audit_with_data(request: Request):
         # --- EARLY HEADER INJECTION (pre-run safety) ---
         athlete_profile = prefetch_context.get("athleteProfile", {})
 
+        resolved_start = start or prefetch_context.get("start")
+        resolved_end   = end   or prefetch_context.get("end")
+
         prefetch_context["report_header"] = {
             "athlete": athlete_profile.get("name", "Unknown Athlete"),
             "discipline": athlete_profile.get("discipline", "cycling"),
             "report_type": report_range,
             "framework": "Unified_Reporting_Framework_v5.1",
             "timezone": athlete_profile.get("timezone", "Europe/Zurich"),
-            "date_range": f"{start} → {end}" if start and end else "unknown",
+            "date_range": f"{resolved_start} → {resolved_end}" if resolved_start and resolved_end else "unknown",
         }
 
         sys.stderr.write(
@@ -415,6 +418,7 @@ async def run_audit_with_data(request: Request):
             f"| athlete={prefetch_context['report_header'].get('athlete','unknown')}\n"
         )
         sys.stderr.flush()
+
 
         light = prefetch_context.get("activities_light")
         full  = prefetch_context.get("activities_full")
@@ -460,6 +464,7 @@ async def run_audit_with_data(request: Request):
                 return JSONResponse({
                     **halt_payload,
                     "report_type": report_range,
+                    "report_header": prefetch_context.get("report_header") if 'prefetch_context' in locals() else None,
                     "semantic_graph": {},
                     "compliance": {},
                     "logs": buffer.getvalue()[-20000:]
@@ -474,6 +479,7 @@ async def run_audit_with_data(request: Request):
             return JSONResponse({
                 "status": "ok",
                 "report_type": report_range,
+                "report_header": prefetch_context.get("report_header") if 'prefetch_context' in locals() else None,
                 "output_format": "semantic_json",
                 "semantic_graph": sanitize(build_semantic_json(context)),
                 "compliance": compliance,
@@ -483,6 +489,7 @@ async def run_audit_with_data(request: Request):
         return JSONResponse({
             "status": "ok",
             "report_type": report_range,
+            "report_header": prefetch_context.get("report_header") if 'prefetch_context' in locals() else None,
             "output_format": "markdown",
             "markdown": report.get("markdown",""),
             "logs": logs[-20000:],
@@ -502,7 +509,7 @@ async def run_audit_with_data(request: Request):
             return JSONResponse({
                 **halt_payload,
                 "report_type": report_range,
-                "report_header": prefetch_context.get("report_header"),
+                "report_header": prefetch_context.get("report_header") if 'prefetch_context' in locals() else None,
                 "semantic_graph": {},
                 "compliance": {},
                 "logs": buffer.getvalue()[-20000:]
