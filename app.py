@@ -416,6 +416,26 @@ async def run_audit_with_data(request: Request):
                 }
             )
 
+        # ============================================================
+        # 🧪 DATA QUALITY EARLY EXIT (no full report build)
+        # ============================================================
+        if report_range == "data_quality":
+            audit = data_quality_audit(prefetch_context)
+
+            return JSONResponse({
+                "status": "ok",
+                "report_type": "data_quality",
+                "output_format": "semantic_json",
+                "semantic_graph": {
+                    "meta": {
+                        "report_type": "data_quality"
+                    },
+                    "data_quality": audit
+                },
+                "compliance": {},
+                "logs": ""
+            })
+
         # ✅ NEW — inject start/end into context for Tier-0 summary to work
         if start and end:
             prefetch_context["start"] = start
