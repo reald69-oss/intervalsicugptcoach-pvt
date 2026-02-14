@@ -18,6 +18,7 @@ Thumbs.db
 *.json
 /docs/devandtest.md 
 /report.py
+/PYTHONCurl.md
 
 # Python
 __pycache__/
