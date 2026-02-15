@@ -2186,6 +2186,79 @@ def build_semantic_json(context):
             f"chronic={list(semantic['performance_intelligence'].get('chronic', {}).keys())}"
         )
 
+    # ---------------------------------------------------------
+    # 🧬 WELLNESS CONSOLIDATION (URF v5.2 canonical structure)
+    # ---------------------------------------------------------
+    if semantic["meta"]["report_type"] == "wellness":
+
+        wellness = semantic.setdefault("wellness", {})
+
+        # --- 42-day window anchor ---
+        wellness["window_days"] = 42
+
+        # -----------------------------------------------------
+        # 2️⃣ HRV Structure
+        # -----------------------------------------------------
+        if wellness.get("hrv_available"):
+            wellness["hrv"] = {
+                "mean": wellness.get("hrv_mean"),
+                "latest": wellness.get("hrv_latest"),
+                "trend_7d": wellness.get("hrv_trend_7d"),
+                "samples": wellness.get("hrv_samples"),
+                "source": wellness.get("hrv_source"),
+            }
+
+        # -----------------------------------------------------
+        # 3️⃣ Sleep + Cardiac
+        # -----------------------------------------------------
+        if "sleep_score" in wellness:
+            wellness["sleep"] = {
+                "average_score": wellness.get("sleep_score"),
+            }
+
+        if "resting_hr_delta" in wellness:
+            wellness["cardiac"] = {
+                "resting_hr_delta": wellness.get("resting_hr_delta"),
+            }
+
+        # -----------------------------------------------------
+        # 4️⃣ Recovery Markers (from canonical metrics layer)
+        # -----------------------------------------------------
+        recovery_metric_keys = [
+            "RecoveryIndex",
+            "StressTolerance",
+            "Monotony",
+            "Strain",
+        ]
+
+        recovery_block = {}
+
+        for key in recovery_metric_keys:
+            if key in semantic.get("metrics", {}):
+                m = semantic["metrics"][key]
+                recovery_block[key] = {
+                    "value": m.get("value"),
+                    "state": m.get("state"),
+                    "framework": m.get("framework"),
+                }
+
+        if recovery_block:
+            wellness["recovery_markers"] = recovery_block
+
+        # -----------------------------------------------------
+        # 5️⃣ Clean up flat fields (optional but cleaner)
+        # -----------------------------------------------------
+        for k in [
+            "hrv_mean",
+            "hrv_latest",
+            "hrv_trend_7d",
+            "hrv_samples",
+            "hrv_source",
+            "sleep_score",
+            "resting_hr_delta",
+        ]:
+            wellness.pop(k, None)
+
 
     # ---------------------------------------------------------
     # 🧠 INSIGHTS (computed once, after all metrics resolved)
