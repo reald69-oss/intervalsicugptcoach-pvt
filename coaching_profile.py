@@ -392,7 +392,7 @@ COACH_PROFILE = {
             "ACWR", "Strain", "Monotony", "CTL", "ATL", "Form", "TRIMP", "W′/CP Modeling"
         ],
         "recovery_analysis": [
-            "RecoveryIndex", "HRV Integration", "Fatigue Detection", "Sleep Quality", "Readiness Tracking"
+            "LoadVariabilityIndex", "HRV Integration", "Fatigue Detection", "Sleep Quality", "Readiness Tracking"
         ],
         "training_quality": [
             "PolarisationIndex", "DurabilityIndex", "SessionQualityRatio", "FatOxidationIndex"
@@ -482,14 +482,14 @@ COACH_PROFILE = {
                 "Stable or rising EF = strong aerobic fitness trend."
             ),
         },
-        "RecoveryIndex": {
-            "framework": "Noakes Central Governor",
-            "formula": "HRV / RestHR × readiness",
+        "LoadVariabilityIndex": {
+            "framework": "Foster Load Variability (Inverse Monotony)",
+            "formula": "1 - (Monotony / 5)",
             "criteria": {
-                "optimal": "0.8–1.0",
-                "moderate": "0.7–0.79",
-                "low": "<0.7"
-            },
+                "optimal": "0.7–1.0",
+                "moderate": "0.4–0.69",
+                "low": "<0.4"
+            }
         },
         "FatOxidationIndex": {
             "framework": "San Millán Zone 2 Model",
@@ -761,10 +761,15 @@ COACH_PROFILE = {
             "formula": "Average Sleep Score (14 days)",
             "criteria": {"low": "<70", "optimal": ">=80"},
         },
-        "RecoveryIndex": {
-            "framework": "TSB–HRV Composite Index",
+        "LoadVariabilityIndex": {
+            "framework": "Autonomic–Load Coupling Index",
             "formula": "(HRV / HRV_mean) × (TSB / 10)",
-            "criteria": {"low": "<0.5", "optimal": "0.6–0.9"},
+            "criteria": {
+                "low": "<0.5",
+                "moderate": "0.5–0.6",
+                "optimal": "0.6–0.9",
+                "high": ">0.9"
+            }
         },
         "HRVBalance": {
         "framework": "Autonomic Recovery Model",

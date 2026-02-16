@@ -53,7 +53,7 @@ def get_dynamic_heuristics():
         "polarisation_target":
             sum(th["Polarisation"]["green"]) / 2,
         "recovery_floor":
-            th["RecoveryIndex"]["amber"][1],
+            th["LoadVariabilityIndex"]["amber"][1],
         "fatigue_delta_green":
             th["FatigueTrend"]["green"],
         "acwr_upper":
@@ -140,9 +140,13 @@ def detect_phases(context, events):
     df_week["delta_raw"] = df_week["tss"].pct_change().clip(-1, 2).fillna(0)
     df_week["delta"] = df_week["delta_raw"].ewm(span=3, adjust=False).mean().round(3)
 
-    # --- Compute dynamic ACWR & Recovery Index -----------------------------
+    # --- Compute dynamic ACWR & Foster LVI -----------------------------
     df_week["acwr"] = (df_week["atl"] / df_week["ctl"]).replace([np.inf, -np.inf], np.nan).fillna(1.0).clip(0, 2)
-    df_week["ri"] = ((df_week["tsb"] + 30) / 60).clip(0, 1)
+    rolling_mean = df_week["tss"].rolling(3).mean()
+    rolling_std  = df_week["tss"].rolling(3).std(ddof=0)
+
+    weekly_monotony = (rolling_mean / (rolling_std + 1e-6)).fillna(1.0)
+    df_week["lvi"] = (1 - (weekly_monotony / 5)).clip(0, 1)
 
     # --- Precompute safe slopes -------------------------------------------
     df_week["ctl_slope"] = df_week["ctl"].diff().fillna(0)
@@ -165,7 +169,7 @@ def detect_phases(context, events):
         ctl_slope = float(df_week.iloc[i]["ctl_slope"])
         atl_slope = float(df_week.iloc[i]["atl_slope"])
         acwr = float(df_week.iloc[i]["acwr"])
-        ri = float(df_week.iloc[i]["ri"])
+        lvi = float(df_week.iloc[i]["lvi"])
 
         label = "Continuous Load"
         method_source = "trend_window"
@@ -175,13 +179,13 @@ def detect_phases(context, events):
             "ctl_slope": round(ctl_slope, 2),
             "atl_slope": round(atl_slope, 2),
             "acwr": round(acwr, 2),
-            "ri": round(ri, 2)
+            "lvi": round(lvi, 2)
         }
 
         # --- Primary thresholds
         for phase, bounds in phase_thresholds.items():
             if bounds["trend_min"] <= d <= bounds["trend_max"]:
-                if acwr <= bounds.get("acwr_max", 9) and ri >= bounds.get("ri_min", 0):
+                if acwr <= bounds.get("acwr_max", 9) and lvi >= bounds.get("lvi_min", 0):
                     label = phase
                     method_source = f"PhaseBoundaries({phase})"
                     break
@@ -279,15 +283,13 @@ def evaluate_actions(context):
     Tier-2 Step 4 — Evaluate Coaching Actions (v17 dynamic)
     Fully dynamic thresholds and phase advice integration.
     """
-    events = context.get("events", [])
-    context = detect_phases(context, events)
     heur = get_dynamic_heuristics()
 
     derived = context.get("derived_metrics", {})
     extended = context.get("extended_metrics", {})
 
     # Promote metrics
-    for k in ["ACWR", "Monotony", "Strain", "Polarisation", "RecoveryIndex"]:
+    for k in ["ACWR", "Monotony", "Strain", "Polarisation", "LoadVariabilityIndex"]:
         if k not in context or isinstance(context[k], dict):
             if k in derived and isinstance(derived[k], dict):
                 val = derived[k].get("value", np.nan)
@@ -380,24 +382,17 @@ def evaluate_actions(context):
             low_keys.append(key)
 
     # ---------------- Metabolic Efficiency ----------------
-    fox = context.get("FatOxidation", 0.0)
-    decoup = context.get("Decoupling", 1.0)
-    if fox >= 0.8 and decoup <= 0.05:
-        actions.append("✅ Metabolic efficiency maintained (San Millán Z2).")
-    else:
-        actions.append("⚠ Improve Zone 2 efficiency — extend duration or adjust IF.")
+    fox = context.get("FatOxidation")
+    decoup = context.get("Decoupling")
 
-    # ---------------- Recovery / Load Balance ----------------
-#    ri = context.get("RecoveryIndex", 1.0)
-#    acwr = context.get("ACWR", 1.0)
-#    if ri < heur["recovery_floor"]:
-#        if acwr > heur["acwr_upper"]:
-#            actions.append(f"⚠ Apply 30–40 % deload (ACWR={acwr:.2f}).")
-#        else:
-#            actions.append(f"⚠ Apply 10–15 % deload (ACWR={acwr:.2f}).")
+    if fox is not None and decoup is not None:
+        if fox >= 0.8 and decoup <= 0.05:
+            actions.append("✅ Metabolic efficiency maintained (San Millán Z2).")
+        else:
+            actions.append("⚠ Improve Zone 2 efficiency — extend duration or adjust IF.")
 
     # ---------------- Stateful DELOAD latch ----------------
-    ri = context.get("RecoveryIndex", 1.0)
+    lvi = context.get("LoadVariabilityIndex", 1.0)
     acwr = context.get("ACWR", 1.0)
 
     phase = (
@@ -419,7 +414,7 @@ def evaluate_actions(context):
     })
 
     failed_adaptation = (
-        ri < heur["recovery_floor"]
+        lvi < heur["recovery_floor"]
         and ctl_slope is not None
         and ctl_slope <= 0
     )
@@ -448,7 +443,7 @@ def evaluate_actions(context):
         and deload.get("triggered_on") != context.get("period", {}).get("end")
     ):
         recovered = (
-            ri >= heur["recovery_floor"]
+            lvi >= heur["recovery_floor"]
             and acwr <= heur["acwr_upper"]
         )
 
@@ -473,9 +468,9 @@ def evaluate_actions(context):
         actions.append("✅ FatMax calibration verified (±5 %).")
 
     # ---------------- UI Flag ----------------
-    if ri < 0.6:
+    if lvi < 0.6:
         context["ui_flag"] = "🔴 Overreached"
-    elif ri < 0.8:
+    elif lvi < 0.8:
         context["ui_flag"] = "🟠 Fatigued"
     else:
         context["ui_flag"] = "🟢 Normal"
@@ -511,34 +506,21 @@ def evaluate_actions(context):
         actions.append(adv["EfficiencyDrift"]["high"].format(drift))
     else:
         actions.append(adv["EfficiencyDrift"]["stable"].format(drift))
-    # Recovery Index
-    if ri < th["RecoveryIndex"]["amber"][0]:
-        actions.append(adv["RecoveryIndex"]["poor"].format(ri))
-    elif ri < th["RecoveryIndex"]["green"][0]:
-        actions.append(adv["RecoveryIndex"]["moderate"].format(ri))
-    else:
-        actions.append(adv["RecoveryIndex"]["healthy"].format(ri))
+    # ---------------- Load Variability Index ----------------
+    lvi = context.get("LoadVariabilityIndex", 1.0)
 
-    # ---------------- Seasonal Phase Analysis ----------------
-    phase_adv = adv.get("PhaseAdvice", {})
-    report_type = str(context.get("report_type", "")).lower()
-    if report_type in ("season", "summary") and "phases" in context:
-        actions.append("---")
-        actions.append("🪜 **Seasonal Phase Analysis**")
-        for ph in context["phases"]:
-            phase = ph.get("phase", "Unknown")
-            start, end = ph.get("start", ""), ph.get("end", "")
-            delta = ph.get("delta", 0)
-            msg = phase_adv.get(
-                phase,
-                f"ℹ {phase} phase ({start} → {end}) Δ {delta*100:.0f}%."
-            )
-            msg = (msg.replace("{start}", str(start or ""))
-                    .replace("{end}", str(end or ""))
-                    .replace("{delta}", f"{delta*100:.0f}%"))
-            actions.append(msg)
-        actions.append("")
-        actions.append("📘 **Coach Note:** Phase logic aligned with Seiler / Friel periodisation heuristics.")
+    if lvi < th["LoadVariabilityIndex"]["amber"][0]:
+        actions.append(
+            adv["LoadVariabilityIndex"]["poor"].format(lvi)
+        )
+    elif lvi < th["LoadVariabilityIndex"]["green"][0]:
+        actions.append(
+            adv["LoadVariabilityIndex"]["moderate"].format(lvi)
+        )
+    else:
+        actions.append(
+            adv["LoadVariabilityIndex"]["healthy"].format(lvi)
+        )
 
     # ---------------- Append metric feedback ----------------
     if metric_contexts:

@@ -91,7 +91,7 @@ def validate_report_output(context, report, framework_version="Unified_Reporting
         raise ValueError(f"❌ Variance exceeds {variance_limit*100:.0f}% limit")
 
     # --- Metrics validation ---
-    derived_metrics = ["ACWR", "Monotony", "Strain", "Polarisation", "RecoveryIndex"]
+    derived_metrics = ["ACWR", "Monotony", "Strain", "Polarisation", "LoadVariabilityIndex"]
     import sys
 
     for m in derived_metrics:

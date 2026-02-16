@@ -45,7 +45,7 @@ CHEAT_SHEET["thresholds"] = {
         "red": (5, 50)
     },
     "SleepQuality": {"green": (80, 100), "amber": (65, 80)},  # score out of 100
-    "RecoveryIndex": {"green": [0.9, 1.3],"amber": [0.8, 0.9],"red": [0.0, 0.8]},
+    "LoadVariabilityIndex": {"green": [0.7, 1.0],"amber": [0.4, 0.69],"red": [0.0, 0.39]},
     # --- HRV family ---
     "HRVBalance": {"green": [1.0, 1.3],"amber": [0.9, 1.0],"red": [0.0, 0.9]},
     "HRVStability": {"green": (0.85, 1.0), "amber": (0.7, 0.85)},
@@ -143,7 +143,7 @@ CHEAT_SHEET["thresholds"] = {
     # In this model:
     #   trend_min / trend_max  → week-to-week % change in training load (TSS)
     #   acwr_max               → acute:chronic workload ratio (ATL/CTL) ceiling
-    #   ri_min                 → Recovery Index (fatigue balance) floor
+    #   lvi_min                 → Load Variability Index (fatigue balance) floor
     #
     # These values align with both academic sources and Intervals.icu's
     # TSB (Training Stress Balance) fatigue-freshness mapping:
@@ -155,49 +155,56 @@ CHEAT_SHEET["thresholds"] = {
     # ================================================================
 
     "PhaseBoundaries": {
+
         # 🧱 BASE → Stable or gently rising CTL; small week-to-week variance
         "Base": {
             "trend_min": -0.05,
             "trend_max": 0.10,
             "acwr_max": 1.2,
-            "ri_min": 0.75
+            "lvi_min": 0.75
         },
+
         # 📈 BUILD → Progressive overload; productive fatigue zone
         "Build": {
             "trend_min": 0.10,
             "trend_max": 0.40,
             "acwr_max": 1.3,
-            "ri_min": 0.65
+            "lvi_min": 0.65
         },
-        # 🏁 PEAK → Stabilised high CTL, ATL dropping, RI improving
+
+        # 🏁 PEAK → Stabilised high CTL, ATL dropping, freshness improving
         "Peak": {
             "trend_min": -0.10,
             "trend_max": 0.05,
             "acwr_max": 1.15,
-            "ri_min": 0.8
+            "lvi_min": 0.8
         },
+
         # 📉 TAPER → Rapid ATL drop, load reduced 30–50%
         "Taper": {
             "trend_min": -0.50,
             "trend_max": -0.15,
             "acwr_max": 1.1,
-            "ri_min": 0.8
+            "lvi_min": 0.8
         },
+
         # 💤 RECOVERY → Heavy unload / detraining period
         "Recovery": {
             "trend_min": -1.0,
             "trend_max": -0.50,
             "acwr_max": 1.0,
-            "ri_min": 0.6
+            "lvi_min": 0.6
         },
+
         # 🧘 DELOAD → Short mid-block unloads; prevents overreach
         "Deload": {
             "trend_min": -0.25,
             "trend_max": -0.10,
             "acwr_max": 1.2,
-            "ri_min": 0.7
+            "lvi_min": 0.7
         },
-        # 🔁 CONTINUOUS LOAD → fallback when variation truly minimal (<5%)
+
+        # 🔁 CONTINUOUS LOAD → fallback when variation minimal (<5%)
         "Continuous Load": {
             "trend_min": -0.05,
             "trend_max": 0.05
@@ -334,7 +341,9 @@ CHEAT_SHEET["context"] = {
     "HRV": "Heart-rate variability balance — indicator of parasympathetic recovery.",
     "RestingHR": "Resting heart rate trend — elevated HR indicates fatigue or stress.",
     "SleepQuality": "Average Garmin sleep score — proxy for sleep recovery and readiness.",
-    "RecoveryIndex": "Composite of HRV and TSB to reflect overall readiness to train.",
+    "LoadVariabilityIndex": {
+        "description": "Composite metric reflecting the interaction between autonomic state (HRV) and training load balance (TSB), indicating how well current load variability aligns with physiological capacity."
+    },
     "HRVBalance": "HRV compared to 42-day mean — shows short-term recovery status.",
     "HRVStability": "Consistency of HRV — lower variability = better physiological stability.",
     "HRVTrend": "Direction of HRV change — rising indicates improving recovery.",
@@ -426,7 +435,9 @@ CHEAT_SHEET["coaching_links"] = {
     "StressTolerance": "If StressTolerance is high (>8), reduce overall load and increase recovery time. If it's low (<2), ensure proper training load progression.",
     "FatigueResistance": "If FatigueResistance <0.9, add longer sub-threshold intervals or extended endurance sessions. Maintain >0.95 to support long-duration performance.",
     "EfficiencyFactor": "If EfficiencyFactor is declining, focus on aerobic conditioning and recovery. Stable or increasing EF indicates improving endurance efficiency.",
-    "RecoveryIndex": "If RecoveryIndex is low, ensure adequate rest and recovery. If high, maintain load and monitor for overreaching.",
+    "LoadVariabilityIndex": {
+        "coaching_guidance": "Low values indicate load is exceeding current physiological tolerance; moderate values suggest manageable stress; high values reflect positive load variability with adequate systemic capacity."
+    },
     # --- Polarisation Variants Coaching Links ---
     "Polarisation": (
         "If Polarisation <0.7 during base, this reflects aerobic Z2 dominance (✅ normal). "
@@ -575,11 +586,11 @@ CHEAT_SHEET["advice"] = {
             "balanced global endurance–intensity contrast across sports."
         )
     },
-    # --- Recovery Index ---
-    "RecoveryIndex": {
-        "poor": "⚠ Recovery Index suppressed ({:.2f}) — prioritise sleep, nutrition, and reduce intensity density.",
-        "moderate": "🟠 Recovery Index moderate ({:.2f}) — monitor fatigue trend.",
-        "healthy": "✅ Recovery Index healthy ({:.2f})."
+    # --- Load Variability Index ---
+    "LoadVariabilityIndex": {
+        "poor": "⚠ Load Variability Index suppressed ({:.2f}) — current load structure exceeds physiological tolerance; reduce intensity clustering and smooth load distribution.",
+        "moderate": "🟠 Load Variability Index moderate ({:.2f}) — load manageable but monitor fatigue accumulation and ACWR trend.",
+        "healthy": "✅ Load Variability Index aligned ({:.2f}) — load variability matches systemic capacity."
     },
     # --- FatigueTrend ---
     "FatigueTrend": {

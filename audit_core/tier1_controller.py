@@ -885,25 +885,9 @@ def run_tier1_controller(df_master, wellness, context):
             context["wellness"]["hrv_ratio"] = hrv_ratio
             debug(context, f"[T1-WELLNESS] HRV ratio computed → {hrv_ratio:.2f}")
 
-        # --------------------------------------------------------------
-        # 🔁 Recovery Index (HRV × TSB composite)
-        # --------------------------------------------------------------
-        tsb = None
-        if isinstance(wellness, dict):
-            tsb = wellness.get("tsb") or wellness.get("TSB")
-
-        if hrv_mean and hrv_latest and tsb is not None:
-            # normalised index: (HRV ratio * (1 + TSB/100))
-            rec_index = round((hrv_latest / hrv_mean) * (1 + (tsb / 100.0)), 2)
-            context["wellness"]["recovery_index"] = rec_index
-            debug(
-                context,
-                f"[T1-WELLNESS] Recovery index computed → {rec_index:.2f} (HRV {hrv_latest}/{hrv_mean}, TSB={tsb:.1f})"
-            )
 
     except Exception as e:
         debug(context, f"[T1-WELLNESS] ⚠️ Wellness processing failed: {e}")
-
 
 
     # --- Step 5: Wellness alignment check ---
@@ -1084,8 +1068,8 @@ def run_tier1_controller(df_master, wellness, context):
                     f"values={df_well['readiness'].dropna().tolist() if 'readiness' in df_well.columns else 'n/a'}")
 
 
-         # --- Build wellness summary block ---
-        context["wellness_metrics"] = {
+        # --- Build wellness summary block ---
+        wellness_metrics = {
             "rest_hr": rest_hr,
             "hrv_trend": hrv_trend,
             "rest_days": rest_days,
@@ -1093,8 +1077,14 @@ def run_tier1_controller(df_master, wellness, context):
             "stress": stress_avg,
             "readiness": readiness_avg,
         }
-        context["wellness_summary"] = context["wellness_metrics"]
-        context["wellness"] = context["wellness_metrics"]
+
+        # Add recovery index if computed earlier
+        if "recovery_index" in context.get("wellness", {}):
+            wellness_metrics["recovery_index"] = context["wellness"]["recovery_index"]
+
+        context["wellness_metrics"] = wellness_metrics
+        context["wellness_summary"] = wellness_metrics
+
 
         debug(context, f"[T1] Wellness summary → rest_days={rest_days}, rest_hr={rest_hr}, hrv_trend={hrv_trend}")
 

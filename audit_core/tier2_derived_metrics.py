@@ -230,7 +230,7 @@ def classify_marker(value, marker, context=None):
         "Polarisation": "PolarisationIndex",
         "FatOx": "FatOxEfficiency",
         "FatOxidation": "FatOxEfficiency",
-        "Recovery": "RecoveryIndex",
+        "Recovery": "LoadVariabilityIndex"
     }
     marker = marker_aliases.get(marker, marker)
 
@@ -904,12 +904,12 @@ def compute_derived_metrics(df_events, context):
     cur = round(100 - foxi, 1)
     gr = round(if_proxy * 2.4, 2)
     mes = round((fat_ox_eff * 60) / (gr + 1e-6), 1)
-    rec_index = round(np.clip(1 - (monotony / 5), 0, 1), 3)
+    lvi = round(np.clip(1 - (monotony / 5), 0, 1), 3)
 
     debug(context,
         f"[DERIVED] IF_proxy={if_proxy:.3f}, FatOxEff={fat_ox_eff}, "
         f"Polarisation={polarisation}, PolarisationIndex={polarisation_index}, "
-        f"MES={mes}, RecIndex={rec_index}"
+        f"MES={mes}, LVI={lvi}"
     )
 
     # --- ✅ 10. Classification (via COACH_PROFILE markers) ---
@@ -923,7 +923,7 @@ def compute_derived_metrics(df_events, context):
         "FatOxEfficiency": fat_ox_eff,
         "Polarisation": polarisation,
         "PolarisationIndex": polarisation_index,
-        "RecoveryIndex": rec_index,
+        "LoadVariabilityIndex": lvi,
         "StressTolerance": stress_tolerance,
         "FOxI": foxi,
         "CUR": cur,
@@ -1006,11 +1006,11 @@ def compute_derived_metrics(df_events, context):
             "icon": classified["MES"]["icon"],
             "desc": "Metabolic efficiency score",
         },
-        "RecoveryIndex": {
-            "value": rec_index,
-            "classification": classified["RecoveryIndex"]["state"],
-            "icon": classified["RecoveryIndex"]["icon"],
-            "desc": "Recovery readiness (Noakes Central Governor)",
+        "LoadVariabilityIndex": {
+            "value": lvi,
+            "classification": classified["LoadVariabilityIndex"]["state"],
+            "icon": classified["LoadVariabilityIndex"]["icon"],
+            "desc": "Load variability score (1 − monotony/5)"
         },
         "StressTolerance": {
             "value": stress_tolerance,
