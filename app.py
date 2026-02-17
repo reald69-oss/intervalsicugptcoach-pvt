@@ -486,7 +486,7 @@ async def run_audit_with_data(request: Request):
             "report_type": report_range,
             "framework": "Unified_Reporting_Framework_v5.1",
             "timezone": athlete_profile.get("timezone", "Europe/Zurich"),
-            "date_range": f"{resolved_start} → {resolved_end}" if resolved_start and resolved_end else "unknown",
+            "date_range": f"{resolved_start} → {resolved_end}" if resolved_start and resolved_end else "not_passed",
         }
 
         sys.stderr.write(

@@ -1093,6 +1093,19 @@ def build_semantic_json(context):
     semantic["meta"]["report_type"] = report_type
     semantic["meta"]["window_days"] = window_days
     semantic["meta"]["period"] = f"{context['period']['start']} → {context['period']['end']}"
+    # ---------------------------------------------------------
+    # Fix header date_range (if not passed)
+    # ---------------------------------------------------------
+    header = context.get("report_header", {}) or {}
+    period = context.get("period") or {}
+
+    period_start = period.get("start")
+    period_end = period.get("end")
+
+    if isinstance(header, dict) and period_start and period_end:
+        if header.get("date_range") in (None, "", "unknown", "not_passed"):
+            header["date_range"] = f"{period_start} → {period_end}"
+
     semantic["meta"]["report_header"] = header
 
     # --- Mark summary reports as image-ready for ChatGPT ---
