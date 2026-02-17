@@ -44,9 +44,9 @@ CHEAT_SHEET["thresholds"] = {
         "red": (0, 40)
     },
     "RestingHR": {
-        "green": (40, 55),
-        "amber": (56, 65),
-        "red": (65, 200)
+        "green": (32, 60),
+        "amber": (61, 70),
+        "red": (71, 200)
     },
     "RestingHRDelta": {
         "green": (-2, 2),

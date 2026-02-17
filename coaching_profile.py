@@ -746,21 +746,6 @@ COACH_PROFILE = {
                 "high": ">4.0"
             }
         },
-        "HRV": {
-            "framework": "Autonomic Recovery Model",
-            "formula": "Mean vs Latest HRV (ms)",
-            "criteria": {"low": "<40", "optimal": "60–90"},
-        },
-        "RestingHR": {
-            "framework": "Cardiac Recovery Model",
-            "formula": "Δ7–28 day Resting HR",
-            "criteria": {"low": ">5", "optimal": "<=0"},
-        },
-        "SleepQuality": {
-            "framework": "Sleep Hygiene & Recovery Model",
-            "formula": "Average Sleep Score (14 days)",
-            "criteria": {"low": "<70", "optimal": ">=80"},
-        },
         "LoadVariabilityIndex": {
             "framework": "Autonomic–Load Coupling Index",
             "formula": "(HRV / HRV_mean) × (TSB / 10)",
@@ -771,22 +756,69 @@ COACH_PROFILE = {
                 "high": ">0.9"
             }
         },
+        "HRV": {
+            "framework": "Autonomic Recovery Model",
+            "formula": "Mean vs Latest HRV (ms)",
+            "criteria": {
+                "optimal": ">=60",
+                "moderate": "40–59",
+                "low": "<40"
+            }
+        },
+        "RestingHR": {
+            "framework": "Cardiac Recovery Model",
+            "formula": "Resting HR (bpm)",
+            "criteria": {
+                "optimal": "32–60",
+                "moderate": "61–70",
+                "high": ">70"
+            }
+        },
+        "RestingHRDelta": {
+            "framework": "Cardiac Recovery Trend",
+            "formula": "Δ7–28 day Resting HR",
+            "criteria": {
+                "optimal": "-2–2",
+                "moderate": "2–5",
+                "high": ">5"
+            }
+        },
+        "SleepQuality": {
+            "framework": "Sleep Hygiene & Recovery Model",
+            "formula": "Average Sleep Score (14 days)",
+            "criteria": {
+                "optimal": "80–100",
+                "moderate": "65–79",
+                "low": "<65"
+            }
+        },
         "HRVBalance": {
-        "framework": "Autonomic Recovery Model",
-        "formula": "Latest HRV / Mean HRV × 100",
-        "criteria": {"low": "<90", "optimal": "100–125"},
+            "framework": "Autonomic Recovery Model",
+            "formula": "Latest HRV / Mean HRV",
+            "criteria": {
+                "optimal": "1.0–1.3",
+                "moderate": "0.9–0.99",
+                "low": "<0.9"
+            }
         },
         "HRVStability": {
             "framework": "Variability Index",
             "formula": "1 - (std / mean) (14d)",
-            "criteria": {"low": "<0.7", "optimal": ">0.85"},
+            "criteria": {
+                "optimal": ">=0.85",
+                "moderate": "0.7–0.84",
+                "low": "<0.7"
+            }
         },
         "HRVTrend": {
             "framework": "Short-Term HRV Trend",
             "formula": "Linear slope (7d)",
-            "criteria": {"low": "<0", "optimal": ">=0"},
+            "criteria": {
+                "optimal": ">=0",
+                "moderate": "-2–-0.01",
+                "low": "<-2"
+            }
         },
-
     },
 
     "metadata": {

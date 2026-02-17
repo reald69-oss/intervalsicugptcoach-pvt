@@ -980,18 +980,6 @@ def build_semantic_json(context):
                 "notes": CHEAT_SHEET.get("context", {}).get("Lactate", "Lactate thresholds derived from cheat-sheet."),
             }
 
-        # --- HRV defaults (always safe to include)
-        hrv_profile = COACH_PROFILE.get("markers", {}).get("HRV", {})
-        hrv_defaults = CHEAT_SHEET["thresholds"].get("HRV", {})
-        semantic["hrv_defaults"] = {
-            "optimal": hrv_profile.get("criteria", {}).get("optimal")
-                        or hrv_defaults.get("optimal")
-                        or [60, 90],
-            "low": hrv_profile.get("criteria", {}).get("low")
-                        or hrv_defaults.get("low")
-                        or [0, 40],
-        }
-
         debug(context,
             f"[SEMANTIC] Lactate defaults (fallback) → LT1={context['lactate_thresholds_dict'].get('lt1_mmol')}, "
             f"LT2={context['lactate_thresholds_dict'].get('lt2_mmol')}, "
