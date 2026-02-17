@@ -250,9 +250,27 @@ def normalize_prefetched_context(data):
                     .reset_index()
                     .rename(columns={"start_date_local": "date"})
                 )
+
                 df_daily["date"] = pd.to_datetime(df_daily["date"], errors="coerce")
+                df_daily = df_daily.sort_values("date")
+
+                # --- enforce rolling 7-day window ---
+                if not df_daily.empty:
+                    end = df_daily["date"].max()
+                    start = end - pd.Timedelta(days=6)
+
+                    date_index = pd.date_range(start=start, end=end, freq="D")
+
+                    df_daily = (
+                        df_daily.set_index("date")
+                        .reindex(date_index, fill_value=0)
+                        .rename_axis("date")
+                        .reset_index()
+                    )
+
                 context["df_daily"] = df_daily
-                debug(context, f"[NORM] built df_daily {len(df_daily)} days")
+                debug(context, f"[NORM] built rolling df_daily {len(df_daily)} days")
+
             except Exception as e:
                 context["df_daily"] = pd.DataFrame(columns=["date", "icu_training_load"])
                 debug(context, f"[NORM] df_daily build failed: {e}")
