@@ -477,7 +477,7 @@ async def run_audit_with_data(request: Request):
         date_range = (
             f"{resolved_start} → {resolved_end}"
             if resolved_start and resolved_end
-            else "unknown"
+            else "not_passed"
         )
 
         # -----------------------------------------------------
