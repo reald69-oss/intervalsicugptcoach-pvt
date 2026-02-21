@@ -124,7 +124,7 @@ def normalize_prefetched_context(data):
         athlete = data.get("athlete") or {}
         calendar = data.get("calendar", {})
 
-        debug(context, f"[RAW FULL SAMPLE] {str(data.get('activities_full', [{}])[0])[:5000]}")
+        #debug(context, f"[RAW FULL SAMPLE] {str(data.get('activities_full', [{}])[0])[:5000]}")
 
         # 🔒 CONTRACT INVARIANT — athlete must have an id
         if not isinstance(athlete, dict):
@@ -237,6 +237,7 @@ def normalize_prefetched_context(data):
         # Derived Tier-0 equivalents
         context["df_light"]  = df_light
         context["df_master"] = df_full
+        context["_df_scope_full"] = df_full.copy()
         context["df_wellness"] = df_well
 
         # Build daily summary if possible
