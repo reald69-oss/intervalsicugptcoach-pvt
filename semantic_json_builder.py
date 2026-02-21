@@ -1329,6 +1329,13 @@ def build_semantic_json(context):
         mmp_model = s.get("mmp_model", {}) or {}
         custom_fields = s.get("custom_field_values", {}) or {}
 
+        threshold_pace = s.get("threshold_pace")
+        pace_units = s.get("pace_units")
+
+        # Intervals stores run threshold pace internally as m/s
+        if key == "run" and threshold_pace:
+            pace_units = "M_PER_SEC"
+
         sport_profiles[key] = {
             "ftp": s.get("ftp"),
             "eftp": mmp_model.get("ftp"),
@@ -1336,8 +1343,8 @@ def build_semantic_json(context):
             "p_max": s.get("p_max"),
             "lthr": s.get("lthr"),
             "max_hr": s.get("max_hr"),
-            "threshold_pace": s.get("threshold_pace"),
-            "pace_units": s.get("pace_units"),
+            "threshold_pace": threshold_pace,
+            "pace_units": pace_units,
             "power_zones": s.get("power_zones"),
             "hr_zones": s.get("hr_zones"),
             "pace_zones": s.get("pace_zones"),
@@ -1345,7 +1352,6 @@ def build_semantic_json(context):
             "lactate_mmol_l": custom_fields.get("HrtLndLt1"),
             "lactate_power": custom_fields.get("HrtLndLt1p"),
         }
-
     # -----------------------------------------------------
     # 🧭 Resolve active (dominant) profile
     # -----------------------------------------------------
@@ -1500,18 +1506,17 @@ def build_semantic_json(context):
 
     if isinstance(df_events, pd.DataFrame) and not df_events.empty:
         debug(context, f"[DEBUG-EVENTS] sample type={type(df_events)} rows={len(df_events)} cols_sample={str(list(df_events.columns))[:100]}")
-
         core_fields = [
             "start_date_local", "name", "type",
             "distance", "moving_time", "icu_training_load", "IF",
-            "average_heartrate", "average_cadence", "icu_average_watts",
+            "average_heartrate", "average_cadence", "icu_average_watts", "icu_variability_index", "icu_weighted_avg_watts",
             "strain_score", "trimp", "hr_load",
             "ss", "ss_cp", "ss_w", "ss_pmax",
             "icu_efficiency_factor", "icu_intensity", "icu_power_hr",
             "decoupling", "icu_pm_w_prime", "icu_w_prime",
             "icu_max_wbal_depletion", "icu_joules_above_ftp",
             "total_elevation_gain", "calories", "VO2MaxGarmin",
-            "source", "core_temp_mean", "core_temp_max", "core_temp_drift_per_hour", "device_name"
+            "source", "core_temp_mean", "core_temp_max", "core_temp_drift_per_hour", "device_name", "icu_hrr"
         ]
 
         # Identify which core fields actually exist in the incoming df
@@ -1519,24 +1524,38 @@ def build_semantic_json(context):
         missing_fields = [f for f in core_fields if f not in df_events.columns]
 
         semantic["events"] = []
-        for _, row in df_events.iterrows():
-            # ✅ Only include fields that have real (non-null, non-NaN, non-empty) values
-            ev = {
-                k: row[k]
-                for k in available_fields
-                if pd.notna(row[k]) and row[k] != "" and row[k] is not None
-            }
 
+        for _, row in df_events.iterrows():
+
+            ev = {}
+
+            # 1️⃣ Add scalar available fields FIRST
+            for k in available_fields:
+                if k in row and pd.notna(row[k]) and row[k] != "":
+                    ev[k] = row[k]
+
+            # 2️⃣ Convert date
             if "start_date_local" in ev:
                 ev["start_date_local"] = convert_to_str(ev["start_date_local"])
 
-            # ✅ Skip events that are completely empty / add w bal / eff
+            # 3️⃣ Classification
             if ev:
                 wbal_fields = classify_wbal_pattern(ev)
                 eff_fields = classify_event_efficiency(ev)
 
                 ev.update(wbal_fields)
                 ev.update(eff_fields)
+
+            # 4️⃣ Add HRR LAST (descriptive naming)
+
+            hrr_60 = row.get("icu_hrr.hrr")
+            hrr_start = row.get("icu_hrr.start_bpm")
+            hrr_end = row.get("icu_hrr.end_bpm")
+
+            if pd.notna(hrr_60):
+                ev["heart_rate_recovery_60s"] = float(hrr_60)
+                ev["heart_rate_recovery_start_bpm"] = hrr_start
+                ev["heart_rate_recovery_end_bpm"] = hrr_end
 
                 semantic["events"].append(ev)
 
