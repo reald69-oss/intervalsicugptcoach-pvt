@@ -1505,23 +1505,29 @@ def build_semantic_json(context):
     df_events = context["_df_scope_full"]
 
     if isinstance(df_events, pd.DataFrame) and not df_events.empty:
-        debug(context, f"[DEBUG-EVENTS] sample type={type(df_events)} rows={len(df_events)} cols_sample={str(list(df_events.columns))[:100]}")
+
+        debug(
+            context,
+            f"[DEBUG-EVENTS] sample type={type(df_events)} rows={len(df_events)} "
+            f"cols_sample={str(list(df_events.columns))[:100]}"
+        )
+
         core_fields = [
             "start_date_local", "name", "type",
             "distance", "moving_time", "icu_training_load", "IF",
-            "average_heartrate", "average_cadence", "icu_average_watts", "icu_variability_index", "icu_weighted_avg_watts",
+            "average_heartrate", "average_cadence",
+            "icu_average_watts", "icu_variability_index", "icu_weighted_avg_watts",
             "strain_score", "trimp", "hr_load",
             "ss", "ss_cp", "ss_w", "ss_pmax",
             "icu_efficiency_factor", "icu_intensity", "icu_power_hr",
             "decoupling", "icu_pm_w_prime", "icu_w_prime",
             "icu_max_wbal_depletion", "icu_joules_above_ftp",
             "total_elevation_gain", "calories", "VO2MaxGarmin",
-            "source", "core_temp_mean", "core_temp_max", "core_temp_drift_per_hour", "device_name", "icu_hrr"
+            "source", "core_temp_mean", "core_temp_max",
+            "core_temp_drift_per_hour", "device_name"
         ]
 
-        # Identify which core fields actually exist in the incoming df
         available_fields = [f for f in core_fields if f in df_events.columns]
-        missing_fields = [f for f in core_fields if f not in df_events.columns]
 
         semantic["events"] = []
 
@@ -1529,48 +1535,51 @@ def build_semantic_json(context):
 
             ev = {}
 
-            # 1️⃣ Add scalar available fields FIRST
+            # 1️⃣ Identity fields
+            for key in ["start_date_local", "name", "type"]:
+                if key in row and pd.notna(row[key]):
+                    ev[key] = row[key]
+
+            # 2️⃣ Scalar fields
             for k in available_fields:
                 if k in row and pd.notna(row[k]) and row[k] != "":
                     ev[k] = row[k]
 
-            # 2️⃣ Convert date
+            # 3️⃣ Convert date
             if "start_date_local" in ev:
                 ev["start_date_local"] = convert_to_str(ev["start_date_local"])
 
-            # 3️⃣ Classification
-            if ev:
-                wbal_fields = classify_wbal_pattern(ev)
-                eff_fields = classify_event_efficiency(ev)
+            # 4️⃣ Only append valid events
+            if "name" in ev:
 
-                ev.update(wbal_fields)
-                ev.update(eff_fields)
+                ev.update(classify_wbal_pattern(ev))
+                ev.update(classify_event_efficiency(ev))
 
-            # 4️⃣ Add HRR LAST (descriptive naming)
+                # 5️⃣ HRR (flattened columns)
+                hrr_60 = row.get("icu_hrr.hrr")
+                hrr_start = row.get("icu_hrr.start_bpm")
+                hrr_end = row.get("icu_hrr.end_bpm")
 
-            hrr_60 = row.get("icu_hrr.hrr")
-            hrr_start = row.get("icu_hrr.start_bpm")
-            hrr_end = row.get("icu_hrr.end_bpm")
-
-            if pd.notna(hrr_60):
-                ev["heart_rate_recovery_60s"] = float(hrr_60)
-                ev["heart_rate_recovery_start_bpm"] = hrr_start
-                ev["heart_rate_recovery_end_bpm"] = hrr_end
+                if pd.notna(hrr_60):
+                    ev["heart_rate_recovery_60s"] = float(hrr_60)
+                    ev["heart_rate_recovery_start_bpm"] = hrr_start
+                    ev["heart_rate_recovery_end_bpm"] = hrr_end
 
                 semantic["events"].append(ev)
 
-        # ✅ Add meta info for structured UI rendering
+        # ✅ Add meta AFTER loop
         semantic["meta"]["events"] = {
             "is_event_block": True,
             "event_block_count": len(semantic["events"]),
             "render": True,
             "notes": "Canonical activity/event block (URF v5.2) — intended for ChatGPT / structured UI rendering."
-         }
+        }
 
         debug(
             context,
             f"[SEMANTIC] EVENTS: populated semantic.events with {len(semantic['events'])} entries"
         )
+
     else:
         debug(context, "[SEMANTIC] EVENTS: no df_events available or empty DataFrame")
 
