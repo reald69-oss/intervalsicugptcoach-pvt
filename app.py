@@ -91,8 +91,8 @@ def normalize_prefetched_context(data):
             if not isinstance(obj, (list, tuple)):
                 return pd.DataFrame()
 
-            df = pd.DataFrame(obj)
-
+            df = pd.json_normalize(obj, max_level=1)
+            
             if "start_date_local" in df.columns:
                 df["start_date_local"] = pd.to_datetime(
                     df["start_date_local"], errors="coerce"
