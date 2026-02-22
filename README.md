@@ -1,4 +1,4 @@
-# 📊 Intervals.icu GPT Coaching Framework — v17
+# 📊 Montis.icu GPT Coaching Framework — v17
 
 A deterministic, rules-based audit and coaching engine for Intervals.icu.  
 Implements the **Unified Reporting Framework v5.1**, providing reproducible load validation, physiological audit integrity, and adaptive coaching decisions.
@@ -10,7 +10,7 @@ Supports dual execution modes:
 ---
 ## 🧭 About [https://www.cliveking.net/]
 
-The **Intervals.icu GPT Coach** transforms athlete data into reproducible, validated insights.  
+The **Montis.icu GPT Coach** transforms athlete data into reproducible, validated insights.  
 It operates as an autonomous audit and analytics layer built on the **Unified Reporting Framework v5.1**, ensuring integrity, transparency, and traceability for endurance coaching decisions.  
 
 All computations use **event-only totals** and enforce <2 % variance across all metrics.  
