@@ -14,7 +14,7 @@ from contextlib import redirect_stdout
 from audit_core.errors import AuditHalt
 from collections import Counter
 from demo_weekly import DEMO_WEEKLY
-import copy
+import copy, traceback
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audit_core"))
@@ -25,15 +25,14 @@ from semantic_json_builder import build_semantic_json
 from audit_core.tier0_pre_audit import expand_zones
 
 
-print("[BOOT] 🚀 Starting IntervalsICU GPTCoach Railway API")
+print("[BOOT] 🚀 Starting Montis.icu GPT Coach Railway API")
 icuoauth = os.getenv("ICU_OAUTH")
 if icuoauth:
     print("[BOOT] ICU_OAUTH detected:", icuoauth[:10], "...")
 else:
-    print("[BOOT-WARN] ICU_OAUTH missing — Intervals.icu calls may fail")
+    print("[BOOT-WARN] ICU_OAUTH missing (no var set), relying on passed ICU_OAUTH")
 
-app = FastAPI(title="IntervalsICU GPTCoach Railway API", version="2.0")
-
+app = FastAPI(title="Montis.icu GPT Coach Railway API", version="2.0")
 
 # ============================================================
 # 🧹 SANITIZER
@@ -432,32 +431,12 @@ async def run_audit_with_data(request: Request):
             prefetch_context = normalize_prefetched_context(data)
 
         except AuditHalt as e:
-
-            sys.stderr.write("\n🛑 AUDIT HALTED (normalization)\n")
-            sys.stderr.write(str(e) + "\n")
-            sys.stderr.flush()
-
-            severity = getattr(e, "severity", "hard")
-            code = getattr(e, "code", None)
-
-            # 🟡 Soft stops → demo
-            if severity == "soft":
-                return load_demo_response(
-                    report_range,
-                    reason=code
-                )
-
-            # 🔴 Hard stops → structured error
-            halt_payload = e.to_dict()
-
-            return JSONResponse({
-                **halt_payload,
-                "report_type": report_range,
-                "report_header": None,
-                "semantic_graph": {},
-                "compliance": {},
-                "logs": ""
-            })
+            return handle_audit_halt(
+                e,
+                report_range,
+                buffer=None,
+                header=None
+            )
 
         except HTTPException as e:
             return JSONResponse(
@@ -578,32 +557,12 @@ async def run_audit_with_data(request: Request):
         except Exception as e:
 
             if isinstance(e, AuditHalt):
-
-                sys.stderr.write("\n🛑 AUDIT HALTED (safe intercept)\n")
-                sys.stderr.write(str(e) + "\n")
-                sys.stderr.flush()
-
-                severity = getattr(e, "severity", "hard")
-                code = getattr(e, "code", None)
-
-                # 🟡 Soft stops → demo
-                if severity == "soft":
-                    return load_demo_response(
-                        report_range,
-                        reason=code
-                    )
-
-                # 🔴 Hard stops → structured halt response
-                halt_payload = e.to_dict()
-
-                return JSONResponse({
-                    **halt_payload,
-                    "report_type": report_range,
-                    "report_header": prefetch_context.get("report_header") if 'prefetch_context' in locals() else None,
-                    "semantic_graph": {},
-                    "compliance": {},
-                    "logs": buffer.getvalue()[-20000:]
-                })
+                return handle_audit_halt(
+                    e,
+                    report_range,
+                    buffer=buffer,
+                    header=prefetch_context.get("report_header")
+                )
 
             raise
 
@@ -632,35 +591,13 @@ async def run_audit_with_data(request: Request):
 
     except Exception as e:
 
-        import traceback
-
         if isinstance(e, AuditHalt):
-
-            sys.stderr.write("\n🛑 AUDIT HALTED (outer intercept)\n")
-            sys.stderr.write(str(e) + "\n")
-            sys.stderr.flush()
-
-            severity = getattr(e, "severity", "hard")
-            code = getattr(e, "code", None)
-
-            # 🟡 Soft stops → demo
-            if severity == "soft":
-                return load_demo_response(
-                    report_range,
-                    reason=code
-                )
-
-            # 🔴 Hard stops → structured halt
-            halt_payload = e.to_dict()
-
-            return JSONResponse({
-                **halt_payload,
-                "report_type": report_range,
-                "report_header": prefetch_context.get("report_header") if 'prefetch_context' in locals() else None,
-                "semantic_graph": {},
-                "compliance": {},
-                "logs": buffer.getvalue()[-20000:]
-            })
+            return handle_audit_halt(
+                e,
+                report_range,
+                buffer=buffer,
+                header=prefetch_context.get("report_header") if 'prefetch_context' in locals() else None
+            )
 
         # 🔥 Truly unexpected crash
         sys.stderr.write("\n🔥 UNHANDLED EXCEPTION IN /run\n")
@@ -672,7 +609,6 @@ async def run_audit_with_data(request: Request):
 
 
 def error_response(e: Exception, buffer=None, status_code:int=500):
-    import traceback
 
     trace = traceback.format_exc()
 
@@ -1041,4 +977,38 @@ DEMO MODE NOTICE:
         "semantic_graph": demo_sg,
         "compliance": {},
         "logs": ""
+    })
+
+def handle_audit_halt(e, report_range, buffer=None, header=None):
+
+    severity = getattr(e, "severity", "hard")
+    code = getattr(e, "code", None)
+
+    # 🔥 Always log to Railway
+    sys.stderr.write("\n🛑 AUDIT HALTED\n")
+    sys.stderr.write(f"Code: {code}\n")
+    sys.stderr.write(f"Severity: {severity}\n")
+    sys.stderr.write(str(e) + "\n")
+    sys.stderr.flush()
+
+    # 🟡 Soft → demo
+    if severity == "soft":
+        return load_demo_response(report_range, reason=code)
+
+    # 🔴 Hard but demo-allowed (auth cases)
+    if code in ["OAUTH_NOT_CONFIGURED", "ATHLETE_PROFILE_INVALID"]:
+        demo = load_demo_response(report_range, reason=code)
+        demo.status_code = 401
+        return demo
+
+    # 🔴 Real hard halt
+    halt_payload = e.to_dict()
+
+    return JSONResponse({
+        **halt_payload,
+        "report_type": report_range,
+        "report_header": header,
+        "semantic_graph": {},
+        "compliance": {},
+        "logs": buffer.getvalue()[-20000:] if buffer else ""
     })
