@@ -32,7 +32,7 @@ DEMO_WEEKLY = {
         "sex": "M",
         "dob": "1980-01-01",
         "country": "France",
-        "city": "JongParisny",
+        "city": "Paris",
         "timezone": "Europe/Paris",
         "profile_image": ""
       },
