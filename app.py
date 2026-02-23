@@ -13,7 +13,8 @@ from datetime import datetime, timedelta, date
 from contextlib import redirect_stdout
 from audit_core.errors import AuditHalt
 from collections import Counter
-
+from demo_weekly import DEMO_WEEKLY
+import copy
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audit_core"))
@@ -429,6 +430,22 @@ async def run_audit_with_data(request: Request):
         # normalize prefetched JSON into pandas-friendly context
         try:
             prefetch_context = normalize_prefetched_context(data)
+
+        except AuditHalt as e:
+            code = getattr(e, "code", None)
+
+            if code in [
+                "OAUTH_NOT_CONFIGURED",
+                "ATHLETE_PROFILE_INVALID"
+            ]:
+                return load_demo_response(
+                    report_range,
+                    reason=code
+                )
+
+            # otherwise propagate real halt
+            raise
+
         except HTTPException as e:
             return JSONResponse(
                 status_code=e.status_code,
@@ -531,10 +548,9 @@ async def run_audit_with_data(request: Request):
 
         # Abort only if NO activity data at all
         if light_empty and full_empty:
-            raise AuditHalt(
-                "No activities found in the requested date range.",
-                code="NO_ACTIVITIES_RANGE",
-                severity="soft"
+            return load_demo_response(
+                report_range,
+                reason="NO_ACTIVITIES_RANGE"
             )
 
         # now run the unified audit (SAFE WRAPPED)
@@ -549,10 +565,27 @@ async def run_audit_with_data(request: Request):
         except Exception as e:
 
             if isinstance(e, AuditHalt):
+
+                code = getattr(e, "code", None)
+
                 sys.stderr.write("\n🛑 AUDIT HALTED (safe intercept)\n")
                 sys.stderr.write(str(e) + "\n")
                 sys.stderr.flush()
 
+                if code in [
+                    "OAUTH_NOT_CONFIGURED",
+                    "ATHLETE_PROFILE_INVALID",
+                    "NO_ACTIVITIES_RANGE",
+                    "FULL_DATA_UNAVAILABLE",
+                    "FULL_FETCH_FAILED",
+                    "LIGHT_ONLY_CONTEXT"
+                ]:
+                    return load_demo_response(
+                        report_range,
+                        reason=code
+                    )
+
+                # otherwise return real halt
                 halt_payload = e.to_dict()
 
                 return JSONResponse({
@@ -564,7 +597,7 @@ async def run_audit_with_data(request: Request):
                     "logs": buffer.getvalue()[-20000:]
                 })
 
-            raise  # re-raise unexpected errors
+            raise
 
 
         logs = buffer.getvalue()
@@ -597,6 +630,21 @@ async def run_audit_with_data(request: Request):
             sys.stderr.write("\n🛑 AUDIT HALTED (outer intercept)\n")
             sys.stderr.write(str(e) + "\n")
             sys.stderr.flush()
+
+            code = getattr(e, "code", None)
+
+            if code in [
+                "OAUTH_NOT_CONFIGURED",
+                "ATHLETE_PROFILE_INVALID",
+                "NO_ACTIVITIES_RANGE",
+                "FULL_DATA_UNAVAILABLE",
+                "FULL_FETCH_FAILED",
+                "LIGHT_ONLY_CONTEXT"
+            ]:
+                return load_demo_response(
+                    report_range,
+                    reason=code
+                )
 
             halt_payload = e.to_dict()
 
@@ -940,3 +988,51 @@ def data_quality_audit(ctx: dict) -> dict:
         "actions": actions,
         "strava_stub_detected": strava_stub_detected
     }
+
+def load_demo_response(report_range: str, reason: str):
+
+    # Prevent cross-request mutation
+    demo_sg = copy.deepcopy(DEMO_WEEKLY)
+
+    if report_range != "weekly":
+        demo_sg["meta"]["report_type"] = report_range
+
+    # Safe reason mapping (never expose raw exception text)
+    REASON_MAP = {
+        "OAUTH_NOT_CONFIGURED": "Account not connected",
+        "ATHLETE_PROFILE_INVALID": "Invalid athlete profile",
+        "NO_ACTIVITIES_RANGE": "No activities found in requested period",
+        "FULL_DATA_UNAVAILABLE": "Detailed activity data unavailable",
+        "FULL_FETCH_FAILED": "Failed to retrieve detailed activity data",
+        "LIGHT_ONLY_CONTEXT": "Only summary activity data available"
+    }
+
+    readable_reason = REASON_MAP.get(reason, "Demo fallback")
+
+    meta = demo_sg.setdefault("meta", {})
+
+    # Append to renderer_instructions (do NOT overwrite)
+    existing_instructions = meta.get("renderer_instructions", "")
+
+    demo_append = f"""
+
+DEMO MODE NOTICE:
+- This is a demonstration report.
+- Triggered because: {readable_reason}.
+- Real athlete data was unavailable.
+- Render normally using the provided semantic data.
+"""
+
+    meta["renderer_instructions"] = existing_instructions + demo_append
+    meta["demo"] = True
+    meta["demo_reason"] = readable_reason
+
+    return JSONResponse({
+        "status": "demo",
+        "report_type": report_range,
+        "report_header": meta.get("report_header"),
+        "output_format": "semantic_json",
+        "semantic_graph": demo_sg,
+        "compliance": {},
+        "logs": ""
+    })
