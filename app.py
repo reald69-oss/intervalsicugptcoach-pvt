@@ -969,15 +969,22 @@ DEMO MODE NOTICE:
     meta["demo"] = True
     meta["demo_reason"] = readable_reason
 
-    return JSONResponse({
+    safe_payload = {
         "status": "demo",
         "report_type": report_range,
         "report_header": meta.get("report_header"),
         "output_format": "semantic_json",
-        "semantic_graph": sanitize(demo_sg),
+        "semantic_graph": demo_sg,
         "compliance": {},
         "logs": ""
-    })
+    }
+
+    # 🔒 Force UTF-8 safe serialization
+    safe_json = json.loads(
+        json.dumps(safe_payload, ensure_ascii=False).encode("utf-8", "ignore").decode("utf-8")
+    )
+
+    return JSONResponse(safe_json)
 
 def handle_audit_halt(e, report_range, buffer=None, header=None):
 
