@@ -432,19 +432,32 @@ async def run_audit_with_data(request: Request):
             prefetch_context = normalize_prefetched_context(data)
 
         except AuditHalt as e:
+
+            sys.stderr.write("\n🛑 AUDIT HALTED (normalization)\n")
+            sys.stderr.write(str(e) + "\n")
+            sys.stderr.flush()
+
+            severity = getattr(e, "severity", "hard")
             code = getattr(e, "code", None)
 
-            if code in [
-                "OAUTH_NOT_CONFIGURED",
-                "ATHLETE_PROFILE_INVALID"
-            ]:
+            # 🟡 Soft stops → demo
+            if severity == "soft":
                 return load_demo_response(
                     report_range,
                     reason=code
                 )
 
-            # otherwise propagate real halt
-            raise
+            # 🔴 Hard stops → structured error
+            halt_payload = e.to_dict()
+
+            return JSONResponse({
+                **halt_payload,
+                "report_type": report_range,
+                "report_header": None,
+                "semantic_graph": {},
+                "compliance": {},
+                "logs": ""
+            })
 
         except HTTPException as e:
             return JSONResponse(
@@ -566,26 +579,21 @@ async def run_audit_with_data(request: Request):
 
             if isinstance(e, AuditHalt):
 
-                code = getattr(e, "code", None)
-
                 sys.stderr.write("\n🛑 AUDIT HALTED (safe intercept)\n")
                 sys.stderr.write(str(e) + "\n")
                 sys.stderr.flush()
 
-                if code in [
-                    "OAUTH_NOT_CONFIGURED",
-                    "ATHLETE_PROFILE_INVALID",
-                    "NO_ACTIVITIES_RANGE",
-                    "FULL_DATA_UNAVAILABLE",
-                    "FULL_FETCH_FAILED",
-                    "LIGHT_ONLY_CONTEXT"
-                ]:
+                severity = getattr(e, "severity", "hard")
+                code = getattr(e, "code", None)
+
+                # 🟡 Soft stops → demo
+                if severity == "soft":
                     return load_demo_response(
                         report_range,
                         reason=code
                     )
 
-                # otherwise return real halt
+                # 🔴 Hard stops → structured halt response
                 halt_payload = e.to_dict()
 
                 return JSONResponse({
@@ -627,25 +635,22 @@ async def run_audit_with_data(request: Request):
         import traceback
 
         if isinstance(e, AuditHalt):
+
             sys.stderr.write("\n🛑 AUDIT HALTED (outer intercept)\n")
             sys.stderr.write(str(e) + "\n")
             sys.stderr.flush()
 
+            severity = getattr(e, "severity", "hard")
             code = getattr(e, "code", None)
 
-            if code in [
-                "OAUTH_NOT_CONFIGURED",
-                "ATHLETE_PROFILE_INVALID",
-                "NO_ACTIVITIES_RANGE",
-                "FULL_DATA_UNAVAILABLE",
-                "FULL_FETCH_FAILED",
-                "LIGHT_ONLY_CONTEXT"
-            ]:
+            # 🟡 Soft stops → demo
+            if severity == "soft":
                 return load_demo_response(
                     report_range,
                     reason=code
                 )
 
+            # 🔴 Hard stops → structured halt
             halt_payload = e.to_dict()
 
             return JSONResponse({
@@ -657,6 +662,7 @@ async def run_audit_with_data(request: Request):
                 "logs": buffer.getvalue()[-20000:]
             })
 
+        # 🔥 Truly unexpected crash
         sys.stderr.write("\n🔥 UNHANDLED EXCEPTION IN /run\n")
         sys.stderr.write(traceback.format_exc())
         sys.stderr.flush()
