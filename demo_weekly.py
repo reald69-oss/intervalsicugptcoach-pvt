@@ -42,8 +42,8 @@ DEMO_WEEKLY = {
         "ftp_kg": 4.11,
         "lthr": 157,
         "max_hr": 177,
-        "threshold_pace": null,
-        "pace_units": null,
+        "threshold_pace": none,
+        "pace_units": none,
         "primary_sport": "ride",
         "dominant_sport": "ride",
         "vo2max_garmin": 72,
@@ -55,11 +55,11 @@ DEMO_WEEKLY = {
           "ftp": 300,
           "eftp": 300,
           "w_prime": 15600,
-          "p_max": null,
+          "p_max": none,
           "lthr": 157,
           "max_hr": 177,
-          "threshold_pace": null,
-          "pace_units": null,
+          "threshold_pace": none,
+          "pace_units": none,
           "power_zones": [
             55,
             75,
@@ -77,16 +77,16 @@ DEMO_WEEKLY = {
             165,
             177
           ],
-          "pace_zones": null,
+          "pace_zones": none,
           "vo2max_garmin": 72,
           "lactate_mmol_l": 1.9,
           "lactate_power": 185
         },
         "run": {
           "ftp": 327,
-          "eftp": null,
-          "w_prime": null,
-          "p_max": null,
+          "eftp": none,
+          "w_prime": none,
+          "p_max": none,
           "lthr": 157,
           "max_hr": 177,
           "threshold_pace": 3.5714285,
@@ -118,20 +118,20 @@ DEMO_WEEKLY = {
             111.5,
             999
           ],
-          "vo2max_garmin": null,
-          "lactate_mmol_l": null,
-          "lactate_power": null
+          "vo2max_garmin": none,
+          "lactate_mmol_l": none,
+          "lactate_power": none
         },
         "swim": {
-          "ftp": null,
-          "eftp": null,
-          "w_prime": null,
-          "p_max": null,
+          "ftp": none,
+          "eftp": none,
+          "w_prime": none,
+          "p_max": none,
           "lthr": 157,
           "max_hr": 177,
-          "threshold_pace": null,
+          "threshold_pace": none,
           "pace_units": "SECS_100M",
-          "power_zones": null,
+          "power_zones": none,
           "hr_zones": [
             132,
             140,
@@ -141,21 +141,21 @@ DEMO_WEEKLY = {
             165,
             177
           ],
-          "pace_zones": null,
-          "vo2max_garmin": null,
-          "lactate_mmol_l": null,
-          "lactate_power": null
+          "pace_zones": none,
+          "vo2max_garmin": none,
+          "lactate_mmol_l": none,
+          "lactate_power": none
         },
         "ski": {
-          "ftp": null,
-          "eftp": null,
-          "w_prime": null,
-          "p_max": null,
+          "ftp": none,
+          "eftp": none,
+          "w_prime": none,
+          "p_max": none,
           "lthr": 157,
           "max_hr": 177,
-          "threshold_pace": null,
+          "threshold_pace": none,
           "pace_units": "MINS_KM",
-          "power_zones": null,
+          "power_zones": none,
           "hr_zones": [
             125,
             140,
@@ -165,10 +165,10 @@ DEMO_WEEKLY = {
             165,
             177
           ],
-          "pace_zones": null,
-          "vo2max_garmin": null,
-          "lactate_mmol_l": null,
-          "lactate_power": null
+          "pace_zones": none,
+          "vo2max_garmin": none,
+          "lactate_mmol_l": none,
+          "lactate_power": none
         }
       },
       "global": {
@@ -184,7 +184,7 @@ DEMO_WEEKLY = {
           "wahoo": true,
           "strava": true,
           "polar": false,
-          "suunto": null,
+          "suunto": none,
           "coros": false,
           "concept2": false
         },
@@ -226,7 +226,7 @@ DEMO_WEEKLY = {
         "equipment_summary": {
           "bike_count": 9,
           "shoe_count": 7,
-          "primary_bike": null,
+          "primary_bike": none,
           "total_bike_distance_km": 139086.38700000002
         },
         "activity_scope": {
@@ -606,7 +606,7 @@ DEMO_WEEKLY = {
           "display_name": "max_depletion_pct_7d",
           "value": 1.055576923076923,
           "framework": "W\u2032 Depletion & Repeatability Model (WDRM)",
-          "formula": null,
+          "formula": none,
           "thresholds": {},
           "phase_context": "",
           "classification": "informational",
@@ -625,7 +625,7 @@ DEMO_WEEKLY = {
           "display_name": "mean_depletion_pct_7d",
           "value": 0.41445512820512825,
           "framework": "W\u2032 Depletion & Repeatability Model (WDRM)",
-          "formula": null,
+          "formula": none,
           "thresholds": {
             "green": [
               0.2,
@@ -649,7 +649,7 @@ DEMO_WEEKLY = {
           "display_name": "high_depletion_sessions_7d",
           "value": 1,
           "framework": "W\u2032 Depletion & Repeatability Model (WDRM)",
-          "formula": null,
+          "formula": none,
           "thresholds": {
             "green": [
               0,
@@ -673,7 +673,7 @@ DEMO_WEEKLY = {
           "display_name": "total_joules_above_ftp_7d",
           "value": 131333.0,
           "framework": "W\u2032 Depletion & Repeatability Model (WDRM)",
-          "formula": null,
+          "formula": none,
           "thresholds": {},
           "phase_context": "",
           "classification": "informational",
@@ -690,7 +690,7 @@ DEMO_WEEKLY = {
           "display_name": "W\u2032 Model Coherence (7-day)",
           "value": 0.4370619658119658,
           "framework": "Skiba Critical Power",
-          "formula": null,
+          "formula": none,
           "thresholds": {
             "green": [
               0.0,
@@ -708,7 +708,7 @@ DEMO_WEEKLY = {
           "phase_context": "",
           "classification": "amber",
           "metric_confidence": "informational",
-          "interpretation": null,
+          "interpretation": none,
           "coaching_implication": {},
           "related_metrics": {},
           "context_window": "7d"
@@ -720,7 +720,7 @@ DEMO_WEEKLY = {
           "display_name": "mean_decoupling_7d",
           "value": 4.6579410999999995,
           "framework": "Intensity Stability & Durability Model (ISDM)",
-          "formula": null,
+          "formula": none,
           "thresholds": {
             "green": [
               0,
@@ -748,7 +748,7 @@ DEMO_WEEKLY = {
           "display_name": "max_decoupling_7d",
           "value": 23.422548,
           "framework": "Intensity Stability & Durability Model (ISDM)",
-          "formula": null,
+          "formula": none,
           "thresholds": {},
           "phase_context": "",
           "classification": "informational",
@@ -763,7 +763,7 @@ DEMO_WEEKLY = {
           "display_name": "high_drift_sessions_7d",
           "value": 1,
           "framework": "Intensity Stability & Durability Model (ISDM)",
-          "formula": null,
+          "formula": none,
           "thresholds": {
             "green": [
               0,
@@ -787,7 +787,7 @@ DEMO_WEEKLY = {
           "display_name": "long_sessions_7d",
           "value": 2,
           "framework": "Intensity Stability & Durability Model (ISDM)",
-          "formula": null,
+          "formula": none,
           "thresholds": {},
           "phase_context": "",
           "classification": "informational",
@@ -804,7 +804,7 @@ DEMO_WEEKLY = {
           "display_name": "rolling_joules_above_ftp_7d",
           "value": 131333.0,
           "framework": "Neural Density Load Index (NDLI)",
-          "formula": null,
+          "formula": none,
           "thresholds": {
             "green": [
               0,
@@ -836,7 +836,7 @@ DEMO_WEEKLY = {
           "display_name": "high_intensity_days_7d",
           "value": 2,
           "framework": "Neural Density Load Index (NDLI)",
-          "formula": null,
+          "formula": none,
           "thresholds": {
             "green": [
               0,
@@ -864,7 +864,7 @@ DEMO_WEEKLY = {
           "display_name": "mean_if_7d",
           "value": 0.8136274509803921,
           "framework": "Neural Density Load Index (NDLI)",
-          "formula": null,
+          "formula": none,
           "thresholds": {},
           "phase_context": "",
           "classification": "informational",
@@ -884,7 +884,7 @@ DEMO_WEEKLY = {
       "recommendation": "Maintain progression",
       "next_session": "Planned structured session",
       "confidence": "moderate",
-      "phase_context": null
+      "phase_context": none
     }
   },
   "zones": {
@@ -1207,7 +1207,7 @@ DEMO_WEEKLY = {
       "wbal_pattern": "none",
       "wbal_depth_pct": 0.0,
       "event_efficiency": "unknown",
-      "event_efficiency_value": null
+      "event_efficiency_value": none
     },
     {
       "start_date_local": "2026-02-21T11:35:58",
@@ -1266,7 +1266,7 @@ DEMO_WEEKLY = {
       "wbal_pattern": "none",
       "wbal_depth_pct": 0.0,
       "event_efficiency": "unknown",
-      "event_efficiency_value": null
+      "event_efficiency_value": none
     },
     {
       "start_date_local": "2026-02-22T13:15:31",
