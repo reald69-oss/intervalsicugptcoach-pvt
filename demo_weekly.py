@@ -42,8 +42,8 @@ DEMO_WEEKLY = {
         "ftp_kg": 4.11,
         "lthr": 157,
         "max_hr": 177,
-        "threshold_pace": none,
-        "pace_units": none,
+        "threshold_pace": None,
+        "pace_units": None,
         "primary_sport": "ride",
         "dominant_sport": "ride",
         "vo2max_garmin": 72,
@@ -55,11 +55,11 @@ DEMO_WEEKLY = {
           "ftp": 300,
           "eftp": 300,
           "w_prime": 15600,
-          "p_max": none,
+          "p_max": None,
           "lthr": 157,
           "max_hr": 177,
-          "threshold_pace": none,
-          "pace_units": none,
+          "threshold_pace": None,
+          "pace_units": None,
           "power_zones": [
             55,
             75,
@@ -77,16 +77,16 @@ DEMO_WEEKLY = {
             165,
             177
           ],
-          "pace_zones": none,
+          "pace_zones": None,
           "vo2max_garmin": 72,
           "lactate_mmol_l": 1.9,
           "lactate_power": 185
         },
         "run": {
           "ftp": 327,
-          "eftp": none,
-          "w_prime": none,
-          "p_max": none,
+          "eftp": None,
+          "w_prime": None,
+          "p_max": None,
           "lthr": 157,
           "max_hr": 177,
           "threshold_pace": 3.5714285,
@@ -118,20 +118,20 @@ DEMO_WEEKLY = {
             111.5,
             999
           ],
-          "vo2max_garmin": none,
-          "lactate_mmol_l": none,
-          "lactate_power": none
+          "vo2max_garmin": None,
+          "lactate_mmol_l": None,
+          "lactate_power": None
         },
         "swim": {
-          "ftp": none,
-          "eftp": none,
-          "w_prime": none,
-          "p_max": none,
+          "ftp": None,
+          "eftp": None,
+          "w_prime": None,
+          "p_max": None,
           "lthr": 157,
           "max_hr": 177,
-          "threshold_pace": none,
+          "threshold_pace": None,
           "pace_units": "SECS_100M",
-          "power_zones": none,
+          "power_zones": None,
           "hr_zones": [
             132,
             140,
@@ -141,21 +141,21 @@ DEMO_WEEKLY = {
             165,
             177
           ],
-          "pace_zones": none,
-          "vo2max_garmin": none,
-          "lactate_mmol_l": none,
-          "lactate_power": none
+          "pace_zones": None,
+          "vo2max_garmin": None,
+          "lactate_mmol_l": None,
+          "lactate_power": None
         },
         "ski": {
-          "ftp": none,
-          "eftp": none,
-          "w_prime": none,
-          "p_max": none,
+          "ftp": None,
+          "eftp": None,
+          "w_prime": None,
+          "p_max": None,
           "lthr": 157,
           "max_hr": 177,
-          "threshold_pace": none,
+          "threshold_pace": None,
           "pace_units": "MINS_KM",
-          "power_zones": none,
+          "power_zones": None,
           "hr_zones": [
             125,
             140,
@@ -165,10 +165,10 @@ DEMO_WEEKLY = {
             165,
             177
           ],
-          "pace_zones": none,
-          "vo2max_garmin": none,
-          "lactate_mmol_l": none,
-          "lactate_power": none
+          "pace_zones": None,
+          "vo2max_garmin": None,
+          "lactate_mmol_l": None,
+          "lactate_power": None
         }
       },
       "global": {
@@ -179,24 +179,24 @@ DEMO_WEEKLY = {
       },
       "context": {
         "platforms": {
-          "garmin": true,
-          "zwift": true,
-          "wahoo": true,
-          "strava": true,
-          "polar": false,
-          "suunto": none,
-          "coros": false,
-          "concept2": false
+          "garmin": True,
+          "zwift": True,
+          "wahoo": True,
+          "strava": True,
+          "polar": False,
+          "suunto": None,
+          "coros": False,
+          "concept2": False
         },
         "wellness_features": {
           "sources": {
-            "garmin": true,
-            "whoop": false,
-            "oura": false,
-            "fitbit": false,
-            "polar": false,
-            "coros": false,
-            "suunto": false
+            "garmin": True,
+            "whoop": False,
+            "oura": False,
+            "fitbit": False,
+            "polar": False,
+            "coros": False,
+            "suunto": False
           },
           "wellness_keys": [
             "weight",
@@ -211,22 +211,22 @@ DEMO_WEEKLY = {
             "steps",
             "bodyFat"
           ],
-          "hrv_available": true,
+          "hrv_available": True,
           "hrv_source": "garmin",
-          "weight_sync": "NONE",
+          "weight_sync": "None",
           "resting_hr": 42
         },
         "training_environment": {
           "plan": "SUPPORTER",
-          "beta_user": true,
-          "coach_access": false,
+          "beta_user": True,
+          "coach_access": False,
           "language": "en",
           "timezone": "Europe/Zurich"
         },
         "equipment_summary": {
           "bike_count": 9,
           "shoe_count": 7,
-          "primary_bike": none,
+          "primary_bike": None,
           "total_bike_distance_km": 139086.38700000002
         },
         "activity_scope": {
@@ -269,20 +269,20 @@ DEMO_WEEKLY = {
       "data_sources": "7-day full activities, 42-day wellness, 90 day light activities",
       "intended_use": "Day-to-day coaching decisions, intensity balance, short-term fatigue and recovery management"
     },
-    "summary_card_ready": false,
+    "summary_card_ready": False,
     "events": {
-      "is_event_block": true,
+      "is_event_block": True,
       "event_block_count": 8,
-      "render": true,
+      "render": True,
       "notes": "Canonical activity/event block (URF v5.2) \u2014 intended for ChatGPT / structured UI rendering."
     },
     "planned_events": {
-      "is_planned_events_block": true,
+      "is_planned_events_block": True,
       "planned_events_block_count": 3,
       "notes": "Canonical planned events block (URF v5.2) \u2014 intended for ChatGPT / structured UI rendering."
     },
     "phases_summary": {
-      "is_phase_block": true,
+      "is_phase_block": True,
       "phase_block_count": 11,
       "notes": "Macro-level sequential phase summary, intended for ChatGPT / structured UI rendering."
     },
@@ -545,7 +545,7 @@ DEMO_WEEKLY = {
   },
   "extended_metrics": {
     "lactate": {
-      "available": true,
+      "available": True,
       "samples": 29,
       "mean_mmol": 1.92,
       "latest_mmol": 1.8,
@@ -553,7 +553,7 @@ DEMO_WEEKLY = {
         1.8,
         2.0
       ],
-      "paired_with_power": true,
+      "paired_with_power": True,
       "power_field": "HrtLndLt1p",
       "power_spread_w": [
         170.0,
@@ -606,7 +606,7 @@ DEMO_WEEKLY = {
           "display_name": "max_depletion_pct_7d",
           "value": 1.055576923076923,
           "framework": "W\u2032 Depletion & Repeatability Model (WDRM)",
-          "formula": none,
+          "formula": None,
           "thresholds": {},
           "phase_context": "",
           "classification": "informational",
@@ -625,7 +625,7 @@ DEMO_WEEKLY = {
           "display_name": "mean_depletion_pct_7d",
           "value": 0.41445512820512825,
           "framework": "W\u2032 Depletion & Repeatability Model (WDRM)",
-          "formula": none,
+          "formula": None,
           "thresholds": {
             "green": [
               0.2,
@@ -649,7 +649,7 @@ DEMO_WEEKLY = {
           "display_name": "high_depletion_sessions_7d",
           "value": 1,
           "framework": "W\u2032 Depletion & Repeatability Model (WDRM)",
-          "formula": none,
+          "formula": None,
           "thresholds": {
             "green": [
               0,
@@ -673,7 +673,7 @@ DEMO_WEEKLY = {
           "display_name": "total_joules_above_ftp_7d",
           "value": 131333.0,
           "framework": "W\u2032 Depletion & Repeatability Model (WDRM)",
-          "formula": none,
+          "formula": None,
           "thresholds": {},
           "phase_context": "",
           "classification": "informational",
@@ -690,7 +690,7 @@ DEMO_WEEKLY = {
           "display_name": "W\u2032 Model Coherence (7-day)",
           "value": 0.4370619658119658,
           "framework": "Skiba Critical Power",
-          "formula": none,
+          "formula": None,
           "thresholds": {
             "green": [
               0.0,
@@ -708,7 +708,7 @@ DEMO_WEEKLY = {
           "phase_context": "",
           "classification": "amber",
           "metric_confidence": "informational",
-          "interpretation": none,
+          "interpretation": None,
           "coaching_implication": {},
           "related_metrics": {},
           "context_window": "7d"
@@ -720,7 +720,7 @@ DEMO_WEEKLY = {
           "display_name": "mean_decoupling_7d",
           "value": 4.6579410999999995,
           "framework": "Intensity Stability & Durability Model (ISDM)",
-          "formula": none,
+          "formula": None,
           "thresholds": {
             "green": [
               0,
@@ -748,7 +748,7 @@ DEMO_WEEKLY = {
           "display_name": "max_decoupling_7d",
           "value": 23.422548,
           "framework": "Intensity Stability & Durability Model (ISDM)",
-          "formula": none,
+          "formula": None,
           "thresholds": {},
           "phase_context": "",
           "classification": "informational",
@@ -763,7 +763,7 @@ DEMO_WEEKLY = {
           "display_name": "high_drift_sessions_7d",
           "value": 1,
           "framework": "Intensity Stability & Durability Model (ISDM)",
-          "formula": none,
+          "formula": None,
           "thresholds": {
             "green": [
               0,
@@ -787,7 +787,7 @@ DEMO_WEEKLY = {
           "display_name": "long_sessions_7d",
           "value": 2,
           "framework": "Intensity Stability & Durability Model (ISDM)",
-          "formula": none,
+          "formula": None,
           "thresholds": {},
           "phase_context": "",
           "classification": "informational",
@@ -804,7 +804,7 @@ DEMO_WEEKLY = {
           "display_name": "rolling_joules_above_ftp_7d",
           "value": 131333.0,
           "framework": "Neural Density Load Index (NDLI)",
-          "formula": none,
+          "formula": None,
           "thresholds": {
             "green": [
               0,
@@ -836,7 +836,7 @@ DEMO_WEEKLY = {
           "display_name": "high_intensity_days_7d",
           "value": 2,
           "framework": "Neural Density Load Index (NDLI)",
-          "formula": none,
+          "formula": None,
           "thresholds": {
             "green": [
               0,
@@ -864,7 +864,7 @@ DEMO_WEEKLY = {
           "display_name": "mean_if_7d",
           "value": 0.8136274509803921,
           "framework": "Neural Density Load Index (NDLI)",
-          "formula": none,
+          "formula": None,
           "thresholds": {},
           "phase_context": "",
           "classification": "informational",
@@ -884,7 +884,7 @@ DEMO_WEEKLY = {
       "recommendation": "Maintain progression",
       "next_session": "Planned structured session",
       "confidence": "moderate",
-      "phase_context": none
+      "phase_context": None
     }
   },
   "zones": {
@@ -1203,11 +1203,11 @@ DEMO_WEEKLY = {
       "calories": 593.0,
       "source": "GARMIN_CONNECT",
       "device_name": "Garmin epix (Gen 2)",
-      "wbal_engagement": "none",
-      "wbal_pattern": "none",
+      "wbal_engagement": "None",
+      "wbal_pattern": "None",
       "wbal_depth_pct": 0.0,
       "event_efficiency": "unknown",
-      "event_efficiency_value": none
+      "event_efficiency_value": None
     },
     {
       "start_date_local": "2026-02-21T11:35:58",
@@ -1262,11 +1262,11 @@ DEMO_WEEKLY = {
       "calories": 409.0,
       "source": "GARMIN_CONNECT",
       "device_name": "Garmin epix (Gen 2)",
-      "wbal_engagement": "none",
-      "wbal_pattern": "none",
+      "wbal_engagement": "None",
+      "wbal_pattern": "None",
       "wbal_depth_pct": 0.0,
       "event_efficiency": "unknown",
-      "event_efficiency_value": none
+      "event_efficiency_value": None
     },
     {
       "start_date_local": "2026-02-22T13:15:31",
@@ -1313,7 +1313,7 @@ DEMO_WEEKLY = {
     "hrv_latest": 43.0,
     "hrv_trend_7d": 4.1,
     "hrv_source": "garmin",
-    "hrv_available": true,
+    "hrv_available": True,
     "hrv_samples": 41,
     "hrv_series": [
       {
@@ -1826,5 +1826,5 @@ DEMO_WEEKLY = {
       "classification": "Grey"
     }
   ],
-  "renderer_instructions": "You are a deterministic URF renderer.\n\n    You must render a **Weekly Training Report** using the embedded system context.\n    This report follows the **Unified Reporting Framework (URF v5.1)**.\n\n    **Scope:** Detailed analysis of the last 7 days of training activity\n    **Data Sources:** 7-day full activities, 42-day wellness, 90 day light activities\n    **Intended Use:** Day-to-day coaching decisions, intensity balance, short-term fatigue and recovery management\n\n    HARD RULES:\n    - Render exactly ONE report.\n- Do NOT add numeric prefixes to section headers.\n- Use emoji-based section headers only.\n- Preserve section order exactly as defined by the contract.\n- Metric context MUST be derived exclusively from each metric\u2019s `context_window` and `confidence_model` fields.\n\n    INTERPRETATION RULES:\n    - Interpretations may be descriptive or conditional, not predictive.\n- If semantic.wbal_summary.temporal_pattern exists, render a one-line anaerobic load timeline using block symbols (\u2582 \u2583 \u2587) mapped to none/low/moderate/high.\n- If semantic.daily_load exists, render it as a compact monoblock map timeline with weekday labels, relative load blocks, and numeric TSS values aligned underneath. Do NOT render daily_load as a list or table.\n- If semantic.daily_load exists AND semantic.wellness.CTL and semantic.wellness.ATL are present, a second symbolic fatigue-pressure row MAY be rendered using \u2191 \u2193 \u2014 symbols based ONLY on the sign of (ATL \u2212 CTL). No magnitude, thresholds, or new calculations are permitted.\n- All rows in the daily load timeline MUST use a fixed-width column per day to ensure vertical alignment across labels, blocks, symbols, and numeric values.\n- If session-level signal icons are rendered in the EVENTS table, a single legend line MUST be rendered once per report directly below the EVENTS section header.\n- If zone distribution data exists (e.g. zone_dist_power, zone_dist_hr, zone_dist_fused), render zone distribution as fixed-width ASCII proportional bars (one bar per zone), with the exact percentage shown. Bars are presentational only and do not constitute derived metrics.\n- If performance_intelligence exists, render three subsections: Anaerobic Repeatability (WDRM), Durability (ISDM), Neural Density (NDLI). Use provided values only. Do NOT recompute or merge with other metrics.\n- If high_dep_sessions > 0 and high_drift_sessions > 0 in the same week, describe this as high neuromuscular + metabolic strain overlap.\n\n    COACHING INTERPRETATION RULES:\n- You MAY include up to 5 short coaching sentence(s) per section.\n- Coaching sentences MUST be directly anchored to values, states, or interpretation fields in that section.\n- Coaching sentences MUST be descriptive or conditional, not predictive.\n- Coaching sentences MUST appear immediately after the section\u2019s data and before the next divider.\n- Coaching sentences MUST NOT introduce new metrics.\n\n    ALLOWED ENRICHMENT:\n        - Restate semantic interpretation fields.\n- Explain what a value indicates within its known threshold or state.\n- derive_stepwise_forecast\n\n    STATE PRESENTATION:\n- Present a concise, single-sentence state banner at the top of the report.\n- Use ONLY semantic states already present in the data.\n- Do NOT derive, compute, or infer new states.\n- Style: single_sentence_banner\n\n    EMPHASIS GUIDANCE:\n        The following sections should receive proportional narrative and visual emphasis.\n        This does NOT change section order, inclusion, or data fidelity.\n        - metrics: high\n- actions: high\n- events: medium\n- wellness: medium\n\n    FRAMING INTENT:\n- Interpret and summarise this report through the following intent:\n  tactical_weekly_control\n- This intent guides prioritisation and narrative focus only.\n\n    SECTION HANDLING RULES:\n        - events: full\n- daily_load: full\n- metrics: full\n- extended_metrics: full\n- performance_intelligence: full\n- zones: full\n- wellness: full\n- phases: forbid\n- planned_events: full\n- planned_summary_by_date: full\n- actions: full\n- future_actions: full\n\n        Handling meanings:\n        - full: render entire section exactly as provided\n        - summary: summarise using existing semantic aggregates only\n        - forbid: do NOT render this section\n\n        EVENTS (WEEKLY \u2014 NON-NEGOTIABLE):\n        - The events section MUST be rendered as a Markdown table.\n        - EVERY event in the semantic JSON MUST appear as exactly one row.\n        - The events section MUST NOT be summarised, renamed, grouped, or rewritten.\n        - Bullet points, highlights, or narrative descriptions of events are FORBIDDEN.\n        - Coaching sentences for events, if enabled, MUST appear AFTER the table.\n        - Convert duration from seconds to minutes at render time.\n        - Display as integer minutes by default.\n        - Use one decimal only if duration < 30 minutes and precision is useful.\n        - Label column as Duration (min).\n        - In the EVENTS table, session-level signal icons MAY be rendered in the 1st column (Signals) using the following canonical mapping derived ONLY from existing semantic fields.\n        - Icons represent independent session signals and MAY appear together for a single event.\n        - When multiple icons apply, they MUST be rendered together in the following fixed order (left \u2192 right):\n        1) \u26a1 Efficient (optimal efficiency factor)\n        2) \ud83d\udfe2 Aerobic (low IF with stable decoupling)\n        3) \ud83d\udca5 Anaerobic (heavy W\u2032 engagement)\n        4) \ud83d\udd01 Repeated (repeated W\u2032 depletion pattern)\n        5) \ud83d\udcc8 Progressive (progressive W\u2032 engagement)\n        6) \ud83e\uddd8 Recovery (very low intensity recovery session)\n        - Icons are visual aliases only and must not replace numeric values, suppress other applicable icons, or reduce table rows.\n        PLANNED EVENTS (WEEKLY \u2014 NON-NEGOTIABLE):\n        - The planned_events section MUST be rendered as a Markdown table.\n        - EVERY planned event in the semantic JSON MUST appear as exactly one row.\n        - The planned_events section MUST NOT be summarised, renamed, grouped, or rewritten.\n        - Narrative descriptions of planned events are FORBIDDEN.\n        - Coaching sentences for planned_events, if enabled, MUST appear AFTER the table.\n\n    LIST RENDERING RULES (NON-NEGOTIABLE):\n    - If a section value is a JSON array (list), render it as a Markdown table.\n- Render EVERY element in the array.\n- Preserve one row per array element.\n- Do NOT summarise the list unless explicitly allowed by section handling.\n- Do NOT replace lists with prose unless explicitly allowed.\n- Do NOT omit rows for brevity.\n\n    TONE AND STYLE:\n    - Keep tone factual, supportive, neutral, and coach-like.\n\n    SECTION ORDER (INSTRUCTIONAL \u2014 DO NOT NUMBER HEADERS):\n    1. meta\n2. hours\n3. tss\n4. distance_km\n5. metrics\n6. extended_metrics\n7. performance_intelligence\n8. zones\n9. daily_load\n10. events\n11. wbal_summary\n12. wellness\n13. phases\n14. insights\n15. insight_view\n16. actions\n17. planned_events\n18. planned_summary_by_date\n19. future_forecast\n20. future_actions\n\n    End with a factual coaching closing note on recovery or adaptation\n    based strictly on the provided data. For Weekly and Season reports, if performance_intelligence.training_state\n    is present in the semantic JSON, use it to anchor the closing interpretation."
+  "renderer_instructions": "You are a deterministic URF renderer.\n\n    You must render a **Weekly Training Report** using the embedded system context.\n    This report follows the **Unified Reporting Framework (URF v5.1)**.\n\n    **Scope:** Detailed analysis of the last 7 days of training activity\n    **Data Sources:** 7-day full activities, 42-day wellness, 90 day light activities\n    **Intended Use:** Day-to-day coaching decisions, intensity balance, short-term fatigue and recovery management\n\n    HARD RULES:\n    - Render exactly ONE report.\n- Do NOT add numeric prefixes to section headers.\n- Use emoji-based section headers only.\n- Preserve section order exactly as defined by the contract.\n- Metric context MUST be derived exclusively from each metric\u2019s `context_window` and `confidence_model` fields.\n\n    INTERPRETATION RULES:\n    - Interpretations may be descriptive or conditional, not predictive.\n- If semantic.wbal_summary.temporal_pattern exists, render a one-line anaerobic load timeline using block symbols (\u2582 \u2583 \u2587) mapped to None/low/moderate/high.\n- If semantic.daily_load exists, render it as a compact monoblock map timeline with weekday labels, relative load blocks, and numeric TSS values aligned underneath. Do NOT render daily_load as a list or table.\n- If semantic.daily_load exists AND semantic.wellness.CTL and semantic.wellness.ATL are present, a second symbolic fatigue-pressure row MAY be rendered using \u2191 \u2193 \u2014 symbols based ONLY on the sign of (ATL \u2212 CTL). No magnitude, thresholds, or new calculations are permitted.\n- All rows in the daily load timeline MUST use a fixed-width column per day to ensure vertical alignment across labels, blocks, symbols, and numeric values.\n- If session-level signal icons are rendered in the EVENTS table, a single legend line MUST be rendered once per report directly below the EVENTS section header.\n- If zone distribution data exists (e.g. zone_dist_power, zone_dist_hr, zone_dist_fused), render zone distribution as fixed-width ASCII proportional bars (one bar per zone), with the exact percentage shown. Bars are presentational only and do not constitute derived metrics.\n- If performance_intelligence exists, render three subsections: Anaerobic Repeatability (WDRM), Durability (ISDM), Neural Density (NDLI). Use provided values only. Do NOT recompute or merge with other metrics.\n- If high_dep_sessions > 0 and high_drift_sessions > 0 in the same week, describe this as high neuromuscular + metabolic strain overlap.\n\n    COACHING INTERPRETATION RULES:\n- You MAY include up to 5 short coaching sentence(s) per section.\n- Coaching sentences MUST be directly anchored to values, states, or interpretation fields in that section.\n- Coaching sentences MUST be descriptive or conditional, not predictive.\n- Coaching sentences MUST appear immediately after the section\u2019s data and before the next divider.\n- Coaching sentences MUST NOT introduce new metrics.\n\n    ALLOWED ENRICHMENT:\n        - Restate semantic interpretation fields.\n- Explain what a value indicates within its known threshold or state.\n- derive_stepwise_forecast\n\n    STATE PRESENTATION:\n- Present a concise, single-sentence state banner at the top of the report.\n- Use ONLY semantic states already present in the data.\n- Do NOT derive, compute, or infer new states.\n- Style: single_sentence_banner\n\n    EMPHASIS GUIDANCE:\n        The following sections should receive proportional narrative and visual emphasis.\n        This does NOT change section order, inclusion, or data fidelity.\n        - metrics: high\n- actions: high\n- events: medium\n- wellness: medium\n\n    FRAMING INTENT:\n- Interpret and summarise this report through the following intent:\n  tactical_weekly_control\n- This intent guides prioritisation and narrative focus only.\n\n    SECTION HANDLING RULES:\n        - events: full\n- daily_load: full\n- metrics: full\n- extended_metrics: full\n- performance_intelligence: full\n- zones: full\n- wellness: full\n- phases: forbid\n- planned_events: full\n- planned_summary_by_date: full\n- actions: full\n- future_actions: full\n\n        Handling meanings:\n        - full: render entire section exactly as provided\n        - summary: summarise using existing semantic aggregates only\n        - forbid: do NOT render this section\n\n        EVENTS (WEEKLY \u2014 NON-NEGOTIABLE):\n        - The events section MUST be rendered as a Markdown table.\n        - EVERY event in the semantic JSON MUST appear as exactly one row.\n        - The events section MUST NOT be summarised, renamed, grouped, or rewritten.\n        - Bullet points, highlights, or narrative descriptions of events are FORBIDDEN.\n        - Coaching sentences for events, if enabled, MUST appear AFTER the table.\n        - Convert duration from seconds to minutes at render time.\n        - Display as integer minutes by default.\n        - Use one decimal only if duration < 30 minutes and precision is useful.\n        - Label column as Duration (min).\n        - In the EVENTS table, session-level signal icons MAY be rendered in the 1st column (Signals) using the following canonical mapping derived ONLY from existing semantic fields.\n        - Icons represent independent session signals and MAY appear together for a single event.\n        - When multiple icons apply, they MUST be rendered together in the following fixed order (left \u2192 right):\n        1) \u26a1 Efficient (optimal efficiency factor)\n        2) \ud83d\udfe2 Aerobic (low IF with stable decoupling)\n        3) \ud83d\udca5 Anaerobic (heavy W\u2032 engagement)\n        4) \ud83d\udd01 Repeated (repeated W\u2032 depletion pattern)\n        5) \ud83d\udcc8 Progressive (progressive W\u2032 engagement)\n        6) \ud83e\uddd8 Recovery (very low intensity recovery session)\n        - Icons are visual aliases only and must not replace numeric values, suppress other applicable icons, or reduce table rows.\n        PLANNED EVENTS (WEEKLY \u2014 NON-NEGOTIABLE):\n        - The planned_events section MUST be rendered as a Markdown table.\n        - EVERY planned event in the semantic JSON MUST appear as exactly one row.\n        - The planned_events section MUST NOT be summarised, renamed, grouped, or rewritten.\n        - Narrative descriptions of planned events are FORBIDDEN.\n        - Coaching sentences for planned_events, if enabled, MUST appear AFTER the table.\n\n    LIST RENDERING RULES (NON-NEGOTIABLE):\n    - If a section value is a JSON array (list), render it as a Markdown table.\n- Render EVERY element in the array.\n- Preserve one row per array element.\n- Do NOT summarise the list unless explicitly allowed by section handling.\n- Do NOT replace lists with prose unless explicitly allowed.\n- Do NOT omit rows for brevity.\n\n    TONE AND STYLE:\n    - Keep tone factual, supportive, neutral, and coach-like.\n\n    SECTION ORDER (INSTRUCTIONAL \u2014 DO NOT NUMBER HEADERS):\n    1. meta\n2. hours\n3. tss\n4. distance_km\n5. metrics\n6. extended_metrics\n7. performance_intelligence\n8. zones\n9. daily_load\n10. events\n11. wbal_summary\n12. wellness\n13. phases\n14. insights\n15. insight_view\n16. actions\n17. planned_events\n18. planned_summary_by_date\n19. future_forecast\n20. future_actions\n\n    End with a factual coaching closing note on recovery or adaptation\n    based strictly on the provided data. For Weekly and Season reports, if performance_intelligence.training_state\n    is present in the semantic JSON, use it to anchor the closing interpretation."
 }
