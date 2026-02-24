@@ -158,17 +158,17 @@ CHEAT_SHEET["thresholds"] = {
     },
     # --- Power-only normalized index (Z1 + Z2 proportion) ---
     "PolarisationIndex": {
-        "green": (0.75, 1.00),
+        "green": (0.75, 1.01),
         "amber": (0.60, 0.75),
     },  # Aerobic bias vs intensity focus (phase-dependent)
     # --- Fused HR + Power (sport-specific, normalized) ---
     "Polarisation_fused": {
-        "green": (0.80, 1.00),
+        "green": (0.80, 1.01),
         "amber": (0.65, 0.80),
     },  # Seiler / Stöggl / Issurin (dominant-sport signal)
     # --- Combined HR + Power (multi-sport, normalized) ---
     "Polarisation_combined": {
-        "green": (0.78, 1.00),
+        "green": (0.78, 1.01),
         "amber": (0.60, 0.78),
     },  # Global descriptor; lower precision than sport-specific
     "TSB": {
