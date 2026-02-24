@@ -134,6 +134,19 @@ RENDERER_PROFILES = {
 
         "framing": {
             "intent": "tactical_weekly_control"
+        },
+        "closing_note": {
+            "required": True,
+            "focus": "tactical_alignment",
+            "anchor_metrics": [
+                "ACWR",
+                "FatigueTrend",
+                "NDLI",
+                "Durability",
+                "performance_intelligence.training_state"
+            ],
+            "intent_rule": "Assess whether acute load and recovery state align with immediate training intent.",
+            "max_sentences": 4
         }
     },
 
@@ -176,6 +189,20 @@ RENDERER_PROFILES = {
 
         "framing": {
             "intent": "medium_term_block_assessment"
+        },
+        "closing_note": {
+            "required": True,
+            "focus": "adaptation_trajectory",
+            "anchor_metrics": [
+                "load_trend",
+                "fitness_trend",
+                "fatigue_trend",
+                "Efficiency_Factor",
+                "Fatigue_Resistance",
+                "phases"
+            ],
+            "intent_rule": "Determine whether the training block reflects expansion, consolidation, or plateau.",
+            "max_sentences": 6
         }
     },
 
@@ -224,6 +251,22 @@ RENDERER_PROFILES = {
 
         "framing": {
             "intent": "recovery_signal_interpretation"
+        },
+        "closing_note": {
+            "required": True,
+            "focus": "recovery_validation",
+            "anchor_metrics": [
+                "HRV",
+                "HRV_stability",
+                "Autonomic_ratio",
+                "Resting_HR_delta",
+                "Sleep_score",
+                "CTL",
+                "ATL",
+                "TSB"
+            ],
+            "intent_rule": "Assess whether autonomic and recovery markers support or constrain training intent.",
+            "max_sentences": 4
         }
     },
 
@@ -264,6 +307,17 @@ RENDERER_PROFILES = {
 
         "framing": {
             "intent": "annual_system_health_review"
+        },
+    "closing_note": {
+        "required": True,
+        "focus": "system_health",
+        "anchor_metrics": [
+            "phases",
+            "performance_summary",
+            "wellness_summary"
+        ],
+        "intent_rule": "Assess overall system health and sustainability across the review period.",
+        "max_sentences": 5
         }
     }
 }

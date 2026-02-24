@@ -2958,10 +2958,28 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     state_presentation = global_profile.get("state_presentation", {})
     emphasis = report_profile.get("emphasis", {})
     framing = report_profile.get("framing", {})
+    closing_cfg = report_profile.get("closing_note", {})
 
     # --------------------------------------------------
     # Optional blocks (existing)
     # --------------------------------------------------
+    closing_note_block = ""
+
+    if closing_cfg.get("required"):
+        focus = closing_cfg.get("focus", "")
+        intent = closing_cfg.get("intent_rule", "")
+        anchors = closing_cfg.get("anchor_metrics", [])
+        max_sent = closing_cfg.get("max_sentences", 4)
+
+        closing_note_block = dedent(f"""
+        CLOSING NOTE REQUIREMENTS:
+        - The closing note MUST resolve the following coaching focus: {focus}.
+        - {intent}
+        - It MUST anchor strictly to: {", ".join(anchors)}.
+        - It MUST NOT introduce new metrics or reinterpret semantic data.
+        - Maximum {max_sent} sentences.
+        """).strip()
+    
     coaching_block = ""
     if coaching_enabled and coaching_max > 0:
         coaching_block = dedent(f"""
@@ -3090,9 +3108,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     SECTION ORDER (INSTRUCTIONAL — DO NOT NUMBER HEADERS):
     {chr(10).join(manifest_lines)}
 
-    End with a factual coaching closing note on recovery or adaptation
-    based strictly on the provided data. For Weekly and Season reports, if performance_intelligence.training_state
-    is present in the semantic JSON, use it to anchor the closing interpretation.
+    {closing_note_block}
     """).strip()
 
     return prompt
