@@ -147,9 +147,14 @@ CHEAT_SHEET["thresholds"] = {
 
     # --- Power-based (Seiler ratio; power only) ---
     "Polarisation": {
-        "green": (0.75, 0.90),
-        "amber": (0.65, 0.95),
-    },  # Canonical polarised ≥1.0; UI bands are coaching heuristics
+        # Seiler Ratio = (Low + High) / Mid
+        # 1.0 ≈ canonical polarised
+        "polarised":           (0.85, 1.10),   # canonical polarised
+        "pyramidal":           (0.65, 0.85),   # threshold-leaning
+        "high_polarised":      (1.10, 1.25),   # strong contrast but stable
+        "excessive_midzone":   (0.00, 0.65),   # too much Z3/Z4
+        "extreme_polarised":   (1.25, 9.99)    # too little mid-zone
+    },
     # --- Power-only normalized index (Z1 + Z2 proportion) ---
     "PolarisationIndex": {
         "green": (0.75, 1.00),
@@ -323,25 +328,29 @@ CLASSIFICATION_ALIASES = {
     "healthy": "green",
     "normal": "green",
     "low_exposure": "green",
+    "polarised": "green",            # canonical ≥1.0
+    "aligned": "green",
+
     # --- Amber (watch / moderate / caution)
     "amber": "amber",
     "moderate": "amber",
     "borderline": "amber",
     "watch": "amber",
     "fatigued": "amber",
-    "pyramidal": "amber",
-    "threshold": "amber",        # Low polarisation; phase-dependent (not inherently bad)
-    # --- Red (critical / bad)
+    "pyramidal": "amber",            # mid-zone dominant
+    "threshold": "amber",            # threshold-leaning
+    "clustered": "amber",
+    "high_polarised": "amber",       # >1.1 but stable
+
+    # --- Red (true risk / pathological)
     "red": "red",
     "poor": "red",
     "overreached": "red",
     "critical": "red",
-    "intensity-focused": "red",
-    #--- Performance Intelligence 
+    "excessive_midzone": "red",      # <0.65 persistent
+    "extreme_polarised": "red",      # >1.25 persistent
     "spiking": "red",
-    "clustered": "amber",
     "overreach": "red",
-    "aligned": "green",
 }
 
 # === Context ===
