@@ -137,6 +137,7 @@ RENDERER_PROFILES = {
         },
         "closing_note": {
             "required": True,
+            "question": "Does today’s physiology match today’s plan?",
             "focus": "tactical_alignment",
             "anchor_metrics": [
                 "ACWR",
@@ -192,6 +193,7 @@ RENDERER_PROFILES = {
         },
         "closing_note": {
             "required": True,
+            "question": "Are we adapting… or just repeating?",
             "focus": "adaptation_trajectory",
             "anchor_metrics": [
                 "load_trend",
@@ -254,6 +256,7 @@ RENDERER_PROFILES = {
         },
         "closing_note": {
             "required": True,
+            "question": "Does current recovery state support today’s training stress?",
             "focus": "recovery_validation",
             "anchor_metrics": [
                 "HRV",
@@ -310,6 +313,7 @@ RENDERER_PROFILES = {
         },
     "closing_note": {
         "required": True,
+        "question": "Is the system progressing sustainably over the long term?",
         "focus": "system_health",
         "anchor_metrics": [
             "phases",
