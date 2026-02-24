@@ -1123,6 +1123,12 @@ def build_semantic_json(context):
     }
 
     # ---------------------------------------------------------
+    # 📊 Wellness Coverage (Tier-2 authoritative)
+    # ---------------------------------------------------------
+    if "wellness_coverage" in context:
+        semantic["wellness"]["coverage"] = context["wellness_coverage"]
+
+    # ---------------------------------------------------------
     # 🧹 Inject DAILY wellness fields (wellness report only)
     # ---------------------------------------------------------
     if (

@@ -98,6 +98,63 @@ def normalise_hrv(df_well, context=None):
 
     return df_well
 
+# =========================================================
+# 📊 WELLNESS COVERAGE METRICS (v16.18)
+# =========================================================
+def compute_wellness_coverage(df_well, context=None):
+    """
+    Compute % coverage of key wellness signals across window.
+    Safe against missing columns.
+    """
+
+    if df_well is None or getattr(df_well, "empty", True):
+        return {
+            "hrv_pct": 0.0,
+            "resting_hr_pct": 0.0,
+            "sleep_pct": 0.0,
+            "subjective_pct": 0.0,
+            "total_days": 0,
+        }
+
+    df = df_well.copy()
+    total_days = len(df)
+
+    def pct(col):
+        if col not in df.columns:
+            return 0.0
+        return round(float(df[col].notna().mean()), 3)
+
+    subjective_cols = [c for c in ["mood", "fatigue", "stress", "motivation"] if c in df.columns]
+
+    subjective_pct = 0.0
+    if subjective_cols:
+        subjective_pct = round(
+            float(df[subjective_cols].notna().any(axis=1).mean()),
+            3
+        )
+
+    def pct_multi(*cols):
+        for col in cols:
+            if col in df.columns:
+                return round(float(df[col].notna().mean()), 3)
+        return 0.0
+
+    coverage = {
+        "unit": "proportion",
+        "hrv_pct": pct_multi("hrv"),
+        "resting_hr_pct": pct_multi("restingHR", "resting_hr", "rest_hr"),
+        "sleep_pct": pct_multi("sleepsecs", "sleep_secs", "sleep_seconds"),
+        "subjective_pct": subjective_pct,
+        "total_days": total_days,
+    }
+
+
+    if context is not None:
+        context["wellness_coverage"] = coverage
+
+    return coverage
+
+
 def compute_zone_intensity(df, context=None):
     """
     Zone Quality Index (ZQI) — percentage of total training time spent in high-intensity zones (Z5–Z7).
@@ -323,6 +380,11 @@ def compute_derived_metrics(df_events, context):
         df_well = normalise_hrv(df_well, context)
     else:
         debug(context, "[T2-HRV] No wellness dataframe in context — skipping HRV normalisation.")
+    # --- 📊 Wellness Coverage ---
+    if df_well is not None:
+        compute_wellness_coverage(df_well, context)
+    else:
+        context["wellness_coverage"] = None
 
     # ---------------------------------------------------------
     # 🩵 HRV value extraction only (no classification here)

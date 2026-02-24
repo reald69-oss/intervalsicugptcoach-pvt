@@ -1040,7 +1040,7 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
         debug(
             context,
             f"[DEBUG] wellness columns (sample {min(10, len(wellness.columns))}/{len(wellness.columns)}): "
-            f"{wellness.columns.tolist()[:10]}"
+            f"{wellness.columns.tolist()[:50]}"
         )
         debug(context,"[DEBUG] wellness head:\n", wellness.head())
         
