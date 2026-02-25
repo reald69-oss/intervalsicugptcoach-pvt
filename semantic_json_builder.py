@@ -2966,7 +2966,8 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     closing_note_block = ""
 
     if closing_cfg.get("required"):
-        question = closing_cfg.get("question", "")
+        verdict_rule = closing_cfg.get("verdict_rule", "")
+        classifications = closing_cfg.get("classification_required", [])
         focus = closing_cfg.get("focus", "")
         intent = closing_cfg.get("intent_rule", "")
         anchors = closing_cfg.get("anchor_metrics", [])
@@ -2974,8 +2975,9 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
 
         closing_note_block = dedent(f"""
         CLOSING NOTE REQUIREMENTS:
-        - The closing note MUST explicitly answer the following coaching question:
-        "{question}"
+        - The closing note MUST begin with one of the following classifications:
+        {", ".join(classifications)}.
+        - {verdict_rule}
         - The closing note MUST remain within the conceptual focus: {focus}.
         - {intent}
         - It MUST anchor strictly to: {", ".join(anchors)}.

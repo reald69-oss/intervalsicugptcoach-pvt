@@ -137,7 +137,12 @@ RENDERER_PROFILES = {
         },
         "closing_note": {
             "required": True,
-            "question": "Does today’s physiology match today’s plan?",
+            "verdict_rule": "State clearly whether last week’s training load was handled appropriately.",
+            "classification_required": [
+                "Handled Appropriately",
+                "Near Capacity",
+                "Exceeded Tolerance"
+            ],
             "focus": "tactical_alignment",
             "anchor_metrics": [
                 "ACWR",
@@ -193,7 +198,12 @@ RENDERER_PROFILES = {
         },
         "closing_note": {
             "required": True,
-            "question": "Are we adapting… or just repeating?",
+            "verdict_rule": "Classify the training block adaptation trajectory.",
+            "classification_required": [
+                "Expansion",
+                "Consolidation",
+                "Plateau"
+            ],
             "focus": "adaptation_trajectory",
             "anchor_metrics": [
                 "load_trend",
@@ -256,7 +266,12 @@ RENDERER_PROFILES = {
         },
         "closing_note": {
             "required": True,
-            "question": "Does current recovery state support today’s training stress?",
+            "verdict_rule": "State clearly whether current recovery status supports or constrains ongoing training.",
+            "classification_required": [
+                "Supported",
+                "Borderline",
+                "Constrained"
+            ],
             "focus": "recovery_validation",
             "anchor_metrics": [
                 "HRV",
@@ -311,17 +326,22 @@ RENDERER_PROFILES = {
         "framing": {
             "intent": "annual_system_health_review"
         },
-    "closing_note": {
-        "required": True,
-        "question": "Is the system progressing sustainably over the long term?",
-        "focus": "system_health",
-        "anchor_metrics": [
-            "phases",
-            "performance_summary",
-            "wellness_summary"
-        ],
-        "intent_rule": "Assess overall system health and sustainability across the review period.",
-        "max_sentences": 5
+        "closing_note": {
+            "required": True,
+            "verdict_rule": "Deliver a clear system-level sustainability verdict.",
+            "classification_required": [
+                "Sustainable Growth",
+                "Stable Maintenance",
+                "Drift Risk"
+            ],
+            "focus": "system_health",
+            "anchor_metrics": [
+                "phases",
+                "performance_summary",
+                "wellness_summary"
+            ],
+            "intent_rule": "Assess overall system health and sustainability across the review period.",
+            "max_sentences": 5
         }
     }
 }
