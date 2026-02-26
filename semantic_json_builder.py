@@ -2478,7 +2478,7 @@ def build_semantic_json(context):
         "phases_detail": full_phases_for_view
     })
 
-    semantic["context_ref"] = context
+    #semantic["context_ref"] = context
 
     # ---------------------------------------------------------
     # 🧩 Echo render options for transparency
