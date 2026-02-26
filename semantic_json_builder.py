@@ -913,7 +913,7 @@ def build_semantic_json(context):
                 "source": source,
                 "framework": profile_def.get("framework", "Physiological"),
                 "formula": profile_def.get("formula"),
-                "thresholds": block.get("thresholds"),
+                "thresholds": copy.deepcopy(block.get("thresholds", {})),
                 "interpretation": (
                     cs["context"].get(metric_key)
                     or profile_def.get("interpretation")
