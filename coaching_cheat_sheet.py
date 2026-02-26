@@ -176,13 +176,17 @@ CHEAT_SHEET["thresholds"] = {
     },
     # --- Fused HR + Power (sport-specific, normalized) ---
     "Polarisation_fused": {
+        "red": (0.00, 0.64),
         "green": (0.80, 1.25),
         "amber": (0.65, 0.80),
+        "high_contrast": (1.25, 3.00)
     },  # Seiler / Stöggl / Issurin (dominant-sport signal)
     # --- Combined HR + Power (multi-sport, normalized) ---
     "Polarisation_combined": {
+        "red": (0.00, 0.59),
         "green": (0.78, 1.25),
         "amber": (0.60, 0.78),
+        "high_contrast": (1.25, 3.00)
     },  # Global descriptor; lower precision than sport-specific
     "TSB": {
         "transition": [10, 999],     # Very fresh, low load (fitness declining)
