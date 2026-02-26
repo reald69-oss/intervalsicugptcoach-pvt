@@ -467,13 +467,11 @@ CHEAT_SHEET["context"] = {
     "HRV": "Heart-rate variability balance — indicator of parasympathetic recovery.",
     "RestingHR": "Resting heart rate trend — elevated HR indicates fatigue or stress.",
     "SleepQuality": "Average Garmin sleep score — proxy for sleep recovery and readiness.",
-    "LoadVariabilityIndex": {
-        "description": (
+    "LoadVariabilityIndex": (
             "Inverse Monotony model (Foster 2001): 1 - (Monotony / 5). "
             "Represents weekly load variability. "
             "Higher values indicate healthier variation in daily training load."
-        )
-    },
+    ),
     "HRVBalance": "HRV compared to 42-day mean — shows short-term recovery status.",
     "HRVStability": "Consistency of HRV — lower variability = better physiological stability.",
     "HRVTrend": "Direction of HRV change — rising indicates improving recovery.",
@@ -588,10 +586,8 @@ CHEAT_SHEET["coaching_links"] = {
     ),
     "FatigueResistance": "If FatigueResistance <0.9, add longer sub-threshold intervals or extended endurance sessions. Maintain >0.95 to support long-duration performance.",
     "EfficiencyFactor": "If EfficiencyFactor is declining, focus on aerobic conditioning and recovery. Stable or increasing EF indicates improving endurance efficiency.",
-    "LoadVariabilityIndex": {
-        "coaching_guidance": "Low values indicate load is exceeding current physiological tolerance; moderate values suggest manageable stress; high values reflect positive load variability with adequate systemic capacity."
-    },
-    # --- Polarisation Variants Coaching Links ---
+    "LoadVariabilityIndex": "Low values indicate load is exceeding current physiological tolerance; moderate values suggest manageable stress; high values reflect positive load variability with adequate systemic capacity.",
+        # --- Polarisation Variants Coaching Links ---
     "Polarisation": (
         "If Polarisation <0.65 during base, this reflects aerobic Z2 dominance (✅ normal). "
         "If in Build/Peak, reduce Z2 time and increase Z1/Z3 contrast. "
@@ -650,18 +646,18 @@ CHEAT_SHEET["coaching_links"] = {
     ),
     "HRVDeviation": (
         "If HRV deviation is negative beyond -10%, reduce intensity "
-        "and prioritise sleep. Positive deviation suggests readiness.",
+        "and prioritise sleep. Positive deviation suggests readiness."
     ),
-    "w_prime_divergence_7d": {
-        "green": "Model windows aligned — W′ setting reflects current power curve.",
-        "amber": "Mild divergence — monitor CP curve stability or review W′ setting.",
-        "red": "Large mismatch between rolling CP W′ and athlete profile W′ — depletion metrics may be distorted. Review W′ calibration."
-    },
-    "w_prime_divergence_90d": {
-        "green": "Model windows aligned — W′ setting reflects current power curve.",
-        "amber": "Mild divergence — monitor CP curve stability or review W′ setting.",
-        "red": "Large mismatch between rolling CP W′ and athlete profile W′ — depletion metrics may be distorted. Review W′ calibration."
-    },
+    "w_prime_divergence_7d": (
+        "green - Model windows aligned — W′ setting reflects current power curve."
+        "amber - Mild divergence — monitor CP curve stability or review W′ setting."
+        "red - Large mismatch between rolling CP W′ and athlete profile W′ — depletion metrics may be distorted. Review W′ calibration."
+    ),
+    "w_prime_divergence_90d": (
+        "green - Model windows aligned — W′ setting reflects current power curve."
+        "amber - Mild divergence — monitor CP curve stability or review W′ setting."
+        "red - Large mismatch between rolling CP W′ and athlete profile W′ — depletion metrics may be distorted. Review W′ calibration."
+    ),
 }
 
 CHEAT_SHEET["display_names"] = {
