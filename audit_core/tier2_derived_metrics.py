@@ -12,7 +12,7 @@ from audit_core.utils import debug
 
 from coaching_profile import COACH_PROFILE
 from coaching_heuristics import HEURISTICS
-from coaching_cheat_sheet import CHEAT_SHEET
+from coaching_cheat_sheet import CHEAT_SHEET, CLASSIFICATION_ALIASES
 
 def normalise_hrv(df_well, context=None):
     """
@@ -282,22 +282,23 @@ def classify_marker(value, marker, context=None):
         debug(context, f"[CLASSIFY] {marker}: non-numeric value={value}")
         return "⚪", "undefined"
 
-    # Canonical aliases
+    # Canonical marker aliases
     marker_aliases = {
-        "Polarisation": "PolarisationIndex",
         "FatOx": "FatOxEfficiency",
         "FatOxidation": "FatOxEfficiency",
-        "Recovery": "LoadVariabilityIndex"
+        "Recovery": "LoadVariabilityIndex",
+        "fatigue_trend": "FatigureTrend",
+        "FatigueTrend": "FatigueTrend"
     }
     marker = marker_aliases.get(marker, marker)
 
-    # Skip multi-dimensional markers
+    # Skip multi-dimensional markers (handled elsewhere)
     MULTI_DIMENSIONAL = {"Polarisation", "PolarisationIndex"}
     if marker in MULTI_DIMENSIONAL:
         debug(context, f"[CLASSIFY] {marker}: skipped (multi-dimensional metric)")
         return "—", "computed"
 
-    # Marker definition
+    # Load criteria from profile (single source of truth)
     marker_def = COACH_PROFILE.get("markers", {}).get(marker, {})
     criteria = marker_def.get("criteria")
 
@@ -305,7 +306,9 @@ def classify_marker(value, marker, context=None):
         debug(context, f"[CLASSIFY] {marker}: no criteria defined")
         return "⚪", "undefined"
 
-    # --- Rule parsing ---
+    # -------------------------
+    # Rule parsing
+    # -------------------------
     def parse_rule(rule):
         rule = str(rule).replace(" ", "")
         if "–" in rule:
@@ -320,22 +323,39 @@ def classify_marker(value, marker, context=None):
         if rule.startswith("<"):  return lambda x: x < float(rule[1:])
         return lambda x: False
 
-    # --- Icon mapping ---
+    # -------------------------
+    # Evaluation
+    # -------------------------
+    matched_state = None
+
+    for state_label, rule in criteria.items():
+        if parse_rule(rule)(v):
+            matched_state = state_label
+            break
+
+    if matched_state is None:
+        debug(context, f"[CLASSIFY] {marker}: {v} no rule matched")
+        return "⚪", "undefined"
+
+    # -------------------------
+    # Canonical state mapping
+    # -------------------------
+    canonical_state = CLASSIFICATION_ALIASES.get(
+        matched_state.lower(),
+        matched_state.lower()
+    )
+
     icon_map = {
-        "optimal": "🟢", "productive": "🟢", "balanced": "🟢", "polarised": "🟢", "low_exposure": "🟢",
-        "moderate": "🟠", "borderline": "🟠", "mixed": "🟠", "recovering": "🟠",
-        "low": "🔴", "high": "🔴", "overload": "🔴", "accumulating": "🔴", "threshold": "🔴"
+        "green": "🟢",
+        "amber": "🟠",
+        "red": "🔴",
     }
 
-    # --- Evaluation ---
-    for state, rule in criteria.items():
-        if parse_rule(rule)(v):
-            icon = icon_map.get(state, "⚪")
-            debug(context, f"[CLASSIFY] {marker}: {v} → {state}")
-            return icon, state
+    icon = icon_map.get(canonical_state, "⚪")
 
-    debug(context, f"[CLASSIFY] {marker}: {v} no rule matched")
-    return "⚪", "undefined"
+    debug(context, f"[CLASSIFY] {marker}: {v} → {matched_state} → {canonical_state}")
+
+    return icon, canonical_state
 
 
 def safe(df, col, fn="sum"):

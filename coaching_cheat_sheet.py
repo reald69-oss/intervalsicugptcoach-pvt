@@ -24,7 +24,10 @@ CHEAT_SHEET["thresholds"] = {
         "amber": (2500, 4000),
         "red": (4000, 8000)
     },
-    "FatigueTrend": {"green": (-10, 10), "amber": (-20, 20)},  # Updated to percentage scale
+    "FatigueTrend": {
+        "green": (-10, 10),   # balanced / stable
+        "amber": (10, 99),  # accumulating fatigue (> +10%)
+    },
     "StressTolerance": {
         "green": (0.8, 1.2),
         "amber": (0.6, 1.4),
@@ -382,40 +385,53 @@ CHEAT_SHEET["polarisation_models"] = {
 # ------------------------------------------------------------
 
 CLASSIFICATION_ALIASES = {
-    # --- Green (good / optimal states)
+
+    # ---------------------------
+    # GREEN (Desirable states)
+    # ---------------------------
     "productive": "green",
     "optimal": "green",
-    "recovering": "green",
-    "good": "green",
     "balanced": "green",
     "healthy": "green",
     "normal": "green",
-    "low_exposure": "green",
-    "polarised": "green",            # canonical ≥1.0
+    "recovering": "green",
+    "polarised": "green",
     "aligned": "green",
-    "high_contrast": "green",
+    "strong": "green",
+    "consistent": "green",
     "low": "green",
+    "green": "green",
 
-    # --- Amber (watch / moderate / caution)
-    "amber": "amber",
+    # ---------------------------
+    # AMBER (Watch / transitional)
+    # ---------------------------
     "moderate": "amber",
     "borderline": "amber",
-    "watch": "amber",
-    "fatigued": "amber",
-    "pyramidal": "amber",            # mid-zone dominant
-    "threshold": "amber",            # threshold-leaning
-    "clustered": "amber",
-    "high_polarised": "green",       # >1.25 but stable
+    "pyramidal": "amber",
+    "aggressive": "amber",
+    "variable": "amber",
+    "underload": "amber",
+    "high_polarised": "amber",
+    "threshold": "amber",
+    "moderate_low": "amber",
+    "moderate_high": "amber",
+    "accumulating": "amber",
+    "amber": "amber",
 
-    # --- Red (true risk / pathological)
-    "red": "red",
-    "poor": "red",
-    "overreached": "red",
-    "critical": "red",
-    "excessive_midzone": "red",      # <0.65 persistent
-    "extreme_polarised": "amber",      # >1.25 persistent
-    "spiking": "red",
+    # ---------------------------
+    # RED (Risk / undesirable)
+    # ---------------------------
+    "overload": "red",
     "overreach": "red",
+    "overreach_risk": "red",
+    "overreached": "red",
+    "inconsistent": "red",
+    "depleted": "red",
+    "critical": "red",
+    "extreme": "red",
+    "high": "red",
+    "extreme_accumulation": "red",
+    "red": "red"
 }
 
 # === Context ===
@@ -423,7 +439,7 @@ CHEAT_SHEET["context"] = {
     "ACWR": (
     "EWMA Acute:Chronic Load Ratio — compares 7-day vs 28-day weighted loads. "
     "0.8–1.3 = productive training, <0.8 = recovery or detraining, >1.5 = overload/injury risk."
-),
+    ),
     "Monotony": "1–2 shows healthy variation; >2.5 means repetitive stress pattern.",
     "Strain": (
         "Modified Foster Strain (ΣTSS_7d × Monotony). "

@@ -384,7 +384,6 @@ def build_insights(semantic):
         "basis": "Tier-2 derived (7d vs 28d load delta)",
         "classification": fatigue_block.get("classification"),
         "confidence": fatigue_block.get("metric_confidence"),
-        "thresholds": fatigue_block.get("thresholds"),
         "interpretation": fatigue_block.get("interpretation"),
         "coaching_implication": fatigue_block.get("coaching_implication"),
     }

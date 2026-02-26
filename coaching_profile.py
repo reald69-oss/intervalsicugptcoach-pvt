@@ -490,7 +490,7 @@ COACH_PROFILE = {
             "criteria": {
                 "recovery": "<0.8",
                 "productive": "0.8–1.3",
-                "aggressive": "1.31–1.5",
+                "aggressive": "1.3–1.5",
                 "overload": ">1.5"
             },
         },
@@ -517,10 +517,13 @@ COACH_PROFILE = {
             "framework": "Banister EWMA Delta",
             "formula": "(Mean_7d - Mean_28d) / Mean_28d × 100",
             "criteria": {
-                "balanced": "-20–20",
-                "accumulating": ">20",
+                "balanced": "-10–10",
+                "moderate_low": "-20–-10",
+                "moderate_high": "10–20",
+                "accumulating": "20–35",
+                "extreme_accumulation": ">35",
                 "recovering": "<-20"
-            },
+            }
         },
         "StressTolerance": {
             "framework": "Banister Capacity-Adjusted Load Ratio",
@@ -536,19 +539,22 @@ COACH_PROFILE = {
             "framework": "Durability / Endurance Resilience Model",
             "formula": "EndurancePower / ThresholdPower",
             "criteria": {
-                "low": "<0.9",
-                "stable": "0.9–1.0",
-                "high": ">1.0"
+                "low": "<0.8",
+                "stable": "0.8–0.9",
+                "optimal": "0.9–1.1",
+                "high": "1.1–1.2",
+                "extreme": ">1.2"
             },
         },
         "EfficiencyFactor": {
             "framework": "Aerobic Efficiency Index",
             "formula": "Power / HeartRate",
             "criteria": {
-                "low": "<1.6",
-                "moderate": "1.6–1.8",
+                "low": "<1.5",
+                "moderate": "1.5–1.8",
                 "optimal": "1.8–2.2",
-                "high": ">2.2"
+                "high": "2.2–2.5",
+                "extreme": ">2.5"
             },
         },
         "LoadVariabilityIndex": {
