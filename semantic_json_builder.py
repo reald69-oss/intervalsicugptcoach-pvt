@@ -173,9 +173,9 @@ def convert_to_str(value):
     if isinstance(value, date):
         return value.isoformat()
     return value
-
-
+    
 def semantic_block_for_metric(name, value, context):
+    import math
 
     metric_name = str(name).strip()
 
@@ -236,17 +236,23 @@ def semantic_block_for_metric(name, value, context):
                 amber = active_thresholds.get("amber")
                 red = active_thresholds.get("red")
 
+                debug(context, f"[THRESHOLDS][{metric_name}] Bands",
+                      f"green={green}",
+                      f"amber={amber}",
+                      f"red={red}")
+
                 if green and green[0] <= v <= green[1]:
                     classification = "green"
-
                 elif amber and amber[0] <= v <= amber[1]:
                     classification = "amber"
-
                 elif red and red[0] <= v <= red[1]:
                     classification = "red"
-
                 else:
-                    classification = "red"
+                    # handle upper overflow above green band
+                    if green and v > green[1]:
+                        classification = "amber"
+                    else:
+                        classification = "red"
 
                 debug(context, f"[THRESHOLDS][{metric_name}] Classification → {classification}")
 
