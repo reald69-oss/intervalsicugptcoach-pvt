@@ -28,7 +28,7 @@ Includes (URF v5.1 Canonical Layout):
 """
 
 
-import json, math
+import json, math, copy
 from datetime import datetime, date, timezone
 import pandas as pd
 from math import isnan
@@ -920,10 +920,7 @@ def build_semantic_json(context):
                 "source": source,
                 "framework": profile_def.get("framework", "Physiological"),
                 "formula": profile_def.get("formula"),
-                "thresholds": (
-                    cs["thresholds"].get(metric_key)
-                    or profile_def.get("criteria")
-                ),
+                "thresholds": block.get("thresholds"),
                 "interpretation": (
                     cs["context"].get(metric_key)
                     or profile_def.get("interpretation")

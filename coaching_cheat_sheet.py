@@ -193,7 +193,7 @@ CHEAT_SHEET["thresholds"] = {
         "fresh": [5, 10],            # Race-ready freshness
         "grey": [-5, 5],             # Balanced / neutral training
         "optimal": [-30, -5],        # Productive training fatigue (good zone)
-        "high_risk": [-999, -30],    # Overreached / excessive fatigue
+        "high_risk": [-999, -30]     # Overreached / excessive fatigue
     },
     # ================================================================
     # 🧠 SCIENTIFICALLY VALIDATED PHASE DETECTION (v17.4)
