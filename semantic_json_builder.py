@@ -173,7 +173,7 @@ def convert_to_str(value):
     if isinstance(value, date):
         return value.isoformat()
     return value
-    
+
 def semantic_block_for_metric(name, value, context):
     import math
 
@@ -2479,7 +2479,7 @@ def build_semantic_json(context):
         "phases_detail": full_phases_for_view
     })
 
-    semantic["context_ref"] = context
+    #semantic["context_ref"] = context
 
     # ---------------------------------------------------------
     # 🧩 Echo render options for transparency
