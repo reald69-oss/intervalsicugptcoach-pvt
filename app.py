@@ -54,8 +54,8 @@ def sanitize(obj, seen=None):
         seen = set()
     if isinstance(obj, (dict, list, tuple, pd.DataFrame, pd.Series)):
         oid = id(obj)
-        if oid in seen:
-            return "<circular>"
+    if oid in seen:
+        return obj  # allow reuse, not recursion
         seen.add(oid)
     if isinstance(obj, pd.DataFrame):
         return sanitize(obj.to_dict(orient="records"), seen)
