@@ -481,13 +481,14 @@ def compute_derived_metrics(df_events, context):
 
     if std_load > 0:
         monotony = round(mean_load / std_load, 2)
-        strain = round(mean_load * monotony, 1)
+        weekly_load = np.sum(last_7d)
+        strain = round(weekly_load * monotony, 1)
         debug(context, f"[DERIVED] Monotony={monotony}, Strain={strain}")
     else:
         monotony = 1.0
-        strain = round(mean_load, 1)
+        weekly_load = np.sum(last_7d)
+        strain = round(weekly_load, 1)
         debug(context, f"[T2] Fallback: zero variance → Monotony=1.0, Strain={strain}")
-
     # --- ✅ 7. FatigueTrend (Banister-aligned 7d–28d delta) ---
     # --- FatigueTrend (use ACWR 28d context if available) ---
     try:
@@ -529,20 +530,31 @@ def compute_derived_metrics(df_events, context):
         debug(context, f"[T2] ⚠️ FatigueTrend computation failed: {e}")
 
 
-
-
-
-    # --- Stress Tolerance computation (with debug and range validation) ---
+    # --- Stress Tolerance computation (Capacity-adjusted weekly load) ---
     try:
-        raw_st = (strain / (monotony + 1e-6)) / 100
-        stress_tolerance = float(np.clip(round(raw_st, 2), 2, 8))
+        weekly_tss = float(np.sum(last_7d))
+
+        ctl = (
+            context.get("ctl")
+            or context.get("load_metrics", {}).get("CTL", {}).get("value")
+            or context.get("wellness_summary", {}).get("ctl")
+            or 0
+        )
+
+        if ctl and ctl > 10:
+            stress_tolerance = round(weekly_tss / (ctl * 7), 2)
+        else:
+            stress_tolerance = 0.0
+
         debug(context, (
             f"[T2] StressTolerance computed:\n"
-            f"       → raw={raw_st:.3f}, clipped={stress_tolerance:.2f}, "
-            f"monotony={monotony:.2f}, strain={strain:.1f}"
+            f"       → weekly_tss={weekly_tss:.1f}, "
+            f"CTL={ctl}, "
+            f"stress_tolerance={stress_tolerance}"
         ))
+
     except Exception as e:
-        stress_tolerance = 0.0
+        stress_tolerance = None
         debug(context, f"[T2] StressTolerance fallback triggered: {e}")
 
     # ======================================================
@@ -787,30 +799,10 @@ def compute_derived_metrics(df_events, context):
 
     fat_ox_eff = round(np.clip((if_proxy or 0.5) * 0.9, 0.3, 0.8), 3)
     # ---------------------------------------------------------
-    # 🧩 Polarisation Metrics (Seiler ratio + normalized index)
+    # 🧩 Polarisation Metrics (Seiler 3-zone + Treff PI)
     # ---------------------------------------------------------
-    if "to_classify" not in locals():
-        to_classify = {}
-    if "classified" not in locals():
-        classified = {}
 
-    # 🩹 Ensure zone_dist_* are dicts
-    for key in ("zone_dist_power", "zone_dist_hr"):
-        if key in context and not isinstance(context[key], dict):
-            try:
-                if hasattr(context[key], "to_dict"):
-                    context[key] = context[key].to_dict()
-                else:
-                    context[key] = dict(context[key])
-                debug(context, f"[T2] Rehydrated {key} to dict with {len(context[key])} keys.")
-            except Exception as e:
-                debug(context, f"[T2] ⚠️ Failed to rehydrate {key}: {e}")
-                context[key] = {}
-
-    # 1️⃣ Normalized Polarisation Index
-    polarisation_index = compute_polarisation_index(context)
-
-    # 2️⃣ Get zone dictionary
+    # 1️⃣ Get zone dictionary (power preferred)
     zones = (
         context.get("zone_dist_power")
         or context.get("zone_dist_hr")
@@ -819,7 +811,6 @@ def compute_derived_metrics(df_events, context):
         or {}
     )
 
-    # 3️⃣ Helper for flexible key access
     def get_zone(z):
         if not isinstance(zones, dict):
             return 0.0
@@ -829,39 +820,56 @@ def compute_derived_metrics(df_events, context):
             zones.get(z, 0.0)))
         )
 
-    # 4️⃣ Extract and compute Seiler ratio safely
-    try:
-        z1, z2, z3 = get_zone("z1"), get_zone("z2"), get_zone("z3")
-        if z2 > 0 and (z1 > 0 or z3 > 0):
-            polarisation = round((z1 + z3) / (2 * z2), 3)
-            debug(context, f"[POL] ✅ Seiler ratio computed → (Z1+Z3)/(2×Z2)={polarisation}")
-        else:
-            polarisation = round(float(polarisation_index or 0.0), 3)
-            debug(context, f"[POL] ⚠️ Missing Z2 or empty zones — fallback to PI={polarisation}")
-    except Exception as e:
-        debug(context, f"[POL] ⚠️ Seiler ratio computation failed → fallback ({e})")
-        polarisation = round(float(polarisation_index or 0.0), 3)
+    # 2️⃣ Collapse 7-zone → Seiler 3-zone
+    z1_raw = get_zone("z1")
+    z2_raw = get_zone("z2")
+    z3_raw = (
+        get_zone("z3")
+        + get_zone("z4")
+        + get_zone("z5")
+        + get_zone("z6")
+        + get_zone("z7")
+    )
 
-    # 5️⃣ Register metrics
+    total = z1_raw + z2_raw + z3_raw
+
+    if total > 0:
+        z1 = z1_raw / total
+        z2 = z2_raw / total
+        z3 = z3_raw / total
+    else:
+        z1 = z2 = z3 = 0.0
+
+    # -------------------------------------------------
+    # 3️⃣ Seiler-style Contrast Ratio
+    # (heuristic operationalisation of 3-zone model)
+    # -------------------------------------------------
+    if z2 > 0:
+        polarisation = round((z1 + z3) / (2 * z2), 3)
+        debug(context, f"[POL] Seiler 3-zone → Z1={z1:.3f} Z2={z2:.3f} Z3+={z3:.3f} → Ratio={polarisation}")
+    else:
+        polarisation = 0.0
+        debug(context, "[POL] Seiler ratio fallback → Z2=0")
+
+    # -------------------------------------------------
+    # 4️⃣ Treff Polarization-Index (2019)
+    # PI = log10( Z1 / (Z2 × Z3) × 100 )
+    # -------------------------------------------------
+    if z2 > 0 and z3 > 0:
+        polarisation_index = round(
+            float(np.log10((z1 / (z2 * z3)) * 100)),
+            3
+        )
+        debug(context, f"[POL] Treff PI → {polarisation_index}")
+    else:
+        polarisation_index = 0.0
+        debug(context, "[POL] Treff PI fallback → invalid zone proportions")
+
+    # 5️⃣ Register
     context["Polarisation"] = polarisation
     context["PolarisationIndex"] = polarisation_index
 
-    # 6️⃣ Classify
-    to_classify.update({
-        "Polarisation": polarisation,
-        "PolarisationIndex": polarisation_index,
-    })
-
-    for marker in ["Polarisation", "PolarisationIndex"]:
-        val = to_classify.get(marker)
-        if val is not None:
-            icon, state = classify_marker(val, marker, context)
-            classified[marker] = {"icon": icon, "state": state}
-            debug(context, f"[CLASSIFY] {marker}={val} → {icon} {state}")
-        else:
-            debug(context, f"[CLASSIFY] ⚠️ Skipped {marker} — no value")
-
-    debug(context, f"[DERIVED] Polarisation={polarisation} | PolarisationIndex={polarisation_index}")
+    debug(context, f"[DERIVED] Polarisation={polarisation} | TreffPI={polarisation_index}")
 
     # ======================================================
     # 🧪 Lactate Measurement Integration (df_light ONLY)

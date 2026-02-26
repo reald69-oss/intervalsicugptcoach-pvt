@@ -2,7 +2,6 @@
 """
 coaching_profile.py — Unified Coaching Profile (v16.1-Sync)
 Structured reference of frameworks, formulas, and methodology anchors.
-Machine-synced with coach_profile.md (2025-11-03).
 """
 
 def get_profile_metrics(context):
@@ -459,7 +458,7 @@ COACH_PROFILE = {
             "Triathlon", "Cycling", "Running", "Endurance", "Ironman", "Gran Fondo", "Marathon"
         ],
         "principles": [
-            "Seiler 80/20 Polarisation", "Banister TRIMP", "Foster Monotony/Strain",
+            "Seiler 3-Zone Polarisation","Treff Polarization-Index (2019)", "Banister TRIMP", "Foster Monotony/Strain",
             "San Millán Zone 2", "Friel Periodisation", "Sandbakk Durability",
             "Skiba Critical Power", "Coggan Power Zones", "Noakes Central Governor"
         ]
@@ -473,7 +472,11 @@ COACH_PROFILE = {
             "LoadVariabilityIndex", "HRV Integration", "Fatigue Detection", "Sleep Quality", "Readiness Tracking"
         ],
         "training_quality": [
-            "PolarisationIndex", "DurabilityIndex", "SessionQualityRatio", "FatOxidationIndex"
+            "Polarisation (Seiler 3-zone)",
+            "PolarisationIndex (Treff 2019)",
+            "DurabilityIndex",
+            "SessionQualityRatio",
+            "FatOxidationIndex"
         ],
         "performance_benchmarking": [
             "BenchmarkIndex", "SpecificityIndex", "ConsistencyIndex", "AgeFactor", "MicrocycleRecoveryWeek"
@@ -500,17 +503,18 @@ COACH_PROFILE = {
             },
         },
         "Strain": {
-            "framework": "Foster 2001",
-            "formula": "Monotony × ΣLoad_7d",
+            "framework": "Modified Foster 2001 (TSS-based)",
+            "formula": "Monotony × ΣTSS_7d",
             "criteria": {
-                "optimal": "<600",
-                "moderate": "600–800",
-                "high": ">800"
-            },
+                "low": "<2000",
+                "moderate": "2000–3000",
+                "high": "3000–4000",
+                "very_high": ">4000"
+            }
         },
         "FatigueTrend": {
             "framework": "Banister EWMA Delta",
-            "formula": "Mean(7d) – Mean(28d)",
+            "formula": "(Mean_7d - Mean_28d) / Mean_28d",
             "criteria": {
                 "balanced": "-0.2–+0.2",
                 "accumulating": ">+0.2",
@@ -518,13 +522,23 @@ COACH_PROFILE = {
             },
         },
         "StressTolerance": {
-            "framework": "Adaptive Load Tolerance",
-            "formula": "(strain / monotony) / 100",
+            "framework": "Banister Capacity-Adjusted Load Ratio",
+            "formula": "ΣTSS_7d / (CTL × 7)",
             "criteria": {
-                "low_exposure": "<3",
-                "optimal": "3–6",
-                "high": ">6"
-            }
+                "underload": "<0.8",
+                "optimal": "0.8–1.2",
+                "aggressive": "1.2–1.4",
+                "overreach_risk": ">1.4"
+            },
+            "interpretation": (
+                "Weekly load relative to chronic adaptive capacity (CTL). "
+                "1.0 indicates weekly load equals fitness baseline. "
+                "Values above 1.2 reflect overload relative to fitness."
+            ),
+            "coaching_implication": (
+                "Maintain 0.8–1.2 for sustainable progression. "
+                "Use >1.2 strategically in Build/Peak with recovery support."
+            )
         },
         "FatigueResistance": {
             "framework": "Durability / Endurance Resilience Model",
@@ -630,7 +644,7 @@ COACH_PROFILE = {
         },
         "ZQI": {
             "framework": "Seiler Intensity Distribution",
-            "formula": "High-intensity time (%)",
+            "formula": "Z3+ time (%) from 3-zone collapsed model",
             "criteria": {
                 "optimal": "5–15",
                 "moderate": "15–25",
@@ -643,58 +657,54 @@ COACH_PROFILE = {
             "formula": "1 - (PowerDrop% / 100)",
         },
         "Polarisation": {
-            "framework": "Seiler 80/20 Model (Ratio)",
-            "formula": "(Z1 + Z3) / (2 × Z2)",
+            "framework": "Seiler 3-Zone Contrast Model",
+            "formula": "(Z1 + Z3+) / (2 × Z2)  (3-zone collapsed, renormalised)",
             "criteria": {
                 "z2_dominant": "< 0.65",
-                "mixed": "0.65–0.84",
+                "pyramidal": "0.65–0.84",
                 "polarised": "0.85–1.25",
                 "high_contrast": "> 1.25"
             },
             "interpretation": (
-                "Seiler Polarisation Ratio showing the balance of low- and high-intensity "
-                "training (Z1 + Z3) relative to moderate-intensity work (Z2). "
-                "<0.65 = Z2-dominant distribution (aerobic or threshold-heavy structure), "
-                "0.65–0.84 = mixed intensity distribution, "
-                "0.85–1.15 = balanced polarised structure (classic 80/20), "
-                ">1.15 = high-contrast polarisation with minimal Z2 exposure. "
-                "Dominance reflects intensity distribution characteristics, not training volume."
+                "Seiler-style contrast ratio derived after collapsing 7-zone power "
+                "distribution into the 3-zone physiological model "
+                "(Z1 = below LT1, Z2 = LT1–LT2, Z3+ = above LT2). "
+                "Represents intensity contrast, not aerobic volume."
             ),
             "coaching_implication": (
-                "If Polarisation <0.65 in Base, interpret as aerobic/Z2-dominant (acceptable). "
-                "If <0.65 in Build or Peak, reduce mid-zone accumulation. "
-                "0.85–1.15 reflects structurally balanced 80/20. "
-                ">1.15 indicates strong contrast; ensure fatigue and recovery are monitored."
+                "If <0.65 in Build/Peak, excessive mid-zone accumulation. "
+                "0.85–1.25 reflects structurally balanced 80/20. "
+                ">1.25 indicates high contrast; ensure recovery capacity matches intensity density."
             ),
             "confidence_model": "contextual",
             "confidence_note": (
-                "Evaluated at weekly level. Most actionable during Build and Peak phases; "
-                "descriptive during Base and Recovery blocks."
+                "Most actionable during Build and Peak. "
+                "Descriptive during Base and Recovery."
             )
         },
         "PolarisationIndex": {
-            "framework": "Z1+Z2 Normalized Index",
-            "formula": "(Z1 + Z2) / Total zone time",
+            "framework": "Treff 2019 Polarization-Index",
+            "formula": "log10( Z1 / (Z2 × Z3) × 100 )  (3-zone collapsed)",
             "criteria": {
-                "aerobic": "≥ 0.75",
-                "mixed": "0.6–0.74",
-                "intensity_focused": "< 0.6"
+                "threshold_dominant": "< 1.5",
+                "pyramidal": "1.5–1.99",
+                "polarised": "≥ 2.0"
             },
             "interpretation": (
-                "Normalized time-in-zone index (0–1) representing the proportion of training "
-                "spent in low and moderate intensities (Z1+Z2). ≥0.75 = strong aerobic bias "
-                "(ideal for Base/Recovery), 0.60–0.74 = balanced, <0.60 = intensity-focused "
-                "(typical in Build or Peak phases)."
+                "Treff Polarization-Index computed after collapsing power zones "
+                "to the 3-zone Seiler physiological model and renormalising. "
+                "Provides a mathematically discriminative classification of "
+                "polarised vs non-polarised intensity distribution."
             ),
             "coaching_implication": (
-                "If PolarisationIndex <0.60 and current block = Base, rebalance toward Z1 endurance "
-                "and reduce Z2. If <0.60 in Build/Peak, acceptable due to intensity focus. "
-                "Target ≥0.75 for strong aerobic adaptation in Base/Recovery."
+                "<1.5 indicates threshold-dominant structure. "
+                "1.5–2.0 reflects pyramidal distribution. "
+                "≥2.0 represents canonical polarised training."
             ),
             "confidence_model": "contextual",
             "confidence_note": (
-                "Weekly distribution signal. Interpretation depends on phase intent "
-                "(aerobic accumulation vs intensity expression)."
+                "Requires ≥4 sessions and ≥2 high-intensity sessions "
+                "for structural reliability."
             ),
         },
         "Polarisation_fused": {
@@ -827,16 +837,6 @@ COACH_PROFILE = {
                 "high": ">4.0"
             }
         },
-        "LoadVariabilityIndex": {
-            "framework": "Autonomic–Load Coupling Index",
-            "formula": "(HRV / HRV_mean) × (TSB / 10)",
-            "criteria": {
-                "low": "<0.5",
-                "moderate": "0.5–0.6",
-                "optimal": "0.6–0.9",
-                "high": ">0.9"
-            }
-        },
         "HRV": {
             "framework": "Autonomic Recovery Model",
             "formula": "Mean vs Latest HRV (ms)",
@@ -904,8 +904,8 @@ COACH_PROFILE = {
 
     "metadata": {
         "framework_chain": [
-            "Seiler", "Banister", "Foster", "San Millán", "Friel",
-            "Sandbakk", "Skiba", "Coggan", "Noakes"
+            "Seiler", "Treff 2019", "Banister", "Foster", "San Millán",
+            "Friel", "Sandbakk", "Skiba", "Coggan", "Noakes"
         ],
         "unified_framework": "v5.1",
         "audit_validation": "Tier-2 verified, event-only totals enforced",

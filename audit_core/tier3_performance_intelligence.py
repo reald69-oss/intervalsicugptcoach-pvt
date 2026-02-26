@@ -66,7 +66,8 @@ def _compute_weekly(context, df_full):
     w_prime = pd.to_numeric(df_full.get("icu_w_prime"), errors="coerce")
     depletion = pd.to_numeric(df_full.get("icu_max_wbal_depletion"), errors="coerce")
     joules = pd.to_numeric(df_full.get("icu_joules_above_ftp"), errors="coerce")
-    decoupling = pd.to_numeric(df_full.get("decoupling"), errors="coerce")
+    decoupling_raw = pd.to_numeric(df_full.get("decoupling"), errors="coerce")
+    decoupling = decoupling_raw.abs()
     if_values = pd.to_numeric(df_full.get("IF"), errors="coerce")
     moving_time = pd.to_numeric(df_full.get("moving_time"), errors="coerce")
 
@@ -319,7 +320,7 @@ def interpret_training_state(context):
 
     if wdrm and wdrm > 0.6:
         adapting = "High anaerobic stimulus — adaptation likely but recovery critical."
-    if durability and durability > 6:
+    if durability is not None and abs(durability) > 6:
         adapting = "Durability strain rising — aerobic consolidation advised."
 
     # --- Neural density check ---

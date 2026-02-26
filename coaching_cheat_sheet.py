@@ -12,16 +12,24 @@ CHEAT_SHEET["meta"] = {
     "framework": "V5.1 Unified Reporting Framework",
     "version": "v16.17",
     "last_updated": "2026-02-05",
-    "source": "Unified Coaching Reference (Intervals + Seiler + Banister)"
+    "source": "Unified Coaching Reference (Intervals + Seiler + Banister + Treff)"
 }
 
 # === Thresholds ===
 CHEAT_SHEET["thresholds"] = {
     "ACWR": {"green": (0.8, 1.3), "amber": (0.6, 1.5)},
     "Monotony": {"green": (1.0, 2.0), "amber": (0.8, 2.5)},
-    "Strain": {"green": (0, 3000), "amber": (3000, 4000)},
+    "Strain": {
+        "green": (0, 2500),
+        "amber": (2500, 4000),
+        "red": (4000, 8000)
+    },
     "FatigueTrend": {"green": (-10, 10), "amber": (-20, 20)},  # Updated to percentage scale
-    "StressTolerance": {"green": (2.0, 8.0), "amber": (1.0, 10.0)},
+    "StressTolerance": {
+        "green": (0.8, 1.2),
+        "amber": (0.6, 1.4),
+        "red": (1.4, 3.0)
+    },
     "LIR": {"green": (0.8, 1.2), "amber": (0.6, 1.4), "red": (0.0, 0.6)},
     "EnduranceReserve": {"green": (1.2, 2.0), "amber": (0.8, 1.2), "red": (0.0, 0.8)},
     "FatOxEfficiency": {"green": (0.4, 0.8), "amber": (0.3, 0.9)},
@@ -147,20 +155,25 @@ CHEAT_SHEET["thresholds"] = {
 
     # --- Power-based (Seiler ratio; power only) ---
     "Polarisation": {
-        # Seiler Ratio = (Low + High) / Mid
-        # 1.0 ≈ canonical polarised
-        # Colour bands reflect structural coaching heuristics
-
-        "red":   (0.00, 0.65),   # excessive mid-zone dominance (threshold-heavy)
-        "amber": (0.65, 0.85),   # pyramidal / threshold-leaning
-        "green": (0.85, 1.25),   # canonical polarised (balanced contrast)
-        # implicit red if >1.25 (extreme polarisation)
+        # <0.65 → threshold-heavy / Z2 dominant
+        "red": (0.00, 0.65),
+        # 0.65–0.85 → pyramidal
+        "amber": (0.65, 0.85),
+        # 0.85–1.25 → classical polarised (balanced 80/20)
+        "green": (0.85, 1.25),
+        # >1.25 → high-contrast polarised (very low Z2 exposure)
+        "high_contrast": (1.25, 3.00)
     },
-    # --- Power-only normalized index (Z1 + Z2 proportion) ---
+    # --- Power-only Treff Polarization-Index (2019) ---
     "PolarisationIndex": {
-        "green": (0.75, 1.01),
-        "amber": (0.60, 0.75),
-    },  # Aerobic bias vs intensity focus (phase-dependent)
+        # Treff PI classification:
+        # >2.0 = Polarised
+        # ~1.5–2.0 = Pyramidal
+        # <1.5 = Threshold-heavy
+        "red":   (0.00, 1.50),   # threshold-dominant / Z2 heavy
+        "amber": (1.50, 2.00),   # pyramidal
+        "green": (2.00, 4.00),   # canonical polarised
+    },
     # --- Fused HR + Power (sport-specific, normalized) ---
     "Polarisation_fused": {
         "green": (0.80, 1.25),
@@ -291,18 +304,30 @@ CHEAT_SHEET["phase_thresholds"] = {
         "recovery": {"green": (0.70, 0.95), "amber": (0.55, 0.75)},
     },
     "PolarisationIndex": {
-        "base":  {"green": (0.60, 0.80), "amber": (0.50, 0.90)},
-        "build": {"green": (0.75, 1.00), "amber": (0.60, 0.75)},
-        "peak":  {"green": (0.80, 1.00), "amber": (0.65, 0.80)},
-        "recovery": {"green": (0.70, 0.95), "amber": (0.55, 0.75)},
+        "base":  {"green": (1.70, 3.50), "amber": (1.40, 1.70)},
+        "build": {"green": (2.00, 3.50), "amber": (1.60, 2.00)},
+        "peak":  {"green": (2.10, 3.50), "amber": (1.70, 2.10)},
+        "recovery": {"green": (1.80, 3.50), "amber": (1.50, 1.80)},
     },
 }
 # === Polarisation Model Mapping (canonical) ===
 CHEAT_SHEET["polarisation_models"] = {
     "PolarisationIndex": [
-        {"label": "polarised", "range": (0.75, 1.00), "description": "80/20 intensity structure — strong aerobic bias"},
-        {"label": "pyramidal", "range": (0.65, 0.75), "description": "Mixed Z2/Z3 structure — transitional base conditioning"},
-        {"label": "threshold", "range": (0.00, 0.65), "description": "Threshold-heavy distribution — higher anaerobic load"},
+        {
+            "label": "threshold",
+            "range": (0.00, 1.50),
+            "description": "Threshold-dominant distribution. Z2 proportion elevated relative to Z1 and Z3."
+        },
+        {
+            "label": "pyramidal",
+            "range": (1.50, 2.00),
+            "description": "Pyramidal intensity structure. Z1 > Z2 > Z3."
+        },
+        {
+            "label": "polarised",
+            "range": (2.00, 4.00),
+            "description": "Treff-defined polarised intensity distribution (>2.0). Strong Z1–Z3 contrast."
+        },
     ],
     "Polarisation": [
         {
@@ -366,6 +391,7 @@ CLASSIFICATION_ALIASES = {
     "low_exposure": "green",
     "polarised": "green",            # canonical ≥1.0
     "aligned": "green",
+    "high_contrast": "green",
 
     # --- Amber (watch / moderate / caution)
     "amber": "amber",
@@ -376,7 +402,7 @@ CLASSIFICATION_ALIASES = {
     "pyramidal": "amber",            # mid-zone dominant
     "threshold": "amber",            # threshold-leaning
     "clustered": "amber",
-    "high_polarised": "amber",       # >1.1 but stable
+    "high_polarised": "green",       # >1.25 but stable
 
     # --- Red (true risk / pathological)
     "red": "red",
@@ -396,7 +422,11 @@ CHEAT_SHEET["context"] = {
     "0.8–1.3 = productive training, <0.8 = recovery or detraining, >1.5 = overload/injury risk."
 ),
     "Monotony": "1–2 shows healthy variation; >2.5 means repetitive stress pattern.",
-    "Strain": "Product of load × monotony; >3500 signals potential overreach.",
+    "Strain": (
+        "Modified Foster Strain (ΣTSS_7d × Monotony). "
+        "Values >3500 indicate elevated combined load and variability risk; "
+        "interpret relative to athlete baseline."
+    ),
     "FatigueTrend": "FatigueTrend is calculated as the percentage change between the 7-day and 28-day moving averages. A 0% change indicates balance, while a positive percentage change indicates accumulating fatigue, and a negative percentage change indicates recovery.",
     "ZQI": "Zone Quality Index (%) 5-15 high-intensity time is normal <3% too easy, >20% too intense or erratic pacing.",
     "FatOxEfficiency": "0.4–0.8 means balanced fat oxidation; lower = carb dependence.",
@@ -405,7 +435,12 @@ CHEAT_SHEET["context"] = {
     "GR": "Glucose Ratio; >2 indicates excess glycolytic bias.",
     "MES": "Metabolic Efficiency Score; >20 is good endurance economy.",
     "ACWR_Risk": "Used internally for stability check.",
-    "StressTolerance": "2–8 indicates sustainable training strain capacity.",
+    "StressTolerance": (
+        "Capacity-adjusted weekly load ratio (ΣTSS_7d / (CTL × 7)). "
+        "1.0 indicates weekly load equals chronic fitness baseline. "
+        "Values >1.2 reflect overload relative to adaptive capacity; "
+        "<0.8 indicates under-stimulation."
+    ),
     "Durability": "Durability index — ratio of power/HR stability under fatigue; >0.9 indicates good endurance robustness.",
     "LIR": "Load Intensity Ratio — ratio of total intensity to total duration; 0.8–1.2 indicates balanced training intensity distribution.",
     "EnduranceReserve": "Endurance Reserve — ratio of aerobic durability to fatigue index; >1.2 indicates strong endurance foundation.",
@@ -429,7 +464,11 @@ CHEAT_SHEET["context"] = {
     "RestingHR": "Resting heart rate trend — elevated HR indicates fatigue or stress.",
     "SleepQuality": "Average Garmin sleep score — proxy for sleep recovery and readiness.",
     "LoadVariabilityIndex": {
-        "description": "Composite metric reflecting the interaction between autonomic state (HRV) and training load balance (TSB), indicating how well current load variability aligns with physiological capacity."
+        "description": (
+            "Inverse Monotony model (Foster 2001): 1 - (Monotony / 5). "
+            "Represents weekly load variability. "
+            "Higher values indicate healthier variation in daily training load."
+        )
     },
     "HRVBalance": "HRV compared to 42-day mean — shows short-term recovery status.",
     "HRVStability": "Consistency of HRV — lower variability = better physiological stability.",
@@ -444,9 +483,10 @@ CHEAT_SHEET["context"] = {
         "⚙️ *Power-only metric — HR ignored.* Use primarily during power-measured cycling phases."
     ),
     "PolarisationIndex": (
-        "Power-based normalized Polarisation Index (0–1). Reflects the proportion of total training "
-        "time in Z1 + Z2 relative to total. ≥0.75 = strong aerobic bias, <0.60 = intensity-heavy. "
-        "⚙️ *Power-only metric; dependent on accurate FTP calibration.*"
+        "Treff Polarization-Index (2019). Calculated as log10(Z1 / (Z2 × Z3) × 100) "
+        "after collapsing to the 3-zone Seiler model. "
+        ">2.0 = polarised distribution, 1.5–2.0 = pyramidal, <1.5 = threshold-heavy. "
+        "⚙️ Power-only metric using 3-zone collapsed distribution."
     ),
     "Polarisation_fused": (
         "Sport-specific Polarisation derived from fused HR+Power data. "
@@ -531,7 +571,11 @@ CHEAT_SHEET["coaching_links"] = {
     "CUR": "If CUR is outside the green zone (30-70), adjust carbohydrate intake and fueling strategy to ensure balanced metabolic use during long sessions.",
     "GR": "If GR exceeds 2.0, focus on reducing glycolytic intensity and increase aerobic work. Ensure sufficient recovery to avoid over-reliance on carbs.",
     "MES": "If MES is below 20, work on improving metabolic efficiency by increasing endurance training with a focus on aerobic base and fat metabolism.",
-    "StressTolerance": "If StressTolerance is high (>8), reduce overall load and increase recovery time. If it's low (<2), ensure proper training load progression.",
+    "StressTolerance": (
+        "If StressTolerance >1.4, weekly load significantly exceeds chronic capacity — "
+        "reduce volume or intensity and monitor recovery. "
+        "If <0.8, stimulus may be insufficient for adaptation."
+    ),
     "FatigueResistance": "If FatigueResistance <0.9, add longer sub-threshold intervals or extended endurance sessions. Maintain >0.95 to support long-duration performance.",
     "EfficiencyFactor": "If EfficiencyFactor is declining, focus on aerobic conditioning and recovery. Stable or increasing EF indicates improving endurance efficiency.",
     "LoadVariabilityIndex": {
@@ -544,9 +588,9 @@ CHEAT_SHEET["coaching_links"] = {
         "Maintain ≥0.85 for ideal 80/20 balance in power-measured disciplines."
     ),
     "PolarisationIndex": (
-        "If PolarisationIndex <0.60 during base, increase Z1 time to reinforce aerobic bias. "
-        "If low in Build, acceptable for intensity focus. "
-        "Target ≥0.75 in base and recovery blocks for efficient endurance adaptation."
+        "If PolarisationIndex <1.5, training is threshold-heavy. "
+        "Between 1.5–2.0 reflects pyramidal distribution. "
+        "Target >2.0 for classical polarised structure during build or peak phases."
     ),
     "Polarisation_fused": (
         "If fused Polarisation Index <0.65, the dominant sport is intensity-heavy — "
@@ -612,7 +656,7 @@ CHEAT_SHEET["coaching_links"] = {
 
 CHEAT_SHEET["display_names"] = {
     "Polarisation": "Polarisation (Power-based, Seiler ratio)",
-    "PolarisationIndex": "Polarisation Index (Power-based, normalized)",
+    "PolarisationIndex": "Polarisation Index (Treff 2019, Power 3-zone)",
     "Polarisation_fused": "Polarisation Index (Fused HR+Power, sport-specific)",
     "Polarisation_combined": "Polarisation Index (Combined HR+Power, multi-sport)",
     "WBalDepletion": "W′ Balance Depletion (Weekly Mean)",
@@ -999,8 +1043,8 @@ CHEAT_SHEET["metric_confidence"] = {
             "min_sessions": 3
         },
         "notes": (
-            "Normalised polarisation reflects aerobic bias rather than "
-            "intensity contrast. Best used directionally."
+            "Treff Polarization-Index reflects structural intensity contrast. "
+            "High confidence when at least 4 sessions and ≥2 high-intensity sessions exist."
         )
     },
     # --- Fused HR + Power (dominant sport) ---
