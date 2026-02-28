@@ -212,8 +212,8 @@ def run_report(
                 "light_start": s.strftime("%Y-%m-%d"),
                 "light_end": e.strftime("%Y-%m-%d"),
                 "lightDays": (e - s).days,
-                "fullDays": 90,
-                "wellnessDays": 90,
+                "fullDays": 7,
+                "wellnessDays": 42,
                 "chunk": False,
             }
             debug(context, f"[RUN_REPORT] 🧭 CLI override persisted → {s.date()} → {e.date()}")
