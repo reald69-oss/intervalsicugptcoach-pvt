@@ -2482,10 +2482,107 @@ def build_semantic_json(context):
     #semantic["context_ref"] = context
 
     # ---------------------------------------------------------
-    # 🧩 Echo render options for transparency
+    #  Echo render options for transparency
     # ---------------------------------------------------------
     if "render_options" in context:
         semantic["options"] = context["render_options"]
+
+    # ---------------------------------------------------------
+    # 🗓️ Microcycle Intent Detection (Plan-Aware Weekly Context)
+    # ---------------------------------------------------------
+    if semantic["meta"].get("report_type") == "weekly":
+
+        microcycle_context = {
+            "planned_total_tss": 0.0,
+            "completed_tss": 0.0,
+            "remaining_tss": 0.0,
+            "planned_intensity_days": 0,
+            "week_iso": None,
+        }
+
+        try:
+            # -------------------------------------------------
+            # 1️⃣ Use canonical ISO week from weekly_phases
+            # -------------------------------------------------
+            weekly_phases = semantic.get("weekly_phases", [])
+
+            if not weekly_phases:
+                semantic["microcycle_context"] = microcycle_context
+                return semantic
+
+            week_label = weekly_phases[-1]["week"]  # authoritative week
+            microcycle_context["week_iso"] = week_label
+
+            # -------------------------------------------------
+            # 2️⃣ Completed TSS (actual)
+            # -------------------------------------------------
+            df_actual = context.get("_df_scope_full")
+
+            if isinstance(df_actual, pd.DataFrame) and not df_actual.empty:
+                df_actual = df_actual.copy()
+                df_actual["start_date_local"] = pd.to_datetime(
+                    df_actual["start_date_local"], errors="coerce"
+                )
+
+                iso = df_actual["start_date_local"].dt.isocalendar()
+                df_actual["year_week"] = (
+                    iso["year"].astype(str) + "-W" + iso["week"].astype(str)
+                )
+
+                week_df = df_actual[df_actual["year_week"] == week_label]
+
+                microcycle_context["completed_tss"] = round(
+                    float(
+                        pd.to_numeric(
+                            week_df.get("icu_training_load", 0),
+                            errors="coerce"
+                        ).fillna(0).sum()
+                    ),
+                    1
+                )
+
+            # -------------------------------------------------
+            # 3️⃣ Planned TSS (Full ISO week Mon–Sun)
+            # -------------------------------------------------
+            planned_summary = semantic.get("planned_summary_by_date", {})
+
+            planned_total = 0.0
+            intensity_days = 0
+
+            # Derive Monday from ISO week label
+            year, week = week_label.split("-W")
+            monday = pd.Timestamp.fromisocalendar(int(year), int(week), 1)
+            sunday = monday + pd.Timedelta(days=6)
+
+            for offset in range(7):
+                day_date = (monday + pd.Timedelta(days=offset)).date()
+                day_str = day_date.isoformat()
+
+                summary = planned_summary.get(day_str)
+
+                if summary:
+                    day_tss = float(summary.get("total_load", 0) or 0)
+                else:
+                    day_tss = 0.0  # explicit default
+
+                planned_total += day_tss
+
+                if day_tss >= 80:
+                    intensity_days += 1
+
+            microcycle_context["planned_total_tss"] = round(planned_total, 1)
+            microcycle_context["planned_intensity_days"] = intensity_days
+            microcycle_context["remaining_tss"] = round(
+                planned_total - microcycle_context["completed_tss"],
+                1
+            )
+
+        except Exception as e:
+            debug(context, f"[MICROCYCLE] ⚠️ Detection failed: {e}")
+
+        semantic["microcycle_context"] = microcycle_context
+
+        debug(context, f"[MICROCYCLE] {microcycle_context}")
 
     # ---------------------------------------------------------
     # 🧭 Phase Structure Normalisation (URF v5.1 — Science-Aligned)

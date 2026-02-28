@@ -338,7 +338,32 @@ def normalize_prefetched_context(data):
         except Exception as e:
             debug(context, f"[NORM] ⚠️ Zone expansion skipped: {e}")
 
-        
+        # -------------------------------------------------
+        # 🫀 Expand HRR nested dict (Tier-0 parity fix)
+        # -------------------------------------------------
+        if "icu_hrr" in df_full.columns:
+            df_full["icu_hrr.hrr"] = df_full["icu_hrr"].apply(
+                lambda x: x.get("hrr") if isinstance(x, dict) else None
+            )
+            df_full["icu_hrr.start_bpm"] = df_full["icu_hrr"].apply(
+                lambda x: x.get("start_bpm") if isinstance(x, dict) else None
+            )
+            df_full["icu_hrr.end_bpm"] = df_full["icu_hrr"].apply(
+                lambda x: x.get("end_bpm") if isinstance(x, dict) else None
+            )
+
+        if "icu_hrr" in df_light.columns:
+            df_light["icu_hrr.hrr"] = df_light["icu_hrr"].apply(
+                lambda x: x.get("hrr") if isinstance(x, dict) else None
+            )
+            df_light["icu_hrr.start_bpm"] = df_light["icu_hrr"].apply(
+                lambda x: x.get("start_bpm") if isinstance(x, dict) else None
+            )
+            df_light["icu_hrr.end_bpm"] = df_light["icu_hrr"].apply(
+                lambda x: x.get("end_bpm") if isinstance(x, dict) else None
+            )
+
+        debug(context, "[NORM] ✅ Expanded icu_hrr nested dict (non-destructive)")
 
         # --- Update context after expansion ---
         context["df_full"] = df_full

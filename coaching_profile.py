@@ -23,7 +23,7 @@ REPORT_CONTRACT = {
         "performance_intelligence",
         "zones", "daily_load", "events", "wbal_summary",
         "wellness", "phases", "insights", "insight_view", "actions",
-        "planned_events", "planned_summary_by_date",
+        "planned_events", "planned_summary_by_date", "microcycle_context",
         "future_forecast", "future_actions"
     ],
 
@@ -32,7 +32,7 @@ REPORT_CONTRACT = {
         "metrics", "extended_metrics",
         "adaptation_metrics", "trend_metrics",
         "performance_intelligence",
-        "phases", "phases_summary",
+        "phases", "phases_summary", "microcycle_context",
         "wbal_summary", "performance_summary",
         "insights", "actions", "future_forecast", "future_actions"
     ],
@@ -119,7 +119,7 @@ RENDERER_PROFILES = {
             "wellness": "full",
             "phases": "forbid",
             "planned_events": "full",
-            "planned_summary_by_date": "full",
+            "planned_summary_by_date": "summary",
             "actions": "full",
             "future_actions": "full"
         },
