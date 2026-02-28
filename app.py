@@ -484,9 +484,21 @@ async def run_audit_with_data(
                 "logs": ""
             })
 
-        # ✅ NEW — inject start/end into context for Tier-0 summary to work
-        if start and end:
+        # ---------------------------------------------------------
+        # 🗓️ Enforce deterministic 7-day window (WEEKLY ONLY)
+        # ---------------------------------------------------------
+        if report_range == "weekly" and start and not end:
+            try:
+                dt_start = pd.to_datetime(start)
+                dt_end = dt_start + pd.Timedelta(days=6)  # inclusive 7-day block
+                end = dt_end.strftime("%Y-%m-%d")
+            except Exception:
+                pass
+
+        if start:
             prefetch_context["start"] = start
+
+        if end:
             prefetch_context["end"] = end
             
         # --- EARLY HEADER INJECTION (pre-run safety) ---
