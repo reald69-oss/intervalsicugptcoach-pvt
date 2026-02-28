@@ -1079,7 +1079,7 @@ def build_semantic_json(context):
 
     # --- Enrich meta block from authoritative REPORT_HEADERS ---
     semantic.setdefault("meta", {})
-    window_days = (pd.to_datetime(context["period"]["end"]) - pd.to_datetime(context["period"]["start"])).days
+    window_days = (pd.to_datetime(context["period"]["end"]) - pd.to_datetime(context["period"]["start"])).days + 1
 
     header = REPORT_HEADERS.get(report_type, {})
     semantic["meta"]["report_type"] = report_type

@@ -85,14 +85,26 @@ def _compute_weekly(context, df_full):
     divergence = None
 
     if rolling_w_prime is not None and athlete_w_prime is not None:
-        valid_mask = athlete_w_prime.replace(0, pd.NA).notna()
+
+        # Clean zeros and NaNs
+        rolling_clean = rolling_w_prime.replace(0, pd.NA)
+        athlete_clean = athlete_w_prime.replace(0, pd.NA)
+
+        valid_mask = rolling_clean.notna() & athlete_clean.notna()
+
         if valid_mask.any():
-            divergence_series = (
-                (rolling_w_prime - athlete_w_prime)
-                / athlete_w_prime.replace(0, pd.NA)
-            )
-            divergence = float(divergence_series.mean())
-            debug(context, "[T3][W′] Rolling vs Athlete divergence", f"{divergence:.3f}")
+
+            mean_rolling = rolling_clean[valid_mask].mean()
+            mean_athlete = athlete_clean[valid_mask].mean()
+
+            if mean_athlete and mean_athlete != 0:
+                divergence = float((mean_rolling - mean_athlete) / mean_athlete)
+
+                debug(
+                    context,
+                    "[T3][W′] Rolling vs Athlete divergence",
+                    f"{divergence:.3f}"
+                )
 
     weekly_result = {
         "anaerobic_repeatability": {

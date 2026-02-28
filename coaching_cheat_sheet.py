@@ -119,12 +119,12 @@ CHEAT_SHEET["thresholds"] = {
         "red": (0.90, 1.0),
     },
     "w_prime_divergence_7d": {
-        "green": (0.0, 0.2),
+        "green": (-0.1, 0.2),
         "amber": (0.2, 0.5),
         "red": (0.5, 1.0)
     },
     "w_prime_divergence_90d": {
-        "green": (0.0, 0.2),
+        "green": (-0.1, 0.2),
         "amber": (0.2, 0.5),
         "red": (0.5, 1.0)
     },

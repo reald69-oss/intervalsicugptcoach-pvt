@@ -520,8 +520,8 @@ COACH_PROFILE = {
                 "balanced": "-10–10",
                 "moderate_low": "-20–-10",
                 "moderate_high": "10–20",
-                "accumulating": "20–35",
-                "extreme_accumulation": ">35",
+                "accumulating": "20–40",
+                "extreme_accumulation": ">40",
                 "recovering": "<-20"
             }
         },
