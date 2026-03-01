@@ -2593,14 +2593,34 @@ def build_semantic_json(context):
             # -------------------------------------------------
             planned_remaining = 0.0
 
-            for offset in range(7):
-                d = (monday + pd.Timedelta(days=offset)).date().isoformat()
-                summary = planned_summary.get(d)
-                if summary:
-                    planned_remaining += float(summary.get("total_load", 0) or 0)
+            planned_events = semantic.get("planned_events", [])
+            week_planned_ids = set()
 
-            planned_remaining = round(planned_remaining, 1)
-            microcycle_context["planned_remaining_tss"] = planned_remaining
+            # Collect all planned IDs in this ISO week
+            for pe in planned_events:
+                planned_date = pd.to_datetime(pe.get("start_date_local")).date()
+                if monday.date() <= planned_date <= sunday.date():
+                    week_planned_ids.add(pe.get("id"))
+
+            # Collect all paired_event_ids from completed activities this week
+            consumed_ids = set()
+
+            if not week_df.empty:
+                for _, row in week_df.iterrows():
+                    paired_id = row.get("paired_event_id")
+                    if paired_id:
+                        consumed_ids.add(paired_id)
+
+            # Remaining = planned IDs not consumed
+            for pe in planned_events:
+                planned_id = pe.get("id")
+                planned_date = pd.to_datetime(pe.get("start_date_local")).date()
+
+                if not (monday.date() <= planned_date <= sunday.date()):
+                    continue
+
+                if planned_id not in consumed_ids:
+                    planned_remaining += float(pe.get("icu_training_load", 0) or 0)
 
             # -------------------------------------------------
             # 5️⃣ Delta (ALWAYS computed)
