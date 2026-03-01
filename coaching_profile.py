@@ -110,6 +110,7 @@ RENDERER_PROFILES = {
         ],
         "section_handling": {
             "events": "full",
+            "microcycle_context": "full",
             "daily_load": "full",
             "metrics": "full",
             "extended_metrics": "full",
