@@ -3167,7 +3167,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         - Convert duration from seconds to minutes at render time.
         - Display as integer minutes by default.
         - Use one decimal only if duration < 30 minutes and precision is useful.
-        - Label column as Duration (min).
+        - Label column as Duration (min). Show HRR60 column when values exist.
         - In the EVENTS table, session-level signal icons MAY be rendered in the 1st column (Signals) using the following canonical mapping derived ONLY from existing semantic fields.
         - Icons represent independent session signals and MAY appear together for a single event.
         - When multiple icons apply, they MUST be rendered together in the following fixed order (left → right):
