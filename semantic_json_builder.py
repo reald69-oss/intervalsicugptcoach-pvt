@@ -1186,16 +1186,24 @@ def build_semantic_json(context):
     subjective_fields = ["recovery", "fatigue", "fitness", "form"]
     subjective_block = {}
     for k, v in context.get("wellness_summary", {}).items():
+
+        if k not in subjective_fields:
+            continue
+
+        # 🔒 Normalize Series → scalar
+        if isinstance(v, pd.Series):
+            v = v.dropna()
+            v = v.iloc[-1] if not v.empty else None
+
         if (
-            k in subjective_fields
-            and not (
-                v is None
-                or (isinstance(v, (float, int)) and pd.isna(v))
-                or (isinstance(v, (list, dict, np.ndarray)) and len(v) == 0)
-                or v == ""
-            )
+            v is None
+            or (isinstance(v, (float, int)) and pd.isna(v))
+            or (isinstance(v, (list, dict, np.ndarray)) and len(v) == 0)
+            or (isinstance(v, str) and v == "")
         ):
-            subjective_block[k] = v
+            continue
+
+        subjective_block[k] = v
 
     # ✅ Always preserve key for schema consistency
     semantic["wellness"]["subjective"] = subjective_block or {}
