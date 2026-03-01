@@ -1177,14 +1177,24 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     # 🧹 Remove subjective fields from the top-level wellness
     # ---------------------------------------------------------
-    for k in ["recovery", "fatigue", "fitness", "form"]:
-        semantic["wellness"].pop(k, None)
+    #for k in ["recovery", "fatigue", "fitness", "form"]:
+    #    semantic["wellness"].pop(k, None)
 
     # ---------------------------------------------------------
     # 🧠 Wrap subjective markers (and clean nulls)
     # ---------------------------------------------------------
-    subjective_fields = ["recovery", "fatigue", "fitness", "form"]
+    subjective_fields = [
+        "soreness",
+        "fatigue",
+        "stress",
+        "mood",
+        "motivation",
+        "injury",
+        "hydration",
+        "readiness",
+    ]
     subjective_block = {}
+    debug(context, f"WELLNESS_SUMMARY_KEYS → {list(context.get('wellness_summary', {}).keys())}")
     for k, v in context.get("wellness_summary", {}).items():
 
         if k not in subjective_fields:

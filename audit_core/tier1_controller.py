@@ -931,6 +931,16 @@ def run_tier1_controller(df_master, wellness, context):
         fatigue_avg = round(df_well["fatigue"].mean(skipna=True), 1) if "fatigue" in df_well.columns else np.nan
         stress_avg = round(df_well["stress"].mean(skipna=True), 1) if "stress" in df_well.columns else np.nan
         readiness_avg = round(df_well["readiness"].mean(skipna=True), 1) if "readiness" in df_well.columns else np.nan
+        soreness_avg = round(df_well["soreness"].mean(skipna=True), 1) \
+            if "soreness" in df_well.columns else np.nan
+        mood_avg = round(df_well["mood"].mean(skipna=True), 1) \
+            if "mood" in df_well.columns else np.nan
+        motivation_avg = round(df_well["motivation"].mean(skipna=True), 1) \
+            if "motivation" in df_well.columns else np.nan
+        hydration_avg = round(df_well["hydration"].mean(skipna=True), 1) \
+            if "hydration" in df_well.columns else np.nan
+        injury_avg = round(df_well["injury"].mean(skipna=True), 1) \
+            if "injury" in df_well.columns else np.nan
 
         # --- Objective + subjective rest-day logic ---
         today = pd.Timestamp.now().normalize()
@@ -1053,15 +1063,31 @@ def run_tier1_controller(df_master, wellness, context):
 
 
         # --- Build wellness summary block ---
+        subjective_fields = [
+            "fatigue",
+            "stress",
+            "soreness",
+            "mood",
+            "motivation",
+            "injury",
+            "hydration",
+            "readiness"
+        ]
+
+        subjective_avgs = {}
+
+        for field in subjective_fields:
+            if field in df_well.columns:
+                val = pd.to_numeric(df_well[field], errors="coerce").mean(skipna=True)
+                if pd.notna(val):
+                    subjective_avgs[field] = round(val, 1)
+
         wellness_metrics = {
             "rest_hr": rest_hr,
             "hrv_trend": hrv_trend,
             "rest_days": rest_days,
-            "fatigue": fatigue_avg,
-            "stress": stress_avg,
-            "readiness": readiness_avg,
+            **subjective_avgs
         }
-
         # Add recovery index if computed earlier
         if "recovery_index" in context.get("wellness", {}):
             wellness_metrics["recovery_index"] = context["wellness"]["recovery_index"]
@@ -1135,16 +1161,21 @@ def run_tier1_controller(df_master, wellness, context):
         context["tsb"] = float(tsb) if pd.notna(tsb) else None
 
         # 🔒 AUTHORITATIVE wellness snapshot ONLY
-        context["wellness_summary"] = {
+        load_snapshot = {
             "ctl": context["ctl"],
             "atl": context["atl"],
             "tsb": context["tsb"],
             "recovery": last.get("recovery"),
-            "fatigue": last.get("fatigue"),
             "fitness": last.get("fitness"),
             "form": last.get("form"),
         }
 
+        existing = context.get("wellness_summary", {})
+
+        context["wellness_summary"] = {
+            **existing,          # keep subjective markers
+            **load_snapshot      # overlay load model
+        }
         # For renderer / UI only — Tier-2 must stay source of truth
         context["load_metrics"] = {
             "CTL": {"value": context["ctl"], "status": "icu"},
