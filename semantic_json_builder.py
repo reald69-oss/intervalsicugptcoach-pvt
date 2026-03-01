@@ -2499,7 +2499,7 @@ def build_semantic_json(context):
             "planned_remaining_tss": 0.0,
             "projected_total_tss": 0.0,
             "delta_to_target": 0.0,
-            "basis": "The microcycle is based on the current ISO week and includes planned and completed with compliance,"
+            "basis": "The microcycle is based on the current ISO week (Monday to Sunday) and includes planned and completed with compliance,"
         }
 
         try:
