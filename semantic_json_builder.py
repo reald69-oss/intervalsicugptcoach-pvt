@@ -1181,23 +1181,17 @@ def build_semantic_json(context):
     #    semantic["wellness"].pop(k, None)
 
     # ---------------------------------------------------------
-    # 🧠 Wrap subjective markers (and clean nulls)
+    # 🧠 Wrap subjective markers (with scale + label)
     # ---------------------------------------------------------
-    subjective_fields = [
-        "soreness",
-        "fatigue",
-        "stress",
-        "mood",
-        "motivation",
-        "injury",
-        "hydration",
-        "readiness",
-    ]
+
+    SUBJECTIVE_SCALES = CHEAT_SHEET.get("subjective_scales", {})
+
     subjective_block = {}
-    debug(context, f"WELLNESS_SUMMARY_KEYS → {list(context.get('wellness_summary', {}).keys())}")
+
     for k, v in context.get("wellness_summary", {}).items():
 
-        if k not in subjective_fields:
+        # Only process defined subjective fields
+        if k not in SUBJECTIVE_SCALES:
             continue
 
         # 🔒 Normalize Series → scalar
@@ -1205,6 +1199,7 @@ def build_semantic_json(context):
             v = v.dropna()
             v = v.iloc[-1] if not v.empty else None
 
+        # Skip invalid / empty
         if (
             v is None
             or (isinstance(v, (float, int)) and pd.isna(v))
@@ -1213,7 +1208,17 @@ def build_semantic_json(context):
         ):
             continue
 
-        subjective_block[k] = v
+        numeric_value = float(v)
+
+        # Round for categorical mapping
+        rounded_value = int(round(numeric_value))
+
+        label = SUBJECTIVE_SCALES[k].get(rounded_value)
+
+        subjective_block[k] = {
+            "value": round(numeric_value, 1),
+            "label": label
+        }
 
     # ✅ Always preserve key for schema consistency
     semantic["wellness"]["subjective"] = subjective_block or {}

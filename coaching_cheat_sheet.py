@@ -315,6 +315,68 @@ CHEAT_SHEET["phase_thresholds"] = {
         "recovery": {"green": (1.80, 3.50), "amber": (1.50, 1.80)},
     },
 }
+
+CHEAT_SHEET["subjective_scales"] = {
+
+    # 1–4 scales
+    "soreness": {
+        1: "low",
+        2: "avg",
+        3: "high",
+        4: "extreme"
+    },
+
+    "fatigue": {
+        1: "low",
+        2: "avg",
+        3: "high",
+        4: "extreme"
+    },
+
+    "stress": {
+        1: "low",
+        2: "avg",
+        3: "high",
+        4: "extreme"
+    },
+
+    "mood": {
+        1: "great",
+        2: "good",
+        3: "ok",
+        4: "grumpy"
+    },
+
+    "motivation": {
+        1: "extreme",
+        2: "high",
+        3: "avg",
+        4: "low"
+    },
+
+    "injury": {
+        1: "none",
+        2: "niggle",
+        3: "poor",
+        4: "injured"
+    },
+
+    "hydration": {
+        1: "good",
+        2: "ok",
+        3: "poor",
+        4: "bad"
+    },
+
+    # 1–5 scale (separate)
+    "readiness": {
+        1: "very poor",
+        2: "poor",
+        3: "fair",
+        4: "good",
+        5: "excellent"
+    }
+}
 # === Polarisation Model Mapping (canonical) ===
 CHEAT_SHEET["polarisation_models"] = {
     "PolarisationIndex": [
