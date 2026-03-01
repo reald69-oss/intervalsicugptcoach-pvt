@@ -2492,7 +2492,7 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     if semantic["meta"].get("report_type") == "weekly":
 
-        microcycle_context = {
+        current_ISO_weekly_microcycle = {
             "week_iso": None,
             "weekly_target_tss": 0.0,
             "completed_tss": 0.0,
@@ -2508,11 +2508,11 @@ def build_semantic_json(context):
             # -------------------------------------------------
             weekly_phases = semantic.get("weekly_phases", [])
             if not weekly_phases:
-                semantic["microcycle_context"] = microcycle_context
+                semantic["current_ISO_weekly_microcycle"] = current_ISO_weekly_microcycle
                 return semantic
 
             week_label = weekly_phases[-1]["week"]
-            microcycle_context["week_iso"] = week_label
+            current_ISO_weekly_microcycle["week_iso"] = week_label
 
             year, week = week_label.split("-W")
             monday = pd.Timestamp.fromisocalendar(int(year), int(week), 1)
@@ -2542,7 +2542,7 @@ def build_semantic_json(context):
                     ).fillna(0).sum()
                 )
 
-                microcycle_context["completed_tss"] = round(completed, 1)
+                current_ISO_weekly_microcycle["completed_tss"] = round(completed, 1)
 
             # -------------------------------------------------
             # 3️⃣ Weekly Target (Calendar + Reconstruction)
@@ -2582,11 +2582,11 @@ def build_semantic_json(context):
                 weekly_target += planned_equivalent
 
             # fallback: truly no plan context
-            if weekly_target == 0.0 and microcycle_context["completed_tss"] > 0:
-                weekly_target = microcycle_context["completed_tss"]
+            if weekly_target == 0.0 and current_ISO_weekly_microcycle["completed_tss"] > 0:
+                weekly_target = current_ISO_weekly_microcycle["completed_tss"]
 
             weekly_target = round(weekly_target, 1)
-            microcycle_context["weekly_target_tss"] = weekly_target
+            current_ISO_weekly_microcycle["weekly_target_tss"] = weekly_target
 
             # -------------------------------------------------
             # 4️⃣ Planned Remaining
@@ -2625,18 +2625,18 @@ def build_semantic_json(context):
             # -------------------------------------------------
             # 5️⃣ Delta (ALWAYS computed)
             # -------------------------------------------------
-            completed_val = microcycle_context["completed_tss"]
+            completed_val = current_ISO_weekly_microcycle["completed_tss"]
             projected_total = completed_val + planned_remaining
             delta = projected_total - weekly_target
 
-            microcycle_context["projected_total_tss"] = round(projected_total, 1)
-            microcycle_context["delta_to_target"] = round(delta, 1)
+            current_ISO_weekly_microcycle["projected_total_tss"] = round(projected_total, 1)
+            current_ISO_weekly_microcycle["delta_to_target"] = round(delta, 1)
 
         except Exception as e:
             debug(context, f"[MICROCYCLE] ❌ {type(e).__name__}: {e}")
 
-        semantic["microcycle_context"] = microcycle_context
-        debug(context, f"[MICROCYCLE] {microcycle_context}")
+        semantic["current_ISO_weekly_microcycle"] = current_ISO_weekly_microcycle
+        debug(context, f"[MICROCYCLE] {current_ISO_weekly_microcycle}")
 
     # ---------------------------------------------------------
     # 🧭 Phase Structure Normalisation (URF v5.1 — Science-Aligned)
