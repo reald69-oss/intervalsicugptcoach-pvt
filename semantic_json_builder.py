@@ -2084,21 +2084,38 @@ def build_semantic_json(context):
         semantic["planned_summary_by_date"] = planned_summary_by_date
 
         # ---------------------------------------------------------
-        # 🔮 Tier-3 FUTURE FORECAST (PLAN-AWARE, CORRECT LOCATION)
+        # 🔮 Tier-3 FUTURE FORECAST (only if report window is recent)
         # ---------------------------------------------------------
-        context["calendar"] = calendar_data  # ✅ REQUIRED — Tier-3 reads THIS
 
-        if not context.get("future_forecast"):
-            from audit_core.tier3_future_forecast import run_future_forecast
-            forecast_output = run_future_forecast(context)
+        semantic["future_forecast"] = {}
 
-            if isinstance(forecast_output, dict):
-                context.update(forecast_output)
-                semantic["future_forecast"] = forecast_output.get("future_forecast", {})
-            else:
-                semantic["future_forecast"] = {}
-        else:
-            semantic["future_forecast"] = context.get("future_forecast", {})
+        try:
+            period = semantic.get("meta", {}).get("period", "")
+            if "→" in period:
+                end_str = period.split("→")[1].strip()
+                report_end = pd.to_datetime(end_str).date()
+                today = datetime.now().date()
+
+                # Only run forecast if report touches current rolling week
+                if report_end >= (today - pd.Timedelta(days=6)):
+
+                    context["calendar"] = calendar_data  # required by Tier-3
+
+                    if not context.get("future_forecast"):
+                        from audit_core.tier3_future_forecast import run_future_forecast
+                        forecast_output = run_future_forecast(context)
+
+                        if isinstance(forecast_output, dict):
+                            context.update(forecast_output)
+                            semantic["future_forecast"] = forecast_output.get(
+                                "future_forecast", {}
+                            )
+                    else:
+                        semantic["future_forecast"] = context.get(
+                            "future_forecast", {})
+
+        except Exception as e:
+            debug(context, f"[FORECAST] ⚠️ {e}")
 
         # ✅ Meta info for structured UI rendering
         semantic["meta"]["planned_events"] = {
