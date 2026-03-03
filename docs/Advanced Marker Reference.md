@@ -1,7 +1,6 @@
 # 📊 Advanced Markers v1.1
 
 🔗 Related files:  
-- See **Glossary & Placeholders** for variable references in reports.  
 - See **Coaching Heuristics Pack** for decision rules using these markers.  
 - See **Coaching Cheat Sheet** for quick classification thresholds.  
 

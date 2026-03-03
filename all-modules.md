@@ -5,7 +5,7 @@ manifest_source: live
 manifest_mode: dual
 manifest_usage: chatgpt+local
 framework_version: "Unified Reporting Framework v5.1"
-ruleset_version: "v16.16G"
+ruleset_version: "v16.17"
 manifest_note: "Dual-path manifest with explicit ChatGPT and Local modes; full GitHub URLs, relative local bindings, and corrected documentation."
 
 ---
@@ -24,7 +24,8 @@ manifest_note: "Dual-path manifest with explicit ChatGPT and Local modes; full G
 | 2 | Tier-0 (`tier0_pre_audit`) | Fetch profile, activities (light+full), wellness; build snapshots | Tier-0 |
 | 3 | Tier-1 (`tier1_controller`) | Dataset validation, visible totals, event log block | Tier-1 |
 | 4 | Tier-2 (all `tier2_*` modules) | Data integrity, completeness, enforced totals, metrics, actions | Tier-2 |
-| 5 | Renderer (`render_unified_report`) | Build URF v5.1 markdown + Report object | Render |
+| 4 | Tier-3 (all `tier3_*` modules) | Performance Intelligence, Forecast, Energy and Adaptation | Tier-2 |
+| 5 | Renderer (`json_semantic_builder`) | Build URF v5.1 markdown + Report object | Render |
 | 6 | URF Spec (`Unified Reporting Framework.md`) | Canonical 10-section layout and metric semantics | Spec |
 | 7 | Coaching Modules | Profile, heuristics, cheat sheet, narrative | Coaching |
 | 8 | Glossary & Placeholders | Token / flag definitions for all tiers | Reference |
@@ -33,7 +34,7 @@ manifest_note: "Dual-path manifest with explicit ChatGPT and Local modes; full G
 
 ## 🧩 Runtime Execution Chain
 
-Schema → Tier-0 → Tier-1 → Tier-2 → URF Renderer → Coaching Modules → Output
+Schema → Tier-0 → Tier-1 → Tier-2 → Tier 3 → URF Renderer → Coaching Modules → Output
 
 ---
 
@@ -41,7 +42,9 @@ Schema → Tier-0 → Tier-1 → Tier-2 → URF Renderer → Coaching Modules �
 
 | **Deprecated File** | **Replaced By** |
 |:--|:--|
-| `Coaching Heuristics Pack.md` | `audit_core/coaching_heuristics.py` |
+| `Coaching Heuristics Pack.md` | `coaching_heuristics.py` |
+| `Coaching Cheat Sheet.md` | `coaching_cheat_sheet.py` |
+| `Coach Profile.md` | `coaching_profile.py` |
 
 ---
 
@@ -50,7 +53,6 @@ Schema → Tier-0 → Tier-1 → Tier-2 → URF Renderer → Coaching Modules �
 - `report_controller.py` loads and executes modules **in order**.  
 - Each layer must confirm success before advancing.  
 - Any failure in Tier-2, URF, or Coaching halts execution with `AuditHalt`.  
-- `Glossary & Placeholders.md` always loaded last.  
 - Schema and Tier-0 are immutable once loaded.  
 
 ---
@@ -84,8 +86,9 @@ Authoritative reference for all modules used by **IntervalsICU GPT Coach** for C
 | Tier-2 — Calculation Integrity | validate_calculation_integrity | Ensure variance ≤ 0.1h / 2TSS | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/audit_core/tier2_calculation_integrity.py |
 | Tier-2 — Derived Metrics | compute_derived_metrics | Recompute ACWR, Strain, Polarisation | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/audit_core/tier2_derived_metrics.py |
 | Tier-2 — Extended Metrics | compute_extended_metrics | Compute durability, hybrid modes | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/audit_core/tier2_extended_metrics.py |
-| Tier-2 — Actions | evaluate_actions | Generate adaptive coaching actions | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/audit_core/tier2_actions.py |
-| Tier-2 — Renderer Validator | finalize_and_validate_render | Validate render before output | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/audit_core/tier2_render_validator.py |
+| Tier-2 — Actions | evaluate_actions | Generate adaptive coaching actions | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/audit_core/tier2_actions.py || Tier-2 — Renderer Validator | finalize_and_validate_render | Validate render before output | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/audit_core/tier2_render_validator.py |
+| Tier-3 — Forecast | future_forecast | Generate adaptive coaching actions | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/audit_core/tier3_future_forecast.py |
+| Tier-3 — PI | performance_intelligence | Generate adaptive coaching actions | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/audit_core/tier3_performance_intelligence.py |
 | Schema Guard | validate_report_schema | Ensure Unified Framework compliance | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/audit_core/report_schema_guard.py |
 
 ---
@@ -102,16 +105,13 @@ Authoritative reference for all modules used by **IntervalsICU GPT Coach** for C
 | Module | Purpose | File Path |
 |:--|:--|:--|
 | Unified Reporting Framework | Canonical metric definitions and 10-section layout | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/Unified%20Reporting%20Framework.md |
-| Coaching Profile | Coach heuristics & adaptive logic | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/coaching%20profile.md |
-| Glossary & Placeholders | Audit state/context tokens (Tier-0 ↔ Tier-1 bridge) | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/Glossary%20&%20Placeholders.md |
-| Coaching Cheat Sheet | Narrative templates, tone, and persona  | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/Coaching%20Cheat%20Sheet.md |
 
 ---
 
 ## 🎨 Renderer & UI Modules
 | Component | Purpose | File Path |
 |:--|:--|:--|
-| Unified Renderer | Combines audit and UI output | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/render_unified_report.py |
+| Unified Renderer | Combines audit and UI output | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/json_semantic_builder.py |
 | Icon Pack | UI icons and metrics logic | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/UIcomponents/icon_pack.py |
 | Layout Schema | Section & card layout map | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/UIcomponents/layout.yaml |
 | Color Schema | Defines UI color variables | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/UIcomponents/color_schema.json |
@@ -135,6 +135,7 @@ Authoritative reference for all modules used by **IntervalsICU GPT Coach** for C
 | Report Dispatcher (ChatGPT) | run_report | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/audit_core/report_controller.py |
 | Local Report Entry (Primary) | report.py → run_report() | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/report.py |
 | Audit Runner (Developer Utility) | run_audit.py | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/run_audit.py |
+| Local Report Entry (Railway) | app.py → run_report() | https://raw.githubusercontent.com/revo2wheels/intervalsicugptcoach-public/main/app.py |
 
 ---
 

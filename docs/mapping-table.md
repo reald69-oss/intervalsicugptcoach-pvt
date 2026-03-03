@@ -154,7 +154,6 @@ flowchart TD
     Data_Integrity["Tier-2 Step-1: Data Integrity"]
     Event_Completeness["Tier-2 Step-2: Event Completeness"]
     Evaluate_Actions["Tier-2 Step-7: Evaluate Actions"]
-    Glossary_and_Placeholders["Glossary & Placeholders"]
 
     %% Outputs
     Enforce_Event_Only_Totals -->|Outputs| TotalHours

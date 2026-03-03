@@ -19,7 +19,7 @@ Thumbs.db
 *.toml
 /docs/devandtest.md 
 /report.py
-/PYTHONCurl.md
+/docs/PYTHONCurl.md
 
 # Python
 __pycache__/
@@ -27,3 +27,4 @@ __pycache__/
 # Root-only generated dirs
 /archive/
 /reports/
+/cloudflare/

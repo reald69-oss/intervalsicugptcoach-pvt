@@ -215,7 +215,7 @@ Each event MUST include:
 - Date
 - Title
 - Intended duration (must equal summed intervals)
-- Intended training load (e.g. TSS)
+- Optional intended training load (e.g. TSS)
 - carbs_per_hour (int g/h) where;
 load_per_hour = TSS / (duration_min / 60)
 Duration: A=<90 | B=90–150 | C=>150
