@@ -414,3 +414,158 @@ If you'd like, next we can:
 * Or draft the exact data schema changes for V6 implementation
 * Or simulate how V6 would have handled your last 10 days differently
 
+
+
+----------------
+
+PHASE 2
+# Energy System Progression Engine (ESPE)
+
+## Overview
+
+The Energy System Progression Engine (ESPE) is a Tier-3 physiology module that evaluates adaptation trends using deterministic power curve comparisons.
+
+ESPE does not store data.  
+It operates entirely on prefetched power curve windows injected into the report context.
+
+It is:
+
+- Stateless  
+- Deterministic  
+- Versioned independently (`espe_v1`)  
+- Sport-aware (Ride, Run supported; Swim excluded unless real power exists)  
+
+
+---
+Scope (Phase 2)
+
+Current scope:
+Ride power curves (fully supported)
+Run power curves (supported if real power exists)
+Swim excluded unless mechanical power data available
+Future phases may include:
+Fatigued curve comparison (-kj1)
+CP / W′ integration
+Volatility overlay (42-day vs 84-day comparison)
+Forecast weighting based on adaptation bias
+---
+
+# Architecture
+
+## Data Flow
+
+### Production
+
+1. Cloudflare Worker:
+   - Computes curve windows
+   - Calls Intervals `/power-curves`
+   - Extracts anchor durations (5s, 30s, 1m, 5m, 20m, 60m)
+   - Injects structured `power_curve` block into payload
+
+2. Railway `app.py`:
+   - Normalizes payload into context
+   - Does not fetch curves
+
+3. Report Controller:
+   - Calls `tier3_espe.run_espe()`
+   - Stores output in `context["energy_system_progression"]`
+
+4. Semantic Builder:
+   - Renders ESPE output without modification
+
+### Local (T0)
+
+- T0 fetches curves directly from Intervals
+- Builds identical `power_curve` contract
+- Skips fetch if prefetch exists
+
+---
+
+# Window Strategy
+Weekly ESPE → 84-day non-overlapping comparison
+Season ESPE → s1 vs s0 comparison
+All-time and 42-day windows excluded from baseline progression logic
+
+## Weekly Report
+
+Purpose: Microcycle-level adaptation tracking.
+
+Window definition:
+
+- Current: Last 84 days
+- Previous: 84 days immediately before current window
+
+Implementation:
+
+curves = r.prevStart.prevEnd , r.currStart.currEnd
+
+
+Rationale:
+
+- 84 days ≈ 12-week macro block
+- Stable enough to reflect physiological adaptation
+- Responsive enough to detect directional change
+- Matches Intervals UI native option (“Last 84 days”)
+
+Not used:
+
+- 42 days (too reactive)
+- All time (represents lifetime peak, not adaptation slope)
+
+---
+
+## Season Report
+
+Purpose: Macrocycle progression tracking.
+
+Window definition:
+
+curves = s1 , s0
+
+
+Where:
+- s0 = current season
+- s1 = previous season
+
+Rationale:
+
+- Season-aligned comparison
+- No manual date math required
+- Clean macrocycle narrative
+
+---
+
+# Power Curve Contract
+
+Injected into context as:
+
+```json
+{
+  "power_curve": {
+    "Ride": {
+      "current": { "5s": ..., "30s": ..., "1m": ..., "5m": ..., "20m": ..., "60m": ... },
+      "previous": { ... },
+      "window_days": 84
+    },
+    "Run": { ... }
+  }
+}
+
+ESPE does not access raw curve arrays.
+Only anchor durations are used.
+
+{
+  "version": "espe_v1",
+  "sports": {
+    "Ride": {
+      "delta_percent": {...},
+      "system_status": {...},
+      "derived_metrics": {...},
+      "plateau_detected": true|false,
+      "adaptation_bias": "vo2_dominant|threshold_dominant|balanced"
+    }
+  }
+}
+This is rendered into the final report under:
+
+energy_system_progression

@@ -213,7 +213,15 @@ RENDERER_PROFILES = {
                 "phases"
             ],
             "intent_rule": "Determine whether the training block reflects expansion, consolidation, or plateau.",
-            "max_sentences": 6
+            "exact_sentences": 6,
+            "sentence_structure": [
+            "1. State classification (Expansion / Consolidation / Plateau).",
+            "2. Describe load + fatigue interaction (load_trend + fatigue_trend).",
+            "3. Describe fitness response (fitness_trend + Efficiency_Factor + Fatigue_Resistance).",
+            "4. Explain what this means physiologically (adaptation quality).",
+            "5. Translate into plain language (block is building / absorbing / stagnating).",
+            "6. Give concrete forward guidance for the next block phase."
+            ]
         }
     },
 

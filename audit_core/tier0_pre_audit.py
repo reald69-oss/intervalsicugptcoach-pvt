@@ -1185,14 +1185,14 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
 
         if light_empty and full_empty:
             raise AuditHalt(
-                "No training activities found in the selected date range.",
+                "No training activities found. please see https://www.montis.icu/setup.html",
                 code="NO_ACTIVITIES_RANGE",
                 severity="soft"
             )
 
         if not light_empty and full_empty:
             raise AuditHalt(
-                "Activities detected, but detailed data could not be retrieved.",
+                "No weekly period activities detected, detailed data could not be retrieved.",
                 code="FULL_DATASET_EMPTY",
                 severity="soft"
             )
