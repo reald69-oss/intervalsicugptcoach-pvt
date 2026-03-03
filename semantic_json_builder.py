@@ -3151,7 +3151,9 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         focus = closing_cfg.get("focus", "")
         intent = closing_cfg.get("intent_rule", "")
         anchors = closing_cfg.get("anchor_metrics", [])
-        max_sent = closing_cfg.get("max_sentences", 4)
+        exact_sent = closing_cfg.get("exact_sentences")
+        max_sent = closing_cfg.get("max_sentences")
+        sentence_structure = closing_cfg.get("sentence_structure", [])
 
         closing_note_block = dedent(f"""
         CLOSING NOTE REQUIREMENTS:
@@ -3162,8 +3164,17 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         - {intent}
         - It MUST anchor strictly to: {", ".join(anchors)}.
         - It MUST NOT introduce new metrics or reinterpret semantic data.
-        - Maximum {max_sent} sentences.
         """).strip()
+
+        if exact_sent:
+            closing_note_block += f"\n- The closing note MUST contain exactly {exact_sent} sentences."
+        elif max_sent:
+            closing_note_block += f"\n- Maximum {max_sent} sentences."
+
+        if sentence_structure:
+            closing_note_block += "\n- The six sentences MUST follow this structure:"
+            for s in sentence_structure:
+                closing_note_block += f"\n  {s}"
     
     coaching_block = ""
     if coaching_enabled and coaching_max > 0:

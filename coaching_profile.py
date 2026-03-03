@@ -285,12 +285,12 @@ RENDERER_PROFILES = {
             "intent_rule": "Assess whether autonomic and recovery markers support or constrain training intent.",
             "exact_sentences": 6,
             "sentence_structure": [
-            "1. State classification (Expansion / Consolidation / Plateau).",
-            "2. Describe load + fatigue interaction (load_trend + fatigue_trend).",
-            "3. Describe fitness response (fitness_trend + Efficiency_Factor + Fatigue_Resistance).",
-            "4. Explain what this means physiologically (adaptation quality).",
-            "5. Translate into plain language (block is building / absorbing / stagnating).",
-            "6. Give concrete forward guidance for the next block phase."
+                "1. State classification (Supported / Borderline / Constrained).",
+                "2. Describe HRV behaviour relative to baseline (trend + stability).",
+                "3. Describe interaction with CTL, ATL, and TSB.",
+                "4. Explain physiological meaning (autonomic balance or strain).",
+                "5. Translate into plain language (what this means for how you feel / cope).",
+                "6. Provide concrete guidance for today or the next 24–72 hours."
             ]
         }
     },
