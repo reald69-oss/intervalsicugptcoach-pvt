@@ -2524,7 +2524,7 @@ def build_semantic_json(context):
         semantic["options"] = context["render_options"]
 
     # ---------------------------------------------------------
-    # 🗓️ Microcycle Execution Model (ISO Phase-Aligned)
+    # 🗓️ Microcycle Execution Model (ISO Aligned)
     # ---------------------------------------------------------
     if semantic["meta"].get("report_type") == "weekly":
 
@@ -2540,18 +2540,15 @@ def build_semantic_json(context):
 
         try:
             # -------------------------------------------------
-            # 1️⃣ ISO week
+            # 1️⃣ ISO week (TRUE current week — time anchored)
             # -------------------------------------------------
-            weekly_phases = semantic.get("weekly_phases", [])
-            if not weekly_phases:
-                semantic["current_ISO_weekly_microcycle"] = current_ISO_weekly_microcycle
-                return semantic
+            now = pd.Timestamp.now(tz=context.get("timezone") or "UTC")
+            iso = now.isocalendar()
 
-            week_label = weekly_phases[-1]["week"]
+            week_label = f"{iso.year}-W{iso.week}"
             current_ISO_weekly_microcycle["week_iso"] = week_label
 
-            year, week = week_label.split("-W")
-            monday = pd.Timestamp.fromisocalendar(int(year), int(week), 1)
+            monday = pd.Timestamp.fromisocalendar(int(iso.year), int(iso.week), 1)
             sunday = monday + pd.Timedelta(days=6)
 
             # -------------------------------------------------
@@ -2657,6 +2654,9 @@ def build_semantic_json(context):
 
                 if planned_id not in consumed_ids:
                     planned_remaining += float(pe.get("icu_training_load", 0) or 0)
+
+            # expose planned remaining
+            current_ISO_weekly_microcycle["planned_remaining_tss"] = round(planned_remaining, 1)
 
             # -------------------------------------------------
             # 5️⃣ Delta (ALWAYS computed)
