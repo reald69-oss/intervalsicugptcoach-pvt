@@ -1261,12 +1261,11 @@ def build_semantic_json(context):
     # 🧪 Lactate Measurement & Personalized Endurance Zone
     # ---------------------------------------------------------
 
-    semantic.setdefault("zones", {})
-    semantic["zones"].setdefault("lactate_calibration", {})
+    lactate_block = {}
 
     # --- Lactate summary injection
     if "lactate_summary" in context and context["lactate_summary"]:
-        semantic["zones"]["lactate_calibration"]["lactate"] = context["lactate_summary"]
+        lactate_block["lactate"] = context["lactate_summary"]
 
         debug(
             context,
@@ -1280,7 +1279,7 @@ def build_semantic_json(context):
 
     # --- Personalized endurance zone (Z2)
     if "personalized_z2" in context and context["personalized_z2"]:
-        semantic["zones"]["lactate_calibration"]["personalized_z2"] = context["personalized_z2"]
+        lactate_block["personalized_z2"] = context["personalized_z2"]
 
         debug(
             context,
@@ -1294,9 +1293,9 @@ def build_semantic_json(context):
         debug(context, "[SEMANTIC] No personalized_z2 data available in context")
 
 
-    # --- Lactate-derived power zones 
+    # --- Lactate-derived power zones
     if context.get("power_lactate"):
-        semantic["zones"]["lactate_calibration"]["power_lactate"] = context["power_lactate"]
+        lactate_block["power_lactate"] = context["power_lactate"]
 
         debug(
             context,
@@ -1306,6 +1305,12 @@ def build_semantic_json(context):
             f"r={context['power_lactate'].get('confidence_r')}"
         )
 
+
+    # --- Only attach if something exists
+    if lactate_block:
+        semantic.setdefault("physiology", {})
+        semantic["physiology"]["lactate_calibration"] = lactate_block
+        
     # ---------------------------------------------------------
     # 🔗 ATHLETE: identity + multi-sport profiles + context
     # ---------------------------------------------------------
