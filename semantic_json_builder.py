@@ -23,7 +23,7 @@ Includes (URF v5.1 Canonical Layout):
  - Planned events + daily load summaries
  - Future forecast (Tier-3 projections)
  - Athlete identity / profile / context (flattened Intervals.icu schema)
- - Zones (power / HR / pace + calibration metadata)
+ - Zones (power / HR / pace + lactate_calibration metadata)
  - Meta header (URF v5.1 framework + reporting window + scope)
 """
 
@@ -1258,13 +1258,16 @@ def build_semantic_json(context):
             semantic[k] = {}
 
     # ---------------------------------------------------------
-    # 🧪 Lactate Measurement & Personalized Endurance Zone (from derived metrics)
+    # 🧪 Lactate Measurement & Personalized Endurance Zone
     # ---------------------------------------------------------
-    semantic.setdefault("extended_metrics", {})
+
+    semantic.setdefault("zones", {})
+    semantic["zones"].setdefault("lactate_calibration", {})
 
     # --- Lactate summary injection
     if "lactate_summary" in context and context["lactate_summary"]:
-        semantic["extended_metrics"]["lactate"] = context["lactate_summary"]
+        semantic["zones"]["lactate_calibration"]["lactate"] = context["lactate_summary"]
+
         debug(
             context,
             f"[SEMANTIC] Injected lactate_summary → mean={context['lactate_summary'].get('mean')}, "
@@ -1274,32 +1277,34 @@ def build_semantic_json(context):
     else:
         debug(context, "[SEMANTIC] No lactate_summary available in context")
 
+
     # --- Personalized endurance zone (Z2)
     if "personalized_z2" in context and context["personalized_z2"]:
-        semantic["extended_metrics"]["personalized_z2"] = context["personalized_z2"]
+        semantic["zones"]["lactate_calibration"]["personalized_z2"] = context["personalized_z2"]
+
         debug(
             context,
             f"[SEMANTIC] Injected personalized_z2 → "
             f"{context['personalized_z2'].get('start_w')}–{context['personalized_z2'].get('end_w')}W "
-            f"({context['personalized_z2'].get('start_pct')}–{context['personalized_z2'].get('end_pct')}%), "
+            f"({context['personalized_z2'].get('start_pct')}–"
+            f"{context['personalized_z2'].get('end_pct')}%), "
             f"method={context['personalized_z2'].get('method')}"
         )
     else:
         debug(context, "[SEMANTIC] No personalized_z2 data available in context")
 
-    # --- Lactate-derived power zones (LT1-based)
+
+    # --- Lactate-derived power zones 
     if context.get("power_lactate"):
-        semantic.setdefault("extended_metrics", {})
-        semantic["extended_metrics"]["power_lactate"] = context["power_lactate"]
+        semantic["zones"]["lactate_calibration"]["power_lactate"] = context["power_lactate"]
 
         debug(
             context,
             f"[SEMANTIC] Injected power_lactate → "
-            f"Z2={context['power_lactate'].get('z2_start_w')}–"
-            f"{context['power_lactate'].get('z2_end_w')}W, "
+            f"LT1={context['power_lactate'].get('lt1_w')}W, "
+            f"LT2={context['power_lactate'].get('lt2_w')}W, "
             f"r={context['power_lactate'].get('confidence_r')}"
         )
-
 
     # ---------------------------------------------------------
     # 🔗 ATHLETE: identity + multi-sport profiles + context
