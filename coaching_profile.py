@@ -118,7 +118,7 @@ RENDERER_PROFILES = {
             "extended_metrics": "forbid",
             "performance_intelligence": "full",
             "zones": "forbid",
-            "physiology": "full"
+            "physiology": "full",
             "wellness": "full",
             "phases": "forbid",
             "planned_events": "full",
@@ -184,7 +184,7 @@ RENDERER_PROFILES = {
             "metrics": "full",
             "extended_metrics": "forbid",
             "performance_intelligence": "full",
-            "physiology": "full"
+            "physiology": "full",
             "wellness": "summary",
             "actions": "full",
             "future_actions": "full"
