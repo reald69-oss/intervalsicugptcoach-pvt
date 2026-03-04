@@ -31,7 +31,7 @@ REPORT_CONTRACT = {
         "meta", "hours", "tss", "distance_km",
         "metrics", "extended_metrics",
         "adaptation_metrics", "trend_metrics",
-        "performance_intelligence",
+        "performance_intelligence", "Zones",
         "phases", "phases_summary",
         "wbal_summary", "performance_summary",
         "insights", "actions", "future_forecast", "future_actions"
@@ -257,7 +257,6 @@ RENDERER_PROFILES = {
             "phases": "forbid"
         },
 
-        # NEW
         "emphasis": {
             "wellness": "high",
             "insights": "high"
@@ -325,8 +324,7 @@ RENDERER_PROFILES = {
             "wellness": "summary",
             "phases": "full"
         },
-
-        # NEW
+        
         "emphasis": {
             "phases": "high",
             "phases_summary": "high",
