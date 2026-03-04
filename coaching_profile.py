@@ -31,7 +31,7 @@ REPORT_CONTRACT = {
         "meta", "hours", "tss", "distance_km",
         "metrics", "extended_metrics",
         "adaptation_metrics", "trend_metrics",
-        "performance_intelligence", "Zones",
+        "performance_intelligence", "zones",
         "phases", "phases_summary",
         "wbal_summary", "performance_summary",
         "insights", "actions", "future_forecast", "future_actions"
