@@ -18,7 +18,7 @@ def get_profile_metrics(context):
 
 REPORT_CONTRACT = {
     "weekly": [
-        "meta", "hours", "tss", "distance_km",
+        "meta", "training_volume",
         "metrics", "extended_metrics",
         "performance_intelligence",
         "zones", "physiology", "daily_load", "events", "wbal_summary",
@@ -28,7 +28,7 @@ REPORT_CONTRACT = {
     ],
 
     "season": [
-        "meta", "hours", "tss", "distance_km",
+        "meta", "training_volume",
         "metrics", "extended_metrics",
         "adaptation_metrics", "trend_metrics",
         "performance_intelligence", "physiology",
@@ -38,7 +38,7 @@ REPORT_CONTRACT = {
     ],
 
     "summary": [
-        "meta", "hours", "tss", "distance_km",
+        "meta", "training_volume",
         "wellness", "insights",
         "phases", "phases_summary", "performance_summary"
     ],
@@ -94,7 +94,7 @@ RENDERER_PROFILES = {
         },
         "interpretation_rules": [
             "Interpretations may be descriptive or conditional, not predictive.",
-            "If hours, tss, and distance_km exist, group them under a single header 'Training Volume'. Render them as three stacked metrics (Hours, Training Load (TSS), Distance) in that order.",
+            "If semantic.training_volume exists, render it under the header 'Training Volume' with three stacked metrics: Hours, Training Load (TSS), Distance.",
             "If semantic.wbal_summary.temporal_pattern exists, render a one-line anaerobic load timeline using block symbols (▂ ▃ ▇) mapped to none/low/moderate/high.",
             "If semantic.daily_load exists, render it as a compact monoblock map timeline with weekday labels, relative load blocks, and numeric TSS values aligned underneath. Do NOT render daily_load as a list or table.",
             "If semantic.daily_load exists AND semantic.wellness.CTL and semantic.wellness.ATL are present, a second symbolic fatigue-pressure row MAY be rendered using ↑ ↓ — symbols based ONLY on the sign of (ATL − CTL). No magnitude, thresholds, or new calculations are permitted.",
@@ -111,6 +111,7 @@ RENDERER_PROFILES = {
             "derive_stepwise_forecast"
         ],
         "section_handling": {
+            "training_volume": "full",
             "events": "full",
             "current_ISO_weekly_microcycle": "full",
             "daily_load": "full",
@@ -168,7 +169,7 @@ RENDERER_PROFILES = {
             "placement": "after_data"
         },
         "interpretation_rules": [
-            "If hours, tss, and distance_km exist, group them under a single header 'Training Volume'. Render them as three stacked metrics (Hours, Training Load (TSS), Distance) in that order.",
+            "If semantic.training_volume exists, render it under the header 'Training Volume' with three stacked metrics: Hours, Training Load (TSS), Distance.",
             "Focus on trends, phases, and accumulated load.",
             "Avoid session-level or daily commentary.",
             "If performance_intelligence exists, render chronic_state first (90d), then acute_overlay (7d). Emphasise contrast between chronic capacity and acute stress.",
@@ -177,6 +178,7 @@ RENDERER_PROFILES = {
             "Restate phase descriptors already present in semantic data."
         ],
         "section_handling": {
+            "training_volume": "full",
             "events": "forbid",
             "daily_load": "forbid",
             "weekly_phases": "forbid",
@@ -308,7 +310,7 @@ RENDERER_PROFILES = {
             "placement": "after_data"
         },
         "interpretation_rules": [
-            "If hours, tss, and distance_km exist, group them under a single header 'Training Volume'. Render them as three stacked metrics (Hours, Training Load (TSS), Distance) in that order.",
+            "If semantic.training_volume exists, render it under the header 'Training Volume' with three stacked metrics: Hours, Training Load (TSS), Distance.",
             "High-level descriptive interpretation only.",
             "Avoid granular metrics or micro-coaching."
         ],
@@ -317,6 +319,7 @@ RENDERER_PROFILES = {
             "show full phases in markdown table."
         ],
         "section_handling": {
+            "training_volume": "full",
             "events": "forbid",
             "daily_load": "forbid",
             "metrics": "summary",

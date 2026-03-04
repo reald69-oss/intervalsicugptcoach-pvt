@@ -1239,9 +1239,11 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
 
     if report_type not in ("season", "summary"):
-        semantic["hours"] = handle_missing_data(context.get("totalHours"), 0)
-        semantic["tss"] = handle_missing_data(context.get("totalTss"), 0)
-        semantic["distance_km"] = handle_missing_data(context.get("totalDistance"), 0)
+        semantic["training_volume"] = {
+            "hours": handle_missing_data(context.get("totalHours"), 0),
+            "tss": handle_missing_data(context.get("totalTss"), 0),
+            "distance_km": handle_missing_data(context.get("totalDistance"), 0),
+        }
 
     # ---------------------------------------------------------
     # AUTHORITATIVE Tier-2 metric injection
@@ -1310,7 +1312,7 @@ def build_semantic_json(context):
     if lactate_block:
         semantic.setdefault("physiology", {})
         semantic["physiology"]["lactate_calibration"] = lactate_block
-        
+
     # ---------------------------------------------------------
     # 🔗 ATHLETE: identity + multi-sport profiles + context
     # ---------------------------------------------------------
@@ -1784,21 +1786,21 @@ def build_semantic_json(context):
             # --- Build unified weekly phase summary ---
             semantic["weekly_phases"] = weekly_phases
 
-            # ✅ ONLY set totals for season / summary
+            # Only set totals for season / summary
             if semantic["meta"]["report_type"] in ("season", "summary"):
-                semantic["hours"] = round(total_hours, 2)
-                semantic["tss"] = round(total_tss, 0)
-                semantic["distance_km"] = round(total_distance, 2)
+                total_hours = round(total_hours, 2)
+                total_tss = round(total_tss, 0)
+                total_distance = round(total_distance, 2)
 
-                context["locked_totalHours"] = semantic["hours"]
-                context["locked_totalTss"] = semantic["tss"]
-                context["locked_totalDistance"] = semantic["distance_km"]
-
-                semantic.setdefault("summary", {}).update({
-                    "totalHours": semantic["hours"],
-                    "totalTss": semantic["tss"],
-                    "totalDistance": semantic["distance_km"],
+                semantic.setdefault("training_volume", {}).update({
+                    "totalHours": total_hours,
+                    "totalTss": total_tss,
+                    "totalDistance": total_distance,
                 })
+
+                context["locked_totalHours"] = total_hours
+                context["locked_totalTss"] = total_tss
+                context["locked_totalDistance"] = total_distance
 
                 debug(
                     context,
