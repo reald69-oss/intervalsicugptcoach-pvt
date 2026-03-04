@@ -542,41 +542,57 @@ async def run_audit_with_data(
             })
 
         # ---------------------------------------------------------
-        # 🗓️ Enforce deterministic 7-day window (WEEKLY ONLY)
+        # 🗓️ WINDOW RESOLUTION
         # ---------------------------------------------------------
-        if report_range == "weekly" and start and not end:
-            try:
-                dt_start = pd.to_datetime(start)
-                dt_end = dt_start + pd.Timedelta(days=6)  # inclusive 7-day block
-                end = dt_end.strftime("%Y-%m-%d")
-            except Exception:
-                pass
-        # else sumary start and end 
-        if start:
-            prefetch_context["start"] = start
 
-        if end:
-            prefetch_context["end"] = end
-            
-        # --- EARLY HEADER INJECTION (pre-run safety) ---
-        athlete_profile = prefetch_context.get("athleteProfile", {})
+        if report_range == "weekly":
 
+            # If start provided → enforce 7 consecutive days
+            if start:
+                try:
+                    dt_start = pd.to_datetime(start)
+                    dt_end = dt_start + pd.Timedelta(days=6)
+                    start = dt_start.strftime("%Y-%m-%d")
+                    end   = dt_end.strftime("%Y-%m-%d")
+                except Exception:
+                    pass
+
+            # If no start provided → derive most recent 7-day block from data
+            else:
+                df_daily = prefetch_context.get("df_daily")
+                if df_daily is not None and not df_daily.empty:
+                    dt_end = pd.to_datetime(df_daily["date"].max())
+                    dt_start = dt_end - pd.Timedelta(days=6)
+                    start = dt_start.strftime("%Y-%m-%d")
+                    end   = dt_end.strftime("%Y-%m-%d")
+
+
+        # ---------------------------------------------------------
+        # 📦 Persist canonical period
+        # ---------------------------------------------------------
+        if start and end:
+            prefetch_context["period"] = {
+                "start": start,
+                "end": end
+            }
+
+        # ---------------------------------------------------------
+        # 🧾 Header date range
+        # ---------------------------------------------------------
         period = prefetch_context.get("period", {})
-
-        resolved_start = start or prefetch_context.get("start") or period.get("start")
-        resolved_end   = end   or prefetch_context.get("end")   or period.get("end")
+        resolved_start = period.get("start")
+        resolved_end   = period.get("end")
 
         date_range = (
             f"{resolved_start} → {resolved_end}"
             if resolved_start and resolved_end
             else "not_passed"
         )
-
+        
         # -----------------------------------------------------
         # 🏷️ INJECT REPORT HEADER
         # -----------------------------------------------------
         athlete_profile = prefetch_context.get("athleteProfile", {})
-        sport_settings = athlete_profile.get("sportSettings", [])
 
         prefetch_context["report_header"] = {
             "athlete": athlete_profile.get("name", "Unknown Athlete"),
