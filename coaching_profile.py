@@ -31,7 +31,7 @@ REPORT_CONTRACT = {
         "meta", "hours", "tss", "distance_km",
         "metrics", "extended_metrics",
         "adaptation_metrics", "trend_metrics",
-        "performance_intelligence", "zones",
+        "performance_intelligence",
         "phases", "phases_summary",
         "wbal_summary", "performance_summary",
         "insights", "actions", "future_forecast", "future_actions"
@@ -117,7 +117,7 @@ RENDERER_PROFILES = {
             "metrics": "full",
             "extended_metrics": "forbid",
             "performance_intelligence": "full",
-            "zones": "full",
+            "zones": "forbid",
             "wellness": "full",
             "phases": "forbid",
             "planned_events": "full",
