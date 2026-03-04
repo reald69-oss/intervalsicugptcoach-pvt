@@ -167,6 +167,7 @@ RENDERER_PROFILES = {
             "placement": "after_data"
         },
         "interpretation_rules": [
+            "If hours, tss, and distance_km exist, group them under a single header 'Training Volume'. Render them as three stacked metrics (Hours, Training Load (TSS), Distance) in that order.",
             "Focus on trends, phases, and accumulated load.",
             "Avoid session-level or daily commentary.",
             "If performance_intelligence exists, render chronic_state first (90d), then acute_overlay (7d). Emphasise contrast between chronic capacity and acute stress.",
@@ -307,6 +308,7 @@ RENDERER_PROFILES = {
             "placement": "after_data"
         },
         "interpretation_rules": [
+            "If hours, tss, and distance_km exist, group them under a single header 'Training Volume'. Render them as three stacked metrics (Hours, Training Load (TSS), Distance) in that order.",
             "High-level descriptive interpretation only.",
             "Avoid granular metrics or micro-coaching."
         ],
