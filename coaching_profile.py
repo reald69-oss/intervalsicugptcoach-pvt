@@ -94,6 +94,7 @@ RENDERER_PROFILES = {
         },
         "interpretation_rules": [
             "Interpretations may be descriptive or conditional, not predictive.",
+            "If hours, tss, and distance_km exist, group them under a single header 'Training Volume'. Render them as three stacked metrics (Hours, Training Load (TSS), Distance) in that order.",
             "If semantic.wbal_summary.temporal_pattern exists, render a one-line anaerobic load timeline using block symbols (▂ ▃ ▇) mapped to none/low/moderate/high.",
             "If semantic.daily_load exists, render it as a compact monoblock map timeline with weekday labels, relative load blocks, and numeric TSS values aligned underneath. Do NOT render daily_load as a list or table.",
             "If semantic.daily_load exists AND semantic.wellness.CTL and semantic.wellness.ATL are present, a second symbolic fatigue-pressure row MAY be rendered using ↑ ↓ — symbols based ONLY on the sign of (ATL − CTL). No magnitude, thresholds, or new calculations are permitted.",
