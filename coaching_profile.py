@@ -21,7 +21,7 @@ REPORT_CONTRACT = {
         "meta", "hours", "tss", "distance_km",
         "metrics", "extended_metrics",
         "performance_intelligence",
-        "zones", "physiology" "daily_load", "events", "wbal_summary",
+        "zones", "physiology", "daily_load", "events", "wbal_summary",
         "wellness", "phases", "insights", "insight_view", "actions",
         "planned_events", "planned_summary_by_date", "current_ISO_weekly_microcycle",
         "future_forecast", "future_actions"
@@ -31,7 +31,7 @@ REPORT_CONTRACT = {
         "meta", "hours", "tss", "distance_km",
         "metrics", "extended_metrics",
         "adaptation_metrics", "trend_metrics",
-        "performance_intelligence", "physiology"
+        "performance_intelligence", "physiology",
         "phases", "phases_summary",
         "wbal_summary", "performance_summary",
         "insights", "actions", "future_forecast", "future_actions"
