@@ -242,7 +242,6 @@ def normalize_prefetched_context(data):
         context["wellness"]         = df_well.to_dict(orient="records")
         context["athlete"]          = athlete
         context["calendar"]         = calendar
-
         # -------------------------------------------------
         # 🔋 POWER CURVE NORMALIZATION (Worker → ESPE)
         # -------------------------------------------------
@@ -253,6 +252,12 @@ def normalize_prefetched_context(data):
             REQUIRED = ["5s", "1m", "5m", "20m", "60m"]
             normalized_curves = {}
 
+            def safe_float(x):
+                try:
+                    return float(x)
+                except (TypeError, ValueError):
+                    return None
+
             for sport, curve_data in power_curve.items():
 
                 if not isinstance(curve_data, dict):
@@ -262,47 +267,36 @@ def normalize_prefetched_context(data):
                 current = curve_data.get("current", {})
                 previous = curve_data.get("previous", {})
                 regression = curve_data.get("curve_regression", {})
-
-                # -----------------------------------------
-                # FFT power model (if present)
-                # -----------------------------------------
                 model = curve_data.get("models", {})
 
                 normalized_curves[sport] = {
 
-                    "current": {
-                        k: float(current.get(k, 0)) if current.get(k) is not None else None
-                        for k in REQUIRED
-                    },
+                    "current": {k: safe_float(current.get(k)) for k in REQUIRED},
 
-                    "previous": {
-                        k: float(previous.get(k, 0)) if previous.get(k) is not None else None
-                        for k in REQUIRED
-                    },
+                    "previous": {k: safe_float(previous.get(k)) for k in REQUIRED},
 
                     "window_days": int(curve_data.get("window_days", 90)),
 
                     "curve_regression": {
-                        "slope": float(regression.get("slope"))
-                        if regression.get("slope") is not None else None,
-                        "r2": float(regression.get("r2"))
-                        if regression.get("r2") is not None else None
+                        "slope": safe_float(regression.get("slope")),
+                        "r2": safe_float(regression.get("r2")),
                     },
 
-                    # FFT_CURVES model
                     "models": {
                         "source": "FFT_CURVES",
-                        "cp": float(model.get("cp")) if model.get("cp") else None,
-                        "w_prime": float(model.get("w_prime")) if model.get("w_prime") else None,
-                        "pmax": float(model.get("pmax")) if model.get("pmax") else None,
-                        "ftp": float(model.get("ftp")) if model.get("ftp") else None
-                    }
+                        "cp": safe_float(model.get("cp")),
+                        "w_prime": safe_float(model.get("w_prime")),
+                        "pmax": safe_float(model.get("pmax")),
+                        "ftp": safe_float(model.get("ftp")),
+                    },
                 }
 
                 # -----------------------------------------
                 # Anchor sanity checks
                 # -----------------------------------------
-                if not normalized_curves[sport]["current"]["5m"] or not normalized_curves[sport]["current"]["20m"]:
+                c = normalized_curves[sport]["current"]
+
+                if c["5m"] is None or c["20m"] is None:
                     debug(context, f"[NORM] ESPE anchors incomplete for {sport}")
 
                 debug(
