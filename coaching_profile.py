@@ -179,6 +179,9 @@ RENDERER_PROFILES = {
             "Focus on trends, phases, and accumulated load.",
             "Avoid session-level or daily commentary.",
             "If performance_intelligence exists, render chronic_state first (90d), then acute_overlay (7d). Emphasise contrast between chronic capacity and acute stress.",
+            "Interpretation may combine signals across sections when they describe the same physiological process (e.g. fatigue, adaptation, durability).",
+            "When energy_system_progression exists, generate at least one sentence summarising the current adaptation direction using system_status and adaptation_state.",
+            "Insights SHOULD prioritise adaptation signals (ESPE) before repeating metric definitions.",
         ],
         "allowed_enrichment": [
             "Restate phase descriptors already present in semantic data."
@@ -189,7 +192,7 @@ RENDERER_PROFILES = {
             "daily_load": "forbid",
             "weekly_phases": "forbid",
             "phases": "full",
-            "metrics": "full",
+            "metrics": "summary",
             "extended_metrics": "forbid",
             "performance_intelligence": "full",
             "energy_system_progression": "summary",
