@@ -2616,6 +2616,14 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     if semantic["meta"].get("report_type") == "weekly":
 
+        report_start = pd.to_datetime(context.get("start")).date()
+        report_end   = pd.to_datetime(context.get("end")).date()
+        today = pd.Timestamp.now(tz=context.get("timezone") or "UTC").date()
+
+        if not (report_start <= today <= report_end):
+            semantic["current_ISO_weekly_microcycle"] = None
+        else:
+            
         current_ISO_weekly_microcycle = {
             "week_iso": None,
             "weekly_target_tss": 0.0,
