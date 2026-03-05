@@ -2080,7 +2080,13 @@ def build_semantic_json(context):
             # Restrict calendar to planned horizon
             # -------------------------------------------------
 
-            report_end = pd.to_datetime(context.get("end")).date()
+            period = semantic.get("meta", {}).get("period", "")
+
+            if "→" in period:
+                _, end_str = [x.strip() for x in period.split("→")]
+                report_end = pd.to_datetime(end_str).date()
+            else:
+                report_end = pd.to_datetime(context.get("end")).date()
             planned_start = report_end
             planned_end = report_end + pd.Timedelta(days=14)
 
