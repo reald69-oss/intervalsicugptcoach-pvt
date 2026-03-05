@@ -2438,6 +2438,26 @@ def build_semantic_json(context):
         )
 
     # ---------------------------------------------------------
+    # 🧠 Energy System Progression (Tier-3 ESPE)
+    # ---------------------------------------------------------
+
+    espe = context.get("energy_system_progression")
+
+    if isinstance(espe, dict) and espe:
+
+        semantic["energy_system_progression"] = espe
+
+        debug(
+            context,
+            "[SEMANTIC] Injected energy_system_progression → "
+            f"sports={list(espe.get('sports', {}).keys())}"
+        )
+
+    else:
+
+        debug(context, "[SEMANTIC] energy_system_progression not present")
+
+    # ---------------------------------------------------------
     # 🧬 WELLNESS CONSOLIDATION (URF v5.2 canonical structure)
     # ---------------------------------------------------------
     if semantic["meta"]["report_type"] == "wellness":

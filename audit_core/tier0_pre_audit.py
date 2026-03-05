@@ -500,6 +500,132 @@ def fetch_athlete_profile(headers, from_cache=None, context=None):
     debug(context, f"[DEBUG-ATHLETE] sample type={type(context.get('athlete'))} content={str(context.get('athlete'))[:100]}")
 
     return athlete, context
+def fetch_power_curves(headers, context=None, from_cache=None):
+    """
+    Fetch ESPE power curve dataset and normalize to ESPE contract.
+    """
+
+    context = context or {}
+
+    # --------------------------------------------
+    # Prefetched path
+    # --------------------------------------------
+    if from_cache is not None:
+        debug(context, "[T0] Using prefetched power_curve dataset")
+        payload = from_cache
+    else:
+
+        athlete_id = context.get("athlete", {}).get("id", 0)
+        curves = context.get("espe_curves")
+        pm_type = "FFT_CURVES"
+
+        url = (
+            f"{INTERVALS_API}/athlete/{athlete_id}/power-curves-ext"
+            f"?type=Ride"
+            f"&curves={curves}"
+            f"&pmType={pm_type}"
+        )
+
+        debug(context, f"[T0] Fetching power curves → {url}")
+
+        resp = fetch_with_retry(url, headers)
+
+        if resp.status_code != 200:
+            raise AuditHalt(
+                f"❌ Power curve fetch failed ({resp.status_code}) → "
+                f"{resp.text[:200]}"
+            )
+
+        payload = resp.json()
+
+        debug(context, "[T0] Power curve dataset retrieved")
+
+    # --------------------------------------------
+    # Window selection
+    # --------------------------------------------
+
+    curves = payload.get("list")
+
+    if not curves or len(curves) < 2:
+        debug(context, "[T0] ⚠ power_curve payload missing windows")
+        return {}
+
+    prev = curves[0]
+    curr = curves[1]
+
+    def extract_anchor(block, seconds):
+
+        secs = block.get("secs", [])
+        vals = block.get("values", [])
+
+        try:
+            idx = secs.index(seconds)
+            return vals[idx]
+        except ValueError:
+            return None
+
+    # --------------------------------------------
+    # Anchor extraction
+    # --------------------------------------------
+
+    normalized = {
+        "Ride": {
+            "previous": {
+                "5s": extract_anchor(prev, 5),
+                "1m": extract_anchor(prev, 60),
+                "5m": extract_anchor(prev, 300),
+                "20m": extract_anchor(prev, 1200),
+                "60m": extract_anchor(prev, 3600),
+            },
+            "current": {
+                "5s": extract_anchor(curr, 5),
+                "1m": extract_anchor(curr, 60),
+                "5m": extract_anchor(curr, 300),
+                "20m": extract_anchor(curr, 1200),
+                "60m": extract_anchor(curr, 3600),
+            },
+            "window_days": prev.get("days"),
+
+            "curve_regression": {
+                "slope": curr.get("mapPlot", {}).get("poSlope"),
+                "r2": curr.get("mapPlot", {}).get("poR2")
+            }
+        }
+    }
+
+    # --------------------------------------------
+    # FFT_CURVES model extraction
+    # --------------------------------------------
+
+    fft_model = next(
+        (m for m in curr.get("powerModels", []) if m.get("type") == "FFT_CURVES"),
+        None
+    )
+
+    if fft_model:
+
+        normalized["Ride"]["models"] = {
+            "source": "FFT_CURVES",
+            "cp": fft_model.get("criticalPower"),
+            "w_prime": fft_model.get("wPrime"),
+            "pmax": fft_model.get("pMax"),
+            "ftp": fft_model.get("ftp")
+        }
+
+    # --------------------------------------------
+    # Guards
+    # --------------------------------------------
+
+    if not normalized["Ride"]["current"]["5m"]:
+        debug(context, "[NORM] ESPE missing 5m anchor for Ride")
+
+    debug(
+        context,
+        "[T0] Normalized power_curve anchors →",
+        f"{list(normalized['Ride']['current'].keys())}"
+    )
+
+    return normalized
 
 
 def run_tier0_pre_audit(start: str, end: str, context: dict):
@@ -813,6 +939,19 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
 
     context.update({"report_mode": mode, "window_start": oldest, "window_end": newest})
 
+    # --- POWER CURVES WINDOW
+
+    ESPE_WINDOW = 84
+
+    end_date = pd.to_datetime(context.get("window_end")).date()
+
+    curr_start = end_date - timedelta(days=ESPE_WINDOW)
+    prev_start = end_date - timedelta(days=ESPE_WINDOW * 2)
+    prev_end = curr_start
+
+    curves = f"r.{prev_start}.{prev_end},r.{curr_start}.{end_date}"
+
+    context["espe_curves"] = curves
 
     # --- Step 3: Fetch activities (canonical Tier-0 behaviour) ---
     report_type = str(context.get("report_type", "")).lower()
@@ -1116,6 +1255,15 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
             df_activities["start_date_local"] = pd.Timestamp.now()
         df_activities["start_date_local"] = df_activities["start_date_local"].dt.tz_localize(None)
         debug(context, f"[T0-FIX] Injected synthetic start_date_local for {len(df_activities)} activities.")
+
+    # --- Fetch power curves (ESPE source) ---
+    power_curve = resolve_dataset(
+        "power_curve",
+        lambda from_cache, context: fetch_power_curves(headers, context, from_cache),
+        context,
+    )
+
+    context["power_curve"] = power_curve
 
     # ------------------------------------------------------------
     # PRESERVE REAL 90-DAY DATASET (for extended metrics)

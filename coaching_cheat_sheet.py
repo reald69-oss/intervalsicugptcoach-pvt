@@ -276,6 +276,54 @@ CHEAT_SHEET["thresholds"] = {
             "trend_max": 0.05
         }
     },
+    "ESPE": {
+        "Ride": {
+            "anaerobic": {"strong": 3.0, "moderate": 1.5, "mild": 0.8, "decline": -1.5},
+            "vo2": {"strong": 3.0, "moderate": 1.5, "mild": 0.8, "decline": -1.5},
+            "threshold": {"strong": 2.0, "moderate": 1.0, "mild": 0.5, "decline": -1.0},
+            "aerobic": {"strong": 1.5, "moderate": 0.7, "mild": 0.4, "decline": -1.0}
+        },
+
+        "Run": {
+            "anaerobic": {"strong": 2.0, "moderate": 1.0, "mild": 0.5, "decline": -1.0},
+            "vo2": {"strong": 2.0, "moderate": 1.0, "mild": 0.5, "decline": -1.0},
+            "threshold": {"strong": 1.0, "moderate": 0.5, "mild": 0.3, "decline": -0.8},
+            "aerobic": {"strong": 1.0, "moderate": 0.5, "mild": 0.3, "decline": -0.8}
+        },
+
+        # Cycling curve phenotypes
+        "curve_slope_time_trialist": -0.48,
+        "curve_slope_endurance_specialist": -0.55,
+        "curve_slope_all_rounder": -0.62,
+        "curve_slope_punchy_climber": -0.68,
+        "curve_slope_punchy": -0.75,
+        "curve_slope_anaerobic_specialist": -0.85,
+
+        # Running curve phenotypes
+        "run_curve_slope_endurance_runner": -0.42,
+        "run_curve_slope_balanced_runner": -0.50,
+        "run_curve_slope_punchy_runner": -0.60,
+
+        "neutral_band": 0.75,
+
+        "curve_quality": {
+            "excellent": 0.85,
+            "good": 0.75
+        },
+        "system_timeline_map": {
+            "strong_gain": "building",
+            "moderate_gain": "building",
+            "mild_gain": "emerging",
+            "stable": "maintaining",
+            "decline": "detraining"
+        },
+        "pdr_reference_duration": "5m",
+
+        "curve_windows": {
+            "default_days": 84,
+            "comparison_model": "rolling_equal_window"
+        },
+    }
 }
 
 CHEAT_SHEET["metric_groups"] = {
@@ -735,6 +783,50 @@ CHEAT_SHEET["coaching_links"] = {
         "amber - Mild divergence — monitor CP curve stability or review W′ setting."
         "red - Large mismatch between rolling CP W′ and athlete profile W′ — depletion metrics may be distorted. Review W′ calibration."
     ),
+    "pdr_5m": (
+        "Power Duration Reserve at 5 minutes. "
+        "Calculated as P5m minus Critical Power (CP). "
+        "Represents the athlete's supra-threshold energy reserve available "
+        "during high-intensity aerobic/VO2 efforts."
+    ),
+    "curve_window": (
+        "Rolling power-duration curve comparison window used by ESPE. "
+        "Two equal windows are compared (current vs previous) using best power "
+        "values for standard durations (5s, 1m, 5m, 20m, 60m). "
+        "Windows are anchored to the report end date and typically span 84–90 days."
+    ),
+    "FFT_CURVES": (
+        "Power-duration model derived from FFT curve fitting in Intervals.icu. "
+        "Provides estimated Critical Power (CP), W′, maximal sprint power (Pmax), "
+        "and FTP using best efforts across the rolling curve window."
+    ),
+    "vo2_reserve_ratio": (
+        "Ratio of 5-minute power to Critical Power (P5m / CP). "
+        "Represents supra-threshold aerobic reserve and VO₂ capacity headroom. "
+        "Values around 1.15–1.30 typical for trained endurance athletes."
+    ),
+    "glycolytic_bias_ratio": (
+        "Ratio of short-duration power relative to threshold power. "
+        "Indicates glycolytic dominance versus aerobic contribution. "
+        "Higher values suggest stronger anaerobic contribution to the power curve."
+    ),
+    "aerobic_durability_ratio": (
+        "Ratio of long-duration power relative to threshold power. "
+        "Represents aerobic durability and the ability to sustain output "
+        "during prolonged efforts."
+    ),
+    "durability_gradient": (
+        "Durability gradient calculated as P60 divided by P20. "
+        "Reflects fatigue resistance across prolonged efforts. "
+        "Values closer to 1 indicate stronger endurance durability."
+    ),
+    "system_balance_score": (
+        "Composite balance indicator across anaerobic, VO₂, threshold, "
+        "and durability systems derived from the power-duration curve. "
+        "Values closer to 1 indicate balanced development across systems."
+    ),
+
+    
 }
 
 CHEAT_SHEET["display_names"] = {

@@ -20,7 +20,7 @@ REPORT_CONTRACT = {
     "weekly": [
         "meta", "training_volume",
         "metrics", "extended_metrics",
-        "performance_intelligence",
+        "performance_intelligence", "energy_system_progression",
         "zones", "physiology", "daily_load", "events", "wbal_summary",
         "wellness", "phases", "insights", "insight_view", "actions",
         "planned_events", "planned_summary_by_date", "current_ISO_weekly_microcycle",
@@ -118,6 +118,7 @@ RENDERER_PROFILES = {
             "metrics": "full",
             "extended_metrics": "forbid",
             "performance_intelligence": "full",
+            "energy_system_progression": "full",
             "zones": "forbid",
             "physiology": "full",
             "wellness": "full",
@@ -841,8 +842,48 @@ COACH_PROFILE = {
                 "low": "<-2"
             }
         },
-    },
+        "vo2_reserve_ratio": {
+            "framework": "Critical Power / VO₂ Reserve Model",
+            "formula": "P5m / CP",
+            "interpretation": "Ratio of 5-minute power to Critical Power reflecting VO₂ headroom above threshold.",
+            "coaching_implication": "Lower ratios indicate fatigue or VO₂ limitation.",
+        },
 
+        "pdr_5m": {
+            "framework": "Power Duration Reserve",
+            "formula": "P5m − CP",
+            "interpretation": "Difference between 5-minute power and Critical Power representing VO₂ reserve capacity.",
+            "coaching_implication": "Higher reserve suggests strong VO₂ capacity above threshold.",
+        },
+
+        "durability_gradient": {
+            "framework": "Durability Gradient Model",
+            "formula": "P60 / P20",
+            "interpretation": "Ratio of 60-minute power to 20-minute power reflecting fatigue resistance across prolonged efforts.",
+            "coaching_implication": "Lower gradients indicate durability decline during long efforts.",
+        },
+
+        "glycolytic_bias_ratio": {
+            "framework": "Energy System Balance Model",
+            "formula": "P1m / CP",
+            "interpretation": "Ratio of short-duration power to threshold power indicating glycolytic dominance.",
+            "coaching_implication": "High values suggest anaerobic bias relative to aerobic capacity.",
+        },
+
+        "aerobic_durability_ratio": {
+            "framework": "Durability / Endurance Model",
+            "formula": "P60 / CP",
+            "interpretation": "Ratio of 60-minute power to 5-minute power reflecting endurance durability across prolonged efforts.",
+            "coaching_implication": "Lower ratios suggest fatigue-driven endurance drop-off.",
+        },
+
+        "system_balance_score": {
+            "framework": "Energy System Balance Composite",
+            "formula": "Composite ESPE score across anaerobic, VO₂, threshold and durability systems",
+            "interpretation": "Composite indicator describing balance of energy system development.",
+            "coaching_implication": "Values closer to 1 indicate balanced development across systems.",
+        }
+    },
     "metadata": {
         "framework_chain": [
             "Seiler", "Treff 2019", "Banister", "Foster", "San Millán",

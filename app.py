@@ -23,6 +23,7 @@ from audit_core.report_controller import run_report
 from audit_core.utils import debug
 from semantic_json_builder import build_semantic_json
 from audit_core.tier0_pre_audit import expand_zones
+from audit_core.tier3_espe import run_espe
 import logging
 
 logging.basicConfig(
@@ -241,6 +242,84 @@ def normalize_prefetched_context(data):
         context["wellness"]         = df_well.to_dict(orient="records")
         context["athlete"]          = athlete
         context["calendar"]         = calendar
+
+        # -------------------------------------------------
+        # 🔋 POWER CURVE NORMALIZATION (Worker → ESPE)
+        # -------------------------------------------------
+        power_curve = data.get("power_curve")
+
+        if isinstance(power_curve, dict):
+
+            REQUIRED = ["5s", "1m", "5m", "20m", "60m"]
+            normalized_curves = {}
+
+            for sport, curve_data in power_curve.items():
+
+                if not isinstance(curve_data, dict):
+                    debug(context, f"[NORM] Invalid curve block for {sport}")
+                    continue
+
+                current = curve_data.get("current", {})
+                previous = curve_data.get("previous", {})
+                regression = curve_data.get("curve_regression", {})
+
+                # -----------------------------------------
+                # FFT power model (if present)
+                # -----------------------------------------
+                model = curve_data.get("models", {})
+
+                normalized_curves[sport] = {
+
+                    "current": {
+                        k: float(current.get(k, 0)) if current.get(k) is not None else None
+                        for k in REQUIRED
+                    },
+
+                    "previous": {
+                        k: float(previous.get(k, 0)) if previous.get(k) is not None else None
+                        for k in REQUIRED
+                    },
+
+                    "window_days": int(curve_data.get("window_days", 90)),
+
+                    "curve_regression": {
+                        "slope": float(regression.get("slope"))
+                        if regression.get("slope") is not None else None,
+                        "r2": float(regression.get("r2"))
+                        if regression.get("r2") is not None else None
+                    },
+
+                    # FFT_CURVES model
+                    "models": {
+                        "source": "FFT_CURVES",
+                        "cp": float(model.get("cp")) if model.get("cp") else None,
+                        "w_prime": float(model.get("w_prime")) if model.get("w_prime") else None,
+                        "pmax": float(model.get("pmax")) if model.get("pmax") else None,
+                        "ftp": float(model.get("ftp")) if model.get("ftp") else None
+                    }
+                }
+
+                # -----------------------------------------
+                # Anchor sanity checks
+                # -----------------------------------------
+                if not normalized_curves[sport]["current"]["5m"] or not normalized_curves[sport]["current"]["20m"]:
+                    debug(context, f"[NORM] ESPE anchors incomplete for {sport}")
+
+                debug(
+                    context,
+                    f"[NORM] {sport} regression slope={regression.get('slope')} "
+                    f"r2={regression.get('r2')}"
+                )
+
+            context["power_curve"] = normalized_curves
+
+            debug(
+                context,
+                f"[NORM] ESPE power curves loaded for sports={list(normalized_curves.keys())}"
+            )
+
+        else:
+            context["power_curve"] = {}
 
         # Derived Tier-0 equivalents
         context["df_light"]  = df_light

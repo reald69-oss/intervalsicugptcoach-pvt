@@ -32,6 +32,7 @@ from semantic_json_builder import build_semantic_json
 from athlete_profile import map_icu_athlete_to_profile
 from audit_core.tier2_actions import detect_phases
 from audit_core.tier3_performance_intelligence import compute_performance_intelligence
+from audit_core.tier3_espe import run_espe
 
 
 def run_report(
@@ -119,6 +120,9 @@ def run_report(
             debug(context, f"[T1] ✅ Registered prefetched calendar ({len(context['calendar'])} events)")
         else:
             debug(context, "[T1] ⚠️ No prefetched calendar found or invalid format")
+        if isinstance(context.get("power_curve"), dict):
+            context["prefetched"]["power_curve"] = context["power_curve"]
+            debug(context, "[T0] ✅ Registered prefetched power_curve dataset")
 
 
     # ============================================================
@@ -180,6 +184,10 @@ def run_report(
             context,
             f"[ORCH] Registered prefetched datasets: {list(context['prefetched'].keys())}"
         )
+    # Promote prefetched power curves into context
+    if isinstance(context.get("prefetched", {}).get("power_curve"), dict):
+        context["power_curve"] = context["prefetched"]["power_curve"]
+        debug(context, "[T0] Bound prefetched power_curve into context")
 
     # 🔒 Prefetch is authoritative — never refetch
     if context.get("prefetched", {}).get("full"):
@@ -737,6 +745,36 @@ def run_report(
 
     except Exception as e:
         debug(context, f"[T3-PI] ❌ Failed: {e}")
+
+    # ============================================================
+    # 🧠 TIER-3: ENERGY SYSTEM PROGRESSION ENGINE (ESPE)
+    # ============================================================
+
+    debug(context, "[T3-ESPE] Starting Energy System Progression Engine…")
+
+    try:
+
+        power_curve = context.get("power_curve")
+
+        if not power_curve:
+            debug(context, "[T3-ESPE] No power_curve block present — skipping")
+        else:
+
+            espe = run_espe(
+                power_curve,
+                context=context
+            )
+
+            context["energy_system_progression"] = espe
+
+            debug(
+                context,
+                "[T3-ESPE] Completed:",
+                f"sports={list(espe.get('sports', {}).keys())}"
+            )
+
+    except Exception as e:
+        debug(context, f"[T3-ESPE] ❌ Failed: {e}")
 
     # ============================================================
     # 🗓️ TIER-3: CALENDAR & FUTURE FORECAST
