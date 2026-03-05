@@ -243,64 +243,89 @@ def normalize_prefetched_context(data):
         context["athlete"]          = athlete
         context["calendar"]         = calendar
         
-       # -------------------------------------------------
+        # -------------------------------------------------
         # 🔋 POWER CURVE NORMALIZATION (Worker → ESPE)
+        # Replicates Tier-0 fetch_power_curves() behaviour
         # -------------------------------------------------
         power_curve = data.get("power_curve")
 
+        normalized_curves = {}
+
+        def extract_anchor(block, seconds):
+            secs = block.get("secs", [])
+            vals = block.get("values", [])
+            try:
+                idx = secs.index(seconds)
+                return vals[idx]
+            except ValueError:
+                return None
+
         if isinstance(power_curve, dict):
 
-            REQUIRED = ["5s", "1m", "5m", "20m", "60m"]
-            normalized_curves = {}
+            for sport, payload in power_curve.items():
 
-            def safe_float(x):
-                try:
-                    return float(x)
-                except (TypeError, ValueError):
-                    return None
-
-            for sport, curve_data in power_curve.items():
-
-                if not isinstance(curve_data, dict):
+                if not isinstance(payload, dict):
                     debug(context, f"[NORM] Invalid curve block for {sport}")
                     continue
 
-                current = curve_data.get("current") or {}
-                previous = curve_data.get("previous") or {}
-                regression = curve_data.get("curve_regression") or {}
-                model = curve_data.get("models") or {}
+                curve_list = payload.get("list")
+
+                if not curve_list or len(curve_list) < 2:
+                    debug(context, f"[NORM] ⚠ power_curve payload missing windows for {sport}")
+                    continue
+
+                prev = curve_list[0]
+                curr = curve_list[1]
 
                 normalized_curves[sport] = {
-
-                    "current": {k: safe_float(current.get(k)) for k in REQUIRED},
-
-                    "previous": {k: safe_float(previous.get(k)) for k in REQUIRED},
-
-                    "window_days": int(curve_data.get("window_days", 90)),
-
+                    "previous": {
+                        "5s": extract_anchor(prev, 5),
+                        "1m": extract_anchor(prev, 60),
+                        "5m": extract_anchor(prev, 300),
+                        "20m": extract_anchor(prev, 1200),
+                        "60m": extract_anchor(prev, 3600),
+                    },
+                    "current": {
+                        "5s": extract_anchor(curr, 5),
+                        "1m": extract_anchor(curr, 60),
+                        "5m": extract_anchor(curr, 300),
+                        "20m": extract_anchor(curr, 1200),
+                        "60m": extract_anchor(curr, 3600),
+                    },
+                    "window_days": prev.get("days"),
                     "curve_regression": {
-                        "slope": safe_float(regression.get("slope")),
-                        "r2": safe_float(regression.get("r2")),
-                    },
-
-                    "models": {
-                        "source": model.get("source", "FFT_CURVES"),
-                        "cp": safe_float(model.get("cp")),
-                        "w_prime": safe_float(model.get("w_prime")),
-                        "pmax": safe_float(model.get("pmax")),
-                        "ftp": safe_float(model.get("ftp")),
-                    },
+                        "slope": curr.get("mapPlot", {}).get("poSlope"),
+                        "r2": curr.get("mapPlot", {}).get("poR2"),
+                    }
                 }
 
-                c = normalized_curves[sport]["current"]
+                # --------------------------------------------
+                # FFT_CURVES model extraction
+                # --------------------------------------------
+                fft_model = next(
+                    (m for m in curr.get("powerModels", []) if m.get("type") == "FFT_CURVES"),
+                    None
+                )
 
-                if c["5m"] is None or c["20m"] is None:
-                    debug(context, f"[NORM] ESPE anchors incomplete for {sport}")
+                if fft_model:
+                    normalized_curves[sport]["models"] = {
+                        "source": "FFT_CURVES",
+                        "cp": fft_model.get("criticalPower"),
+                        "w_prime": fft_model.get("wPrime"),
+                        "pmax": fft_model.get("pMax"),
+                        "ftp": fft_model.get("ftp"),
+                    }
+
+                # --------------------------------------------
+                # Guards
+                # --------------------------------------------
+                if not normalized_curves[sport]["current"]["5m"]:
+                    debug(context, f"[NORM] ESPE missing 5m anchor for {sport}")
 
                 debug(
                     context,
-                    f"[NORM] {sport} regression slope={regression.get('slope')} "
-                    f"r2={regression.get('r2')}"
+                    f"[NORM] ESPE anchors normalized → {sport}",
+                    list(normalized_curves[sport]["current"].keys())
                 )
 
             context["power_curve"] = normalized_curves
