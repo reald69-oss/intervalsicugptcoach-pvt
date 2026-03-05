@@ -2079,15 +2079,13 @@ def build_semantic_json(context):
             # -------------------------------------------------
             # Restrict calendar to report period
             # -------------------------------------------------
-            period = semantic.get("meta", {}).get("period")
+            period = context.get("period")
 
-            if period and "→" in period:
+            if period and period.get("start") and period.get("end"):
                 try:
-                    p_start, p_end = [x.strip() for x in period.split("→")]
-
+                    p_start = pd.to_datetime(period["start"]).date()
+                    p_end = pd.to_datetime(period["end"]).date()
                     d = pd.to_datetime(start).date()
-                    p_start = pd.to_datetime(p_start).date()
-                    p_end = pd.to_datetime(p_end).date()
 
                     if not (p_start <= d <= p_end):
                         continue
