@@ -452,7 +452,7 @@ def build_insights(semantic):
     # Weekly reports only for now
     # --------------------------------------------------
 
-    if report_type == "weekly":
+    if report_type in ("season", "weekly"):
 
         espe = semantic.get("energy_system_progression", {})
         sports = espe.get("sports", {})
