@@ -103,7 +103,10 @@ RENDERER_PROFILES = {
             "If zone distribution data exists (e.g. zone_dist_power, zone_dist_hr, zone_dist_fused), render zone distribution as fixed-width ASCII proportional bars (one bar per zone), with the exact percentage shown. Bars are presentational only and do not constitute derived metrics.",
             "If semantic.zones.lactate_calibration exists and lactate.available is true, render a Lactate Calibration subsection summarising mean mmol/L, latest mmol/L, sample count, and inferred LT1 power. This is descriptive only and must not derive new values.",
             "If performance_intelligence exists, render three subsections: Anaerobic Repeatability (WDRM), Durability (ISDM), Neural Density (NDLI). Use provided values only. Do NOT recompute or merge with other metrics.",
-            "If high_dep_sessions > 0 and high_drift_sessions > 0 in the same week, describe this as high neuromuscular + metabolic strain overlap."
+            "If high_dep_sessions > 0 and high_drift_sessions > 0 in the same week, describe this as high neuromuscular + metabolic strain overlap.",
+            "Interpretation may combine signals across sections when they describe the same physiological process (e.g. fatigue, adaptation, durability).",
+            "When energy_system_progression exists, generate at least one sentence summarising the current adaptation direction using system_status and adaptation_state.",
+            "Insights SHOULD prioritise adaptation signals (ESPE) before repeating metric definitions.",
         ],
         "allowed_enrichment": [
             "Restate semantic interpretation fields.",
@@ -133,7 +136,8 @@ RENDERER_PROFILES = {
             "metrics": "high",
             "actions": "high",
             "events": "medium",
-            "wellness": "medium"
+            "wellness": "medium",
+            "adaptation": "high"
         },
 
         "framing": {
@@ -368,8 +372,9 @@ REPORT_RESOLUTION = {
         "TSB": "authoritative",
         "zones": "authoritative",
         "derived_metrics": "full",
-        "extended_metrics": "limited",
+        "extended_metrics": "none",
         "performance_intelligence": "acute_full_7d",
+        "energy_system_progression": "full",
         "insights": "tactical",
     },
 
@@ -379,7 +384,7 @@ REPORT_RESOLUTION = {
         "TSB": "authoritative",
         "zones": "not_available",
         "derived_metrics": "trend_only",
-        "extended_metrics": "full",
+        "extended_metrics": "none",
         "performance_intelligence": "acute_overlay_plus_chronic_90d",
         "insights": "strategic",
     },
