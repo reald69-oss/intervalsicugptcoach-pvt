@@ -1609,7 +1609,7 @@ def build_semantic_json(context):
                     activity_id = f"i{activity_id}"
 
                 ev["activity_id"] = activity_id
-                ev["activity_link"] = f'getOneDayFullActivityV1(activity_id="{activity_id}")'
+                ev["activity_link"] = f'https://intervals.icu/activities/{activity_id}'
 
             # 2️⃣ Scalar fields
             for k in available_fields:

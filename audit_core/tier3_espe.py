@@ -39,7 +39,7 @@ def _anchor_meta(v):
         return {
             "power": v.get("power"),
             "activity_id": aid,
-            "activity_link": f"getOneDayFullActivityV1(activity_id=\"{aid}\")" if aid else None
+            "activity_link": f"https://intervals.icu/activities/{aid}" if aid else None
         }
     return {
         "power": v,
@@ -164,7 +164,7 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
         "window_days": window,
         "description": f"Best power values recorded within the last {window} days"
     }
-    
+
     curve_window = {
         "current_days": window,
         "previous_days": window,
