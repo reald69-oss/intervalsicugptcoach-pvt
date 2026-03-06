@@ -2058,11 +2058,26 @@ def build_semantic_json(context):
 
     calendar_data = context.get("calendar")
 
+    consumed_ids = set()
+
+    df_actual = context.get("_df_scope_full")
+    if isinstance(df_actual, pd.DataFrame) and not df_actual.empty:
+        for _, row in df_actual.iterrows():
+            paired_id = row.get("paired_event_id")
+            if paired_id:
+                consumed_ids.add(paired_id)
+
     if isinstance(calendar_data, list) and len(calendar_data) > 0:
         planned_by_date = {}
 
         for e in calendar_data:
+
             if not isinstance(e, dict):
+                continue
+
+            planned_id = e.get("id")
+
+            if planned_id in consumed_ids:
                 continue
 
             start = e.get("start_date_local") or e.get("date")
