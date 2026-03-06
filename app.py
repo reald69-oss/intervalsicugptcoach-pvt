@@ -252,14 +252,28 @@ def normalize_prefetched_context(data):
         normalized_curves = {}
 
         def extract_anchor(block, seconds):
+
             secs = block.get("secs", [])
             vals = block.get("values", [])
-            try:
-                idx = secs.index(seconds)
-                return vals[idx]
-            except ValueError:
+            acts = block.get("activity_id", [])
+
+            if not secs:
                 return None
 
+            # closest duration match (safer than exact index)
+            idx = min(range(len(secs)), key=lambda i: abs(secs[i] - seconds))
+
+            power = vals[idx]
+            activity_id = acts[idx] if idx < len(acts) else None
+
+            if activity_id and not str(activity_id).startswith("i"):
+                activity_id = f"i{activity_id}"
+
+            return {
+                "power": power,
+                "activity_id": activity_id
+            }
+            
         if isinstance(power_curve, dict):
 
             for sport, payload in power_curve.items():

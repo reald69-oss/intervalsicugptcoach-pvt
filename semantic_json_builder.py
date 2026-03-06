@@ -1572,7 +1572,7 @@ def build_semantic_json(context):
         )
 
         core_fields = [
-            "start_date_local", "name", "type",
+            "id","start_date_local", "name", "type",
             "distance", "moving_time", "icu_training_load", "IF",
             "average_heartrate", "average_cadence",
             "icu_average_watts", "icu_variability_index", "icu_weighted_avg_watts",
@@ -1595,9 +1595,21 @@ def build_semantic_json(context):
             ev = {}
 
             # 1️⃣ Identity fields
-            for key in ["start_date_local", "name", "type"]:
+            for key in ["id", "start_date_local", "name", "type"]:
                 if key in row and pd.notna(row[key]):
                     ev[key] = row[key]
+
+            # build activity link
+            activity_id = row.get("id") or row.get("activity_id")
+
+            if pd.notna(activity_id):
+                activity_id = str(activity_id)
+
+                if not activity_id.startswith("i"):
+                    activity_id = f"i{activity_id}"
+
+                ev["activity_id"] = activity_id
+                ev["activity_link"] = f'getOneDayFullActivityV1(activity_id="{activity_id}")'
 
             # 2️⃣ Scalar fields
             for k in available_fields:
