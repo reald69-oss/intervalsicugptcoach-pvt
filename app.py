@@ -618,6 +618,12 @@ async def run_audit_with_data(
             )
 
         except HTTPException as e:
+
+            sys.stderr.write("\n🚫 HTTPException triggered\n")
+            sys.stderr.write(f"Status: {e.status_code}\n")
+            sys.stderr.write(f"Detail: {e.detail}\n")
+            sys.stderr.flush()
+
             return JSONResponse(
                 status_code=e.status_code,
                 content={
