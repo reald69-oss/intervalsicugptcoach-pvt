@@ -3358,6 +3358,8 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         6) 🧘 Recovery (very low intensity recovery session)
         7) ❤️ Heart_rate_recovery_60s (Heart Rate Recovery within 60s)
         - Icons are visual aliases only and must not replace numeric values, suppress other applicable icons, or reduce table rows.
+        - When `activity_link` exists, the Activity column MUST render the activity name as a Markdown link: [name](activity_link).
+        - Icons MUST appear before the link inside the same Activity cell.
         PLANNED EVENTS (WEEKLY — NON-NEGOTIABLE):
         - The planned_events section MUST be rendered as a Markdown table.
         - EVERY planned event in the semantic JSON MUST appear as exactly one row.
