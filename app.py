@@ -1190,7 +1190,7 @@ def data_quality_audit(ctx: dict) -> dict:
         "strava_stub_detected": strava_stub_detected
     }
 
-def load_demo_response(report_range: str, reason: str):
+def load_demo_response(report_range: str, reason: str, detail: str | None = None):
 
     sys.stderr.write("\n🧪 DEMO RESPONSE GENERATED\n")
     sys.stderr.write(f"Report: {report_range}\n")
@@ -1213,7 +1213,10 @@ def load_demo_response(report_range: str, reason: str):
         "MANUAL_DEMO": "Manual demo mode enabled." + " See www.montis.net/setup.html"
     }
 
-    readable_reason = REASON_MAP.get(reason, "Demo fallback, See www.montis.net/setup.html")
+    readable_reason = detail or REASON_MAP.get(
+        reason,
+        "Demo fallback. See www.montis.net/setup.html"
+    )
 
     # ✅ Canonical location — root of semantic_graph
     existing = demo_sg.get("renderer_instructions", "")
@@ -1300,7 +1303,11 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
 
     # 🟡 Soft → demo
     if severity == "soft":
-        return load_demo_response(report_range, reason=code)
+        return load_demo_response(
+            report_range,
+            reason=code,
+            detail=str(e)
+        )
 
     # 🔴 Hard but demo-allowed (auth cases)
     if code in ["OAUTH_NOT_CONFIGURED", "ATHLETE_PROFILE_INVALID"]:
