@@ -23,7 +23,7 @@ from audit_core.report_controller import run_report
 from audit_core.utils import debug
 from semantic_json_builder import build_semantic_json
 from audit_core.tier0_pre_audit import expand_zones
-from audit_core.tier3_espe import run_espe
+
 import logging
 
 logging.basicConfig(
@@ -63,8 +63,8 @@ def sanitize(obj, seen=None):
         seen = set()
     if isinstance(obj, (dict, list, tuple, pd.DataFrame, pd.Series)):
         oid = id(obj)
-    if oid in seen:
-        return obj  # allow reuse, not recursion
+        if oid in seen:
+            return obj  # allow reuse, not recursion
         seen.add(oid)
     if isinstance(obj, pd.DataFrame):
         return sanitize(obj.to_dict(orient="records"), seen)
@@ -610,11 +610,13 @@ async def run_audit_with_data(
             prefetch_context = normalize_prefetched_context(data)
 
         except AuditHalt as e:
+            context = locals().get("prefetch_context")
             return handle_audit_halt(
                 e,
                 report_range,
                 buffer=None,
-                header=None
+                header=None,
+                context=context
             )
 
         except HTTPException as e:
@@ -784,16 +786,17 @@ async def run_audit_with_data(
                     include_coaching_metrics=True,
                     **prefetch_context
                 )
-        except Exception as e:
 
-            if isinstance(e, AuditHalt):
-                return handle_audit_halt(
-                    e,
-                    report_range,
-                    buffer=buffer,
-                    header=prefetch_context.get("report_header")
-                )
+        except AuditHalt as e:
+            return handle_audit_halt(
+                e,
+                report_range,
+                buffer=buffer,
+                header=prefetch_context.get("report_header"),
+                context=prefetch_context
+            )
 
+        except Exception:
             raise
 
         context = report.get("context", {}) if isinstance(report, dict) else {}
@@ -845,17 +848,17 @@ async def run_audit_with_data(
             "logs": logs[-20000:],
         })
 
+    except AuditHalt as e:
+        return handle_audit_halt(
+            e,
+            report_range,
+            buffer=buffer,
+            header=prefetch_context.get("report_header") if 'prefetch_context' in locals() else None,
+            context=prefetch_context if 'prefetch_context' in locals() else None
+        )
+
     except Exception as e:
 
-        if isinstance(e, AuditHalt):
-            return handle_audit_halt(
-                e,
-                report_range,
-                buffer=buffer,
-                header=prefetch_context.get("report_header") if 'prefetch_context' in locals() else None
-            )
-
-        # 🔥 Truly unexpected crash
         sys.stderr.write("\n🔥 UNHANDLED EXCEPTION IN /run\n")
         sys.stderr.write(traceback.format_exc())
         sys.stderr.flush()
@@ -1252,17 +1255,48 @@ DEMO MODE NOTICE:
 
     return JSONResponse(safe_json)
 
-def handle_audit_halt(e, report_range, buffer=None, header=None):
+def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
 
     severity = getattr(e, "severity", "hard")
     code = getattr(e, "code", None)
+
+    athlete_name = None
+    athlete_id = None
+    period_str = None
+
+    if context:
+        athlete = context.get("athlete") or context.get("athleteProfile") or {}
+        athlete_name = athlete.get("name")
+        athlete_id = athlete.get("id")
+
+        period = context.get("period", {})
+        start = period.get("start")
+        end = period.get("end")
+
+        if start and end:
+            period_str = f"{start} → {end}"
 
     # 🔥 Always log to Railway
     sys.stderr.write("\n🛑 AUDIT HALTED\n")
     sys.stderr.write(f"Code: {code}\n")
     sys.stderr.write(f"Severity: {severity}\n")
+    sys.stderr.write(f"Report: {report_range}\n")
+
+    if athlete_name or athlete_id:
+        sys.stderr.write(f"Athlete: {athlete_name} ({athlete_id})\n")
+
+    if period_str:
+        sys.stderr.write(f"Period: {period_str}\n")
+
     sys.stderr.write(str(e) + "\n")
     sys.stderr.flush()
+    logger.info(
+        "[HALT] report_type=%s athlete=%s code=%s message=%s",
+        report_range,
+        athlete_name,
+        code,
+        str(e)
+    )
 
     # 🟡 Soft → demo
     if severity == "soft":
