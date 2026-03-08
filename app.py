@@ -730,9 +730,9 @@ async def run_audit_with_data(
         )
 
         # ---------------------------------------------------------
-        # LIGHT exists but FULL missing
+        # LIGHT exists but FULL missing (only critical for weekly/season)
         # ---------------------------------------------------------
-        if not light_empty and full_empty:
+        if report_range in ("weekly", "season") and not light_empty and full_empty:
 
             last_date = None
 

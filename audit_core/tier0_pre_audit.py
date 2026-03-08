@@ -1329,14 +1329,9 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
                 severity="soft"
             )
 
-        if not light_empty and full_empty:
-            raise AuditHalt(
-                "No weekly period activities detected, detailed data could not be retrieved.",
-                code="FULL_DATASET_EMPTY",
-                severity="soft"
-            )
+        # ⚠ DO NOT halt if light exists but full is empty
+        # This is valid for summary/wellness reports
 
-        # Default empty case
         raise AuditHalt(
             "Activities were found but none matched the report criteria.",
             code="ACTIVITIES_FILTERED_OUT",
