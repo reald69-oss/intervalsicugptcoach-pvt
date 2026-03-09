@@ -449,18 +449,18 @@ CHEAT_SHEET["subjective_scales"] = {
         10: "🔟"
     },
     "feel": {
-        1: "weak",
-        2: "poor",
+        5: "weak",
+        4: "poor",
         3: "normal",
-        4: "good",
-        5: "strong"
+        2: "good",
+        1: "strong"
     },
     "feel_emoji": {
-        1: "😞",
-        2: "🙁",
+        5: "😞",
+        4: "🙁",
         3: "😐",
-        4: "🙂",
-        5: "😄"
+        2: "🙂",
+        1: "😄"
     }
 }
 # === Polarisation Model Mapping (canonical) ===
