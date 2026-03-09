@@ -695,7 +695,7 @@ def run_tier1_controller(df_master, wellness, context):
         )
 
     # Ensure numeric for mean computations
-    for col in ["IF", "average_heartrate", "VO2MaxGarmin"]:
+    for col in ["icu_intensity", "average_heartrate", "VO2MaxGarmin"]:
         if col in visible_events.columns:
             visible_events[col] = pd.to_numeric(visible_events[col], errors="coerce").fillna(0)
 
@@ -709,7 +709,7 @@ def run_tier1_controller(df_master, wellness, context):
         context,
         f"[Tier-1] Visible subset unified: {t0.get('hours', 0):.2f} h | "
         f"{t0.get('distance', 0):.1f} km | {t0.get('tss', 0)} TSS | "
-        f"IF={t0.get('avg_if')} HR={t0.get('avg_hr')} VO₂={t0.get('vo2max')}"
+        f"icu_intensity={t0.get('avg_if')} HR={t0.get('avg_hr')} VO₂={t0.get('vo2max')}"
     )
 
     # --- Cycling-only refinement for mean metrics ---
@@ -718,8 +718,8 @@ def run_tier1_controller(df_master, wellness, context):
     cycling_subset = cycling_subset[cycling_subset["sport_group"] == "Ride"]
     if not cycling_subset.empty:
         context["tier1_visibleTotals"].update({
-            "avg_if": round(cycling_subset["IF"].mean(), 2)
-            if "IF" in cycling_subset.columns else 0,
+            "avg_if": round(cycling_subset["icu_intensity"].mean(), 2)
+            if "icu_intensity" in cycling_subset.columns else 0,
             "avg_hr": int(cycling_subset["average_heartrate"].mean())
             if "average_heartrate" in cycling_subset.columns else None,
             "vo2max": round(

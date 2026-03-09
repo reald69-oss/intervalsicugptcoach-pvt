@@ -237,35 +237,35 @@ def compute_polarisation_index(context):
     # =========================================================
     df = context.get("df_events")
     if df is None or getattr(df, "empty", True):
-        debug_fn(context, "[POL] ⚠ No df_events for IF fallback → 0.0")
+        debug_fn(context, "[POL] ⚠ No df_events for icu_intensity fallback → 0.0")
         return 0.0
 
-    if "IF" not in df.columns or "moving_time" not in df.columns:
-        debug_fn(context, "[POL] ⚠ Missing IF or moving_time → 0.0")
+    if "icu_intensity" not in df.columns or "moving_time" not in df.columns:
+        debug_fn(context, "[POL] ⚠ Missing icu_intensity or moving_time → 0.0")
         return 0.0
 
     try:
-        tmp = df[["IF", "moving_time"]].copy()
-        tmp["IF"] = pd.to_numeric(tmp["IF"], errors="coerce")
+        tmp = df[["icu_intensity", "moving_time"]].copy()
+        tmp["icu_intensity"] = pd.to_numeric(tmp["icu_intensity"], errors="coerce")
         tmp["moving_time"] = pd.to_numeric(tmp["moving_time"], errors="coerce").fillna(0)
-        tmp = tmp.dropna(subset=["IF"])
+        tmp = tmp.dropna(subset=["icu_intensity"])
         tmp = tmp[tmp["moving_time"] > 0]
         if tmp.empty:
-            debug_fn(context, "[POL] ⚠ IF fallback has no valid rows → 0.0")
+            debug_fn(context, "[POL] ⚠ icu_intensity fallback has no valid rows → 0.0")
             return 0.0
 
-        tmp.loc[tmp["IF"] > 10, "IF"] /= 100.0
+        tmp.loc[tmp["icu_intensity"] > 10, "icu_intensity"] /= 100.0
         total_time = float(tmp["moving_time"].sum())
         if total_time <= 0:
             return 0.0
 
-        low_time = float(tmp.loc[tmp["IF"] < 0.85, "moving_time"].sum())
+        low_time = float(tmp.loc[tmp["icu_intensity"] < 0.85, "moving_time"].sum())
         pol = round(low_time / total_time, 3)
-        debug_fn(context, f"[POL] (IF-fallback) low_time={low_time:.1f}s total={total_time:.1f}s → PI={pol}")
+        debug_fn(context, f"[POL] (icu_intensity-fallback) low_time={low_time:.1f}s total={total_time:.1f}s → PI={pol}")
         return pol
 
     except Exception as e:
-        debug_fn(context, f"[POL] ⚠ IF fallback failed ({e}) → 0.0")
+        debug_fn(context, f"[POL] ⚠ icu_intensity fallback failed ({e}) → 0.0")
         return 0.0
 
 
@@ -810,10 +810,10 @@ def compute_derived_metrics(df_events, context):
                 context["ZQI"] = zqi
 
     # --- ✅ 9. Fat oxidation efficiency ---
-    if "IF" in df_events.columns:
-        df_events["IF"] = pd.to_numeric(df_events["IF"], errors="coerce")
-        df_events.loc[df_events["IF"] > 10, "IF"] /= 100
-        if_proxy = np.nanmean(df_events["IF"].values)
+    if "icu_intensity" in df_events.columns:
+        df_events["icu_intensity"] = pd.to_numeric(df_events["icu_intensity"], errors="coerce")
+        df_events.loc[df_events["icu_intensity"] > 10, "icu_intensity"] /= 100
+        if_proxy = np.nanmean(df_events["icu_intensity"].values)
     else:
         if_proxy = 0.7  # assume aerobic bias if missing
 
@@ -1130,7 +1130,7 @@ def compute_derived_metrics(df_events, context):
     # 🩵 HR-only Fallback Annotations (metadata for reports)
     # ======================================================
     has_power = any("power_z" in c.lower() for c in df_events.columns)
-    has_if = "IF" in df_events.columns
+    has_if = "icu_intensity" in df_events.columns
     has_hr = any("hr_z" in c.lower() for c in df_events.columns)
 
     context["hr_only_mode"] = bool(has_hr and not has_power)

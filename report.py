@@ -170,6 +170,8 @@ def fetch_remote_report(report_type, fmt="semantic", staging=False, owner=None, 
     markdown and semantic JSON in a single JSON envelope.
     """
     base = f"https://intervalsicugptcoach.clive-a5a.workers.dev/run_{report_type}"
+    if staging:
+        base = f"https://intervalsicugptcoach-staging.clive-a5a.workers.dev/run_{report_type}"
 
     # Build query params
     params = []

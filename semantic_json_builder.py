@@ -55,7 +55,7 @@ def classify_wbal_pattern(row: dict) -> dict:
     joules = row.get("icu_joules_above_ftp")
     duration = row.get("moving_time") or 0
     strain = row.get("strain_score") or 0
-    IF = row.get("IF") or 0
+    IF = row.get("icu_intensity") or 0
 
     if not wprime or not max_dep or not joules:
         return {
@@ -2064,7 +2064,7 @@ def build_semantic_json(context):
         # --- Fields allowed per mode ---
         if report_type in ("season", "summary"):
             perf_fields = {
-                "IF": "mean_IF",
+                "icu_intensity": "mean_IF",
                 "decoupling": "mean_decoupling",
                 "icu_pm_w_prime": "mean_w_prime",
                 "icu_joules_above_ftp": "mean_joules_above_ftp",
