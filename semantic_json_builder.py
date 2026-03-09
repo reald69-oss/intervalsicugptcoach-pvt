@@ -2435,7 +2435,7 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     # 🧭 COACHING ACTIONS (Tier-2 guidance)
     # ---------------------------------------------------------
-    semantic["actions"] = context.get("actions", [])
+    #semantic["actions"] = context.get("actions", [])
     
     # ---------------------------------------------------------
     # Coaching Question
