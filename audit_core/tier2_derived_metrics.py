@@ -493,22 +493,29 @@ def compute_derived_metrics(df_events, context):
     load_series = df_ref["icu_training_load"].fillna(0)
 
     # --- ✅ 6. Monotony & Strain (Foster 2001 method) ---
-    last_7d = load_series[-7:].values
+
+    last_7d = load_series.tail(7).astype(float).values
+
     mean_load = np.mean(last_7d)
-    std_load = np.std(last_7d, ddof=0)
+    std_load = np.std(last_7d, ddof=1)
+
     debug(context, f"[T2] Monotony/Strain input (7d padded): {last_7d}")
     debug(context, f"[T2] Mean load={mean_load:.2f}, Std={std_load:.2f}")
 
     if std_load > 0:
         monotony = round(mean_load / std_load, 2)
-        weekly_load = np.sum(last_7d)
+        weekly_load = float(np.sum(last_7d))
         strain = round(weekly_load * monotony, 1)
+
         debug(context, f"[DERIVED] Monotony={monotony}, Strain={strain}")
+
     else:
         monotony = 1.0
-        weekly_load = np.sum(last_7d)
+        weekly_load = float(np.sum(last_7d))
         strain = round(weekly_load, 1)
+
         debug(context, f"[T2] Fallback: zero variance → Monotony=1.0, Strain={strain}")
+        
     # --- ✅ 7. FatigueTrend (Banister-aligned 7d–28d delta) ---
     # --- FatigueTrend (use ACWR 28d context if available) ---
     try:
