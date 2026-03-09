@@ -45,9 +45,9 @@ def select_question(report, signals):
     question = aligned[idx]["question"]
 
     # Blend secondary signal context if useful
-    if secondary_sig and secondary_sig in SIGNAL_LABELS:
+    if secondary_sig and secondary_sig in SIGNAL_MAP:
 
-        label = SIGNAL_LABELS[secondary_sig]
+        label = SIGNAL_MAP[secondary_sig]
 
         if "given the current" not in question:
             question = f"{question} given the current {label}"
@@ -202,7 +202,7 @@ def generate_question(report, signals):
     question = variants[idx]
 
     if "{secondary}" in question and secondary:
-        label = SIGNAL_LABELS.get(secondary, secondary)
+        label = SIGNAL_MAP.get(secondary, secondary)
         question = question.format(secondary=label)
 
     return question
