@@ -3419,7 +3419,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         - Label column as Duration (min). Show HRR60 column when values exist.
         - In the EVENTS table, session-level signal icons MAY be rendered within the Activity column as a prefix using the following canonical mapping derived ONLY from existing semantic fields.
         - Icons represent independent session signals and MAY appear together for a single event.
-        - Add rpe_emoji and feel_emoji to the right of activity name tightly coupled 
+        - Add rpe_emoji and feel_emoji to the right of activity name tightly coupled.
         - When multiple icons apply, they MUST be rendered together in the following fixed order (left → right):
         1) ⚡ Efficient (optimal efficiency factor)
         2) 🟢 Aerobic (low IF with stable decoupling)
@@ -3431,6 +3431,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         - Icons are visual aliases only and must not replace numeric values, suppress other applicable icons, or reduce table rows.
         - When `activity_link` exists, the Activity column MUST render the activity name as a Markdown link: [name](activity_link).
         - Icons MUST appear before the link inside the same Activity cell.
+        - Show icon legends underneath the table tightly coupled
         PLANNED EVENTS (WEEKLY — NON-NEGOTIABLE):
         - The planned_events section MUST be rendered as a Markdown table.
         - EVERY planned event in the semantic JSON MUST appear as exactly one row.
