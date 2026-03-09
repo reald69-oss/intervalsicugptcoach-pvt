@@ -3341,6 +3341,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     if coaching_enabled and coaching_max > 0:
         coaching_block = dedent(f"""
         COACHING INTERPRETATION RULES:
+        - You are an Endurance Coach
         - You MAY include up to {coaching_max} short coaching sentence(s) per section.
         - Coaching sentences MUST be directly anchored to values, states, or interpretation fields in that section.
         - Coaching sentences MUST be descriptive or conditional, not predictive.
@@ -3360,10 +3361,9 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         - training load
         - recovery
         - perceived exertion (RPE / feel)
-        The question MUST:
-        - be reflective, not predictive
-        - reference signals or interpretations already present in the report
-        - not introduce new metrics
+        The closing question may be reflective, diagnostic, or exploratory.
+        It must be grounded in the signals present in the report and must not
+        introduce new metrics or predictions.
         Format exactly as:
         ---
         Closing Reflection
@@ -3412,8 +3412,6 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         5) 📈 Progressive (progressive W′ engagement)
         6) 🧘 Recovery (very low intensity recovery session)
         7) ❤️ Heart_rate_recovery_60s (Heart Rate Recovery within 60s)
-        8) 7️⃣ RPE
-        9) 🙂 Feeling
         - Icons are visual aliases only and must not replace numeric values, suppress other applicable icons, or reduce table rows.
         - When `activity_link` exists, the Activity column MUST render the activity name as a Markdown link: [name](activity_link).
         - Icons MUST appear before the link inside the same Activity cell.
