@@ -1583,7 +1583,7 @@ def build_semantic_json(context):
             "icu_max_wbal_depletion", "icu_joules_above_ftp",
             "total_elevation_gain", "calories", "VO2MaxGarmin",
             "source", "core_temp_mean", "core_temp_max",
-            "core_temp_drift_per_hour", "device_name", "compliance"
+            "core_temp_drift_per_hour", "device_name", "compliance", "icu_rpe", "feel"
         ]
 
         available_fields = [f for f in core_fields if f in df_events.columns]
@@ -1615,6 +1615,38 @@ def build_semantic_json(context):
             for k in available_fields:
                 if k in row and pd.notna(row[k]) and row[k] != "":
                     ev[k] = row[k]
+
+            # ---------------------------------------------------------
+            # Subjective perception (RPE emoji + Feel emoji)
+            # ---------------------------------------------------------
+
+            rpe = row.get("icu_rpe")
+            feel = row.get("feel")
+
+            # ---- RPE emoji (read-only, do not overwrite icu_rpe) ----
+            if rpe is not None and pd.notna(rpe):
+                try:
+                    rpe = int(rpe)
+                    rpe_emoji = CHEAT_SHEET["subjective_scales"]["rpe_emoji"].get(rpe)
+
+                    if rpe_emoji:
+                        ev["rpe_emoji"] = rpe_emoji
+
+                except Exception:
+                    pass
+
+
+            # ---- Feel emoji ----
+            if feel is not None and pd.notna(feel):
+                try:
+                    feel = int(feel)
+                    feel_emoji = CHEAT_SHEET["subjective_scales"]["feel_emoji"].get(feel)
+
+                    if feel_emoji:
+                        ev["feel_emoji"] = feel_emoji
+
+                except Exception:
+                    pass
 
             # 3️⃣ Convert date
             if "start_date_local" in ev:
@@ -3349,6 +3381,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         - Label column as Duration (min). Show HRR60 column when values exist.
         - In the EVENTS table, session-level signal icons MAY be rendered within the Activity column as a prefix using the following canonical mapping derived ONLY from existing semantic fields.
         - Icons represent independent session signals and MAY appear together for a single event.
+        - Add rpe_emoji and feel_emoji to the right of activity name tightly coupled 
         - When multiple icons apply, they MUST be rendered together in the following fixed order (left → right):
         1) ⚡ Efficient (optimal efficiency factor)
         2) 🟢 Aerobic (low IF with stable decoupling)

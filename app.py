@@ -581,7 +581,7 @@ async def run_audit_with_data(
         start = data.get("start")
         end = data.get("end")
         # ---------------------------------------------------------
-        # 🚫 Future Start-Date Safeguard
+        # 🚫 Future Start-Date Safeguard - COMMENTED OUT FOR TESTING OF EMPTY FUL DATA
         # ---------------------------------------------------------
 #        try:
 #            if start:

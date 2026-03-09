@@ -423,6 +423,44 @@ CHEAT_SHEET["subjective_scales"] = {
         3: "fair",
         4: "good",
         5: "excellent"
+    },
+    "icu_rpe": {
+        1: "nothing at all",
+        2: "very easy",
+        3: "easy",
+        4: "comfortable",
+        5: "slightly challenging",
+        6: "difficult",
+        7: "hard",
+        8: "very hard",
+        9: "extremely hard",
+        10: "max effort"
+    },
+    "rpe_emoji": {
+        1: "1️⃣",
+        2: "2️⃣",
+        3: "3️⃣",
+        4: "4️⃣",
+        5: "5️⃣",
+        6: "6️⃣",
+        7: "7️⃣",
+        8: "8️⃣",
+        9: "9️⃣",
+        10: "🔟"
+    },
+    "feel": {
+        1: "weak",
+        2: "poor",
+        3: "normal",
+        4: "good",
+        5: "strong"
+    },
+    "feel_emoji": {
+        1: "😞",
+        2: "🙁",
+        3: "😐",
+        4: "🙂",
+        5: "😄"
     }
 }
 # === Polarisation Model Mapping (canonical) ===
