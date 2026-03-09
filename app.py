@@ -37,9 +37,9 @@ logger = logging.getLogger("app")
 print("[BOOT] 🚀 Starting Montis.icu GPT Coach Railway API")
 icuoauth = os.getenv("ICU_OAUTH")
 if icuoauth:
-    print("[BOOT] ICU_OAUTH detected:", icuoauth[:10], "...")
+    print("[BOOT-WARN] Variable ICU_OAUTH detected:", icuoauth[:10], "...")
 else:
-    print("[BOOT-WARN] ICU_OAUTH missing (no var set), relying on passed ICU_OAUTH")
+    print("[BOOT] ICU_OAUTH relying on passed ICU_OAUTH")
 
 app = FastAPI(title="Montis.icu GPT Coach Railway API", version="2.0")
 
