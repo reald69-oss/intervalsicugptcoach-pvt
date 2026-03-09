@@ -4,7 +4,7 @@
 Montis Coaching Question Engine 
 """
 
-from question_bank import QUESTION_BANK, SIGNAL_MAP
+from question_bank import QUESTION_BANK, SIGNAL_MAP, QUESTION_TEMPLATES
 
 def select_question(report, signals):
 
@@ -162,3 +162,47 @@ def dominant_signal(signals):
     signals_sorted = sorted(signals, key=lambda x: x[1], reverse=True)
 
     return signals_sorted[0][0]
+
+
+#generate from template
+def generate_question(report, signals):
+
+    if not signals:
+        return None
+
+    signals_sorted = sorted(signals, key=lambda x: x[1], reverse=True)
+
+    primary = signals_sorted[0][0]
+    secondary = None
+
+    if len(signals_sorted) > 1:
+        secondary = signals_sorted[1][0]
+
+    key = primary
+
+    if secondary:
+        combo_key = f"{primary}+{secondary}"
+        if combo_key in QUESTION_TEMPLATES:
+            key = combo_key
+
+    template_obj = QUESTION_TEMPLATES.get(key)
+
+    if not template_obj:
+        return None
+
+    variants = template_obj.get("question_variants")
+
+    if not variants:
+        return None
+
+    # deterministic rotation using report period
+    period = report.get("meta", {}).get("period", "")
+    idx = abs(hash(period + key)) % len(variants)
+
+    question = variants[idx]
+
+    if "{secondary}" in question and secondary:
+        label = SIGNAL_LABELS.get(secondary, secondary)
+        question = question.format(secondary=label)
+
+    return question

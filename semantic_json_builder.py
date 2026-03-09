@@ -40,7 +40,7 @@ from math import isnan
 import pytz
 from audit_core.tier2_derived_metrics import classify_marker
 from textwrap import dedent
-from questions_engine import detect_signals, select_question
+from questions_engine import detect_signals, select_question, generate_question
 
 # ---------------------------------------------------------
 # Helpers
@@ -2436,7 +2436,23 @@ def build_semantic_json(context):
     # 🧭 COACHING ACTIONS (Tier-2 guidance)
     # ---------------------------------------------------------
     semantic["actions"] = context.get("actions", [])
-        
+    
+    # ---------------------------------------------------------
+    # Coaching Question
+    # ---------------------------------------------------------
+
+    actions = context.get("actions", []) or []
+
+    signals = detect_signals(semantic)
+    question = generate_question(semantic, signals)
+    #    question = select_question(semantic, signals) # moved to template
+    if question:
+        actions.append({
+            "type": "reflection",
+            "question": question
+        })
+
+    semantic["actions"] = actions
     # ---------------------------------------------------------
     # 🧠 Performance Intelligence (Tier-3)
     # ---------------------------------------------------------
@@ -3153,15 +3169,6 @@ def build_semantic_json(context):
             semantic.update(ordered)
 
 
-    # ---------------------------------------------------------
-    # Coaching Question
-    # ---------------------------------------------------------
-
-    signals = detect_signals(semantic)
-    question = select_question(semantic, signals)
-
-    if question:
-        semantic["ask_question"] = question
 
     # ---------------------------------------------------------
     # ✅ Contract Enforcement

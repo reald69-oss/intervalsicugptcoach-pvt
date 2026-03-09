@@ -120,3 +120,245 @@ SIGNAL_MAP = {
 "adaptation_unstable": "adaptation_stability",
 "adaptation_stable": "adaptation_stability"
 }
+
+QUESTION_TEMPLATES = {
+
+# ------------------------------------------------
+# FATIGUE
+# ------------------------------------------------
+
+"fatigue_accumulation": {
+
+"signals": ["fatigue_accumulation"],
+
+"question_variants": [
+
+"Is fatigue beginning to constrain performance?",
+"Is accumulated fatigue starting to affect session quality?",
+"Is fatigue rising faster than adaptation?"
+
+]
+
+},
+
+"fatigue_accumulation+load_pressure": {
+
+"signals": ["fatigue_accumulation","load_pressure"],
+
+"question_variants": [
+
+"Is fatigue beginning to constrain performance given the current {secondary}?",
+"Is accumulated fatigue affecting performance under the present {secondary}?",
+"Is fatigue rising faster than the body can adapt to the current {secondary}?"
+
+]
+
+},
+
+# ------------------------------------------------
+# LOAD
+# ------------------------------------------------
+
+"load_pressure": {
+
+"signals": ["load_pressure"],
+
+"question_variants": [
+
+"Is the current training load sustainable?",
+"Is the present load level producing productive stress or excessive strain?",
+"Is the load trajectory aligned with adaptation?"
+
+]
+
+},
+
+# ------------------------------------------------
+# DURABILITY
+# ------------------------------------------------
+
+"durability_decline": {
+
+"signals": ["durability_decline"],
+
+"question_variants": [
+
+"Is durability beginning to break down late in sustained efforts?",
+"Is aerobic stability drifting under prolonged load?",
+"Is fatigue revealing limits in endurance durability?"
+
+]
+
+},
+
+"durability_pressure": {
+
+"signals": ["durability_pressure"],
+
+"question_variants": [
+
+"Is durability responding positively to recent training load?",
+"Is aerobic stability holding under the current endurance demand?",
+"Is durability progressing as training volume increases?"
+
+]
+
+},
+
+"durability_decline+fatigue_accumulation": {
+
+"signals": ["durability_decline","fatigue_accumulation"],
+
+"question_variants": [
+
+"Is fatigue contributing to durability drift late in sustained efforts?",
+"Is aerobic stability breaking down under accumulated fatigue?",
+"Is fatigue revealing limits in durability?"
+
+]
+
+},
+
+# ------------------------------------------------
+# ANAEROBIC
+# ------------------------------------------------
+
+"anaerobic_depletion": {
+
+"signals": ["anaerobic_depletion"],
+
+"question_variants": [
+
+"Is anaerobic repeatability declining across high-intensity efforts?",
+"Are repeated hard efforts losing quality due to W′ depletion?",
+"Is anaerobic capacity being depleted faster than it recovers?"
+
+]
+
+},
+
+"anaerobic_load": {
+
+"signals": ["anaerobic_load"],
+
+"question_variants": [
+
+"Is anaerobic demand producing productive stimulus?",
+"Are repeated high-intensity efforts becoming more sustainable?",
+"Is anaerobic repeatability improving under current intensity?"
+
+]
+
+},
+
+# ------------------------------------------------
+# NEURAL
+# ------------------------------------------------
+
+"intensity_clustering": {
+
+"signals": ["intensity_clustering"],
+
+"question_variants": [
+
+"Is intensity clustering limiting adaptation?",
+"Are hard sessions stacking too closely together?",
+"Is neural load concentrated too tightly in the week?"
+
+]
+
+},
+
+"high_intensity_density": {
+
+"signals": ["high_intensity_density"],
+
+"question_variants": [
+
+"Is the current intensity density supporting progression?",
+"Are high-intensity sessions accumulating effectively?",
+"Is neural demand balanced across the week?"
+
+]
+
+},
+
+# ------------------------------------------------
+# SYSTEM ADAPTATION
+# ------------------------------------------------
+
+"system_decline": {
+
+"signals": ["system_decline"],
+
+"question_variants": [
+
+"Is a physiological system beginning to constrain performance?",
+"Is one energy system declining relative to the others?",
+"Is the current training stimulus misaligned with system needs?"
+
+]
+
+},
+
+"system_progression": {
+
+"signals": ["system_progression"],
+
+"question_variants": [
+
+"Is a specific physiological system showing clear progression?",
+"Is adaptation occurring in the system currently targeted by training?",
+"Is the current stimulus producing meaningful system improvement?"
+
+]
+
+},
+
+# ------------------------------------------------
+# ADAPTATION STABILITY
+# ------------------------------------------------
+
+"adaptation_fragile": {
+
+"signals": ["adaptation_fragile"],
+
+"question_variants": [
+
+"Is the current adaptation fragile under training stress?",
+"Are improvements stabilizing or fluctuating?",
+"Is adaptation consolidating across sessions?"
+
+]
+
+},
+
+"adaptation_unstable": {
+
+"signals": ["adaptation_unstable"],
+
+"question_variants": [
+
+"Is adaptation becoming unstable under current stress?",
+"Are improvements fluctuating instead of consolidating?",
+"Is training stress exceeding adaptive capacity?"
+
+]
+
+},
+
+"adaptation_stable": {
+
+"signals": ["adaptation_stable"],
+
+"question_variants": [
+
+"Is adaptation consolidating successfully?",
+"Are gains stabilizing across repeated sessions?",
+"Is the current progression becoming durable?"
+
+]
+
+}
+
+}
