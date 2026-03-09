@@ -3348,6 +3348,28 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         - Coaching sentences MUST NOT introduce new metrics.
         """).strip()
 
+
+    question_block = ""
+    if coaching_enabled:
+        question_block = dedent("""
+        CLOSING REFLECTION RULE:
+        After the full report is produced, generate exactly ONE short reflective coaching question.
+        The question MUST be based on the dominant signal in the report and relate to one of:
+        - fatigue
+        - adaptation
+        - training load
+        - recovery
+        - perceived exertion (RPE / feel)
+        The question MUST:
+        - be reflective, not predictive
+        - reference signals or interpretations already present in the report
+        - not introduce new metrics
+        Format exactly as:
+        ---
+        Closing Reflection
+        <question>
+        """).strip()
+
     enrichment_block = ""
     if allowed_enrichment:
         enrichment_block = dedent(f"""
@@ -3477,6 +3499,8 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     {closing_note_block}
     """).strip()
 
+    {question_block}
+    
     return prompt
 
 
