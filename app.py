@@ -583,9 +583,9 @@ async def run_audit_with_data(
 
         data = json.loads(raw)
 
-        # DEBUG TRIGGER HERE
+        # DEBUG TRIGGER
         if debug:
-            return await get_debug(request)
+            return await get_debug_with_data(data)
 
         report_range = data.get("range","weekly")
         fmt = data.get("format","markdown").lower()
@@ -913,56 +913,50 @@ def error_response(e: Exception, buffer=None, status_code:int=500):
 
 
 # ============================================================
-# 🧠 DEBUG ENDPOINT — Semantic JSON + Logs Only
+# DEBUG ENDPOINT — Semantic JSON + Logs Only
 # ============================================================
 @app.post("/debug")
 async def get_debug(request: Request):
 
+    raw = await request.body()
+
+    if not raw:
+        raise ValueError("Empty request body")
+
+    data = json.loads(raw)
+
+    return await get_debug_with_data(data)
+
+# ============================================================
+# DEBUG HELPER
+# ============================================================
+
+async def get_debug_with_data(data: dict):
+
     buffer = io.StringIO()
 
-    try:
+    report_range = data.get("range", "weekly")
 
-        raw = await request.body()
+    prefetch_context = normalize_prefetched_context(data)
 
-        if not raw:
-            raise ValueError("Empty request body")
+    report, compliance, logs, context, sg, markdown = _run_full_audit(
+        range=report_range,
+        output_format="semantic",
+        prefetch_context=prefetch_context
+    )
 
-        data = json.loads(raw)
+    MAX_LOG = 250000
+    log_tail = logs[-MAX_LOG:]
 
-        report_range = data.get("range", "weekly")
-
-        # Normalize prefetched dataset
-        prefetch_context = normalize_prefetched_context(data)
-
-        report, compliance, logs, context, sg, markdown = _run_full_audit(
-            range=report_range,
-            output_format="semantic",
-            prefetch_context=prefetch_context
-        )
-
-        MAX_LOG = 250000
-        log_tail = logs[-MAX_LOG:]
-
-        return JSONResponse({
-            "status": "ok",
-            "report_type": report_range,
-            "output_format": "semantic_json",
-            "semantic_graph": sanitize(sg),
-            "compliance": compliance,
-            "logs": log_tail
-        })
-
-    except AuditHalt as e:
-        return handle_audit_halt(
-            e,
-            report_range,
-            buffer=buffer,
-            header=None,
-            context=prefetch_context if 'prefetch_context' in locals() else None
-        )
-
-    except Exception as e:
-        return error_response(e, buffer)
+    return JSONResponse({
+        "status": "ok",
+        "debug": True,
+        "report_type": report_range,
+        "output_format": "semantic_json",
+        "semantic_graph": sanitize(sg),
+        "compliance": compliance,
+        "logs": log_tail
+    })
 
 def data_quality_audit(ctx: dict) -> dict:
     score = 0
