@@ -890,75 +890,55 @@ def error_response(e: Exception, buffer=None, status_code:int=500):
     )
 
 
-@app.get("/semantic")
-def get_semantic(range: str = Query("weekly")):
-    _, compliance, logs, _, sg, _ = _run_full_audit(range=range)
-    return JSONResponse({"status":"ok","report_type":range,"output_format":"semantic_json","semantic_graph":sanitize(sg),"compliance":compliance,"logs":logs[:20000]})
-
-
-@app.get("/metrics")
-def get_metrics(range: str = Query("weekly")):
-    _, compliance, logs, _, sg, _ = _run_full_audit(range=range)
-    return JSONResponse({"status":"ok","report_type":range,
-        "metrics":sanitize(sg.get("metrics",{})),
-        "extended_metrics":sanitize(sg.get("extended_metrics",{})),
-        "trend_metrics":sanitize(sg.get("trend_metrics",{})),
-        "adaptation_metrics":sanitize(sg.get("adaptation_metrics",{})),
-        "correlation_metrics":sanitize(sg.get("correlation_metrics",{})),
-        "compliance":compliance,"logs":logs[:20000]})
-
-
-@app.get("/phases")
-def get_phases(range: str = Query("weekly")):
-    _, compliance, logs, _, sg, _ = _run_full_audit(range=range)
-    return JSONResponse({"status":"ok","report_type":range,
-        "phases":sanitize(sg.get("phases",[])),"actions":sanitize(sg.get("actions",[])),
-        "compliance":compliance,"logs":logs[:20000]})
-
-
-@app.get("/compare")
-def compare_periods(range: str = Query("weekly")):
-    _, compliance, logs, _, sg, _ = _run_full_audit(range=range)
-    return JSONResponse({"status":"ok","report_type":range,
-        "trend_metrics":sanitize(sg.get("trend_metrics",{})),"core_metrics":sanitize(sg.get("metrics",{})),
-        "compliance":compliance,"logs":logs[:20000]})
-
-
-@app.get("/insights")
-def get_insights(range: str = Query("weekly")):
-    _, compliance, logs, _, sg, _ = _run_full_audit(range=range)
-    return JSONResponse({"status":"ok","report_type":range,"insights":sanitize(sg.get("insight_view",{})),
-        "compliance":compliance,"logs":logs[:20000]})
-
 # ============================================================
 # 🧠 DEBUG ENDPOINT — Semantic JSON + Logs Only
 # ============================================================
-@app.get("/debug")
-def get_debug(
-    range: str = Query("weekly", description="Report type: weekly, season, wellness, summary"),
-    format: str = Query("semantic", description="Output format: semantic (ignored for now)")
-):
+@app.post("/debug")
+async def get_debug(request: Request):
     """
-    Debug endpoint for any report type.
-    Returns semantic JSON + captured logs.
-    Compatible with both local and staging use.
+    Debug endpoint.
+    Accepts the same payload as /run but returns
+    semantic graph + full logs without rendering.
     """
+
+    buffer = io.StringIO()
+
     try:
-        report, compliance, logs, context, sg, markdown = _run_full_audit(
-            range=range,
-            output_format="semantic"
-        )
+        raw = await request.body()
+
+        if not raw:
+            raise ValueError("Empty request body")
+
+        data = json.loads(raw)
+
+        report_range = data.get("range", "weekly")
+        fmt = "semantic"
+
+        # Normalize prefetched payload from Worker
+        prefetch_context = normalize_prefetched_context(data)
+
+        with redirect_stdout(buffer):
+            report, compliance = run_report(
+                reportType=report_range,
+                output_format=fmt,
+                include_coaching_metrics=True,
+                **prefetch_context
+            )
+
+        logs = buffer.getvalue()
+
+        semantic_graph = report.get("semantic_graph", {}) if isinstance(report, dict) else {}
 
         return JSONResponse({
             "status": "ok",
-            "report_type": range,
+            "report_type": report_range,
             "output_format": "semantic_json",
-            "semantic_graph": sanitize(sg),
-            "logs": logs[-20000:],
+            "semantic_graph": sanitize(semantic_graph),
+            "logs": logs[-50000:]
         })
 
     except Exception as e:
-        return error_response(e)
+        return error_response(e, buffer)
 
 def data_quality_audit(ctx: dict) -> dict:
     score = 0

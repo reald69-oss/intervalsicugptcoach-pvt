@@ -36,8 +36,7 @@ Supports both:
 • /run_data_quality
 
 Query parameters:
-  ?staging=1          → routes to Railway staging environment
-  ?owner=xyz          → optional owner identifier for staging keys
+  ?staging=1          → Staging determined by Worker hostname
   ?render=gpt         → enables GPT-rendered Markdown output
                          (includes both Markdown + semantic JSON)
   ?test=strava        → simulate STRAVA-only account
@@ -73,7 +72,7 @@ PREFETCH MODE (REMOTE)
   python report.py --range weekly --prefetch --staging (RAILWAY STAGING JSON) - this would get sent to GPT
   python report.py --range season --prefetch --gpt (RAILWAY JSON AND GPT MD)
   python report.py --range summary --start 2025-01-01 --end 2025-12-31 (LOCAL JSON)
-  python report.py --range weekly --prefetch --staging --owner xxxx --strava-test
+  python report.py --range weekly --prefetch --staging --strava-test
     → simulates STRAVA-only account and returns friendly data-source error
 
 | CLI flag             | Worker param   | Test scenario                              | Expected result                                                            |
@@ -127,6 +126,15 @@ from audit_core.utils import debug
 
 sys.stdout.reconfigure(encoding="utf-8")
 
+#---------------------------------------------
+#  Resolve correct Cloudflare Worker base URL.
+#----------------------------------------------
+def get_worker_base(staging=False):
+
+    if staging:
+        return "https://intervalsicugptcoach-staging.clive-a5a.workers.dev"
+    return "https://intervalsicugptcoach.clive-a5a.workers.dev"
+
 # ─────────────────────────────────────────────
 # DEBUG REPORTS
 # ─────────────────────────────────────────────
@@ -149,7 +157,10 @@ def fetch_debug_report(report_type, format="semantic", staging=False):
     data = resp.json()
 
     outname = f"report_{report_type}_{'staging' if staging else 'prod'}_{format}_debug.json"
-    with open(outname, "w", encoding="utf-8") as f:
+    Path("reports").mkdir(exist_ok=True)
+    out_path = Path("reports") / outname
+
+    with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
     print(f"[DEBUG ENDPOINT] ✅ Saved {outname}")
@@ -163,22 +174,16 @@ def fetch_debug_report(report_type, format="semantic", staging=False):
 # ─────────────────────────────────────────────
 # PREFETCH HELPER — Cloudflare Worker Schema
 # ─────────────────────────────────────────────
-def fetch_remote_report(report_type, fmt="semantic", staging=False, owner=None, gpt=False, start=None, end=None, strava_test=False):
+def fetch_remote_report(report_type, staging=False, gpt=False, start=None, end=None, strava_test=False):
     """
     Fetch a URF report (semantic+markdown) from Cloudflare Worker.
     If GPT rendering is enabled (?render=gpt), the Worker now returns both
     markdown and semantic JSON in a single JSON envelope.
     """
-    base = f"https://intervalsicugptcoach.clive-a5a.workers.dev/run_{report_type}"
-    if staging:
-        base = f"https://intervalsicugptcoach-staging.clive-a5a.workers.dev/run_{report_type}"
-
+    worker_base = get_worker_base(staging)
+    base = f"{worker_base}/run_{report_type}"
     # Build query params
     params = []
-    if staging:
-        params.append("staging=1")
-    if owner:
-        params.append(f"owner={owner}")
     if gpt:
         params.append("render=gpt")
     if start:
@@ -207,7 +212,10 @@ def fetch_remote_report(report_type, fmt="semantic", staging=False, owner=None, 
         "User-Agent": "IntervalsGPTCoachLocal/1.0"
     }
 
-    print(f"[REMOTE] Fetching {report_type} report (staging={staging}, gpt={gpt}) → {url}")
+    env = "staging" if staging else "prod"
+    print(f"[REMOTE] env={env} report={report_type} gpt={gpt}")
+    print(f"[REMOTE] → {url}")
+
     resp = requests.get(url, headers=headers, timeout=120)
 
     # Accept semantic error responses (422) from Worker
@@ -267,7 +275,6 @@ def generate_full_report(
     output_format="markdown",
     prefetch=False,
     staging=False,
-    owner=None,
     start=None,
     end=None,
     gpt=False,
@@ -288,12 +295,10 @@ def generate_full_report(
     # 🌐 PREFETCH MODE — via Cloudflare Worker
     # ============================================================
     if prefetch:
-        print(f"[PREFETCH] Using Worker prehydrated report (staging={staging}, owner={owner}, gpt={gpt})")
+        print(f"[PREFETCH] Using Worker prehydrated report (staging={staging}, gpt={gpt})")
         data = fetch_remote_report(
             report_type,
-            fmt=output_format,
             staging=staging,
-            owner=owner,
             gpt=gpt,
             start=start,
             end=end,
@@ -424,45 +429,6 @@ def generate_full_report(
 
     return full_output
 
-
-# ============================================================
-# 💾 DEBUG OPTIONAL
-# ============================================================
-
-
-def fetch_debug_report(report_type="weekly", staging=False):
-    """
-    Fetch any report in debug mode (semantic JSON + logs only).
-    Works locally or with Railway staging.
-    """
-    base = (
-        "https://intervalsicugptcoach-public-staging.up.railway.app"
-        if staging else
-        "http://localhost:8080"
-    )
-    url = f"{base}/debug?range={report_type}"
-    headers = {
-        "Authorization": f"Bearer {os.getenv('ICU_OAUTH', '')}",
-        "User-Agent": "IntervalsGPTCoachLocal/1.0"
-    }
-
-    print(f"[DEBUG MODE] Fetching '{report_type}' debug report from {url}")
-    resp = requests.get(url, headers=headers, timeout=120)
-    resp.raise_for_status()
-
-    data = resp.json()
-    reports_dir = Path("reports")
-    reports_dir.mkdir(exist_ok=True)
-
-    outname = f"report_{report_type}_{'staging' if staging else 'local'}_debug.json"
-    (reports_dir / outname).write_text(json.dumps(data, indent=2), encoding="utf-8")
-
-    print(f"[DEBUG] ✅ Saved → {outname}")
-    print(f"[DEBUG] Keys: {list(data.keys())}")
-    print(f"[DEBUG] Log lines: {len(data.get('logs', '').splitlines())}")
-    return data
-
-
 # ─────────────────────────────────────────────
 # CLI ENTRY POINT
 # ─────────────────────────────────────────────
@@ -480,8 +446,6 @@ def main():
                         help="Use prehydrated dataset from Railway proxy (via Worker)")
     parser.add_argument("--staging", action="store_true",
                         help="Request staging environment (Worker will decide access)")
-    parser.add_argument("--owner", type=str, default=None,
-                        help="Optional owner identifier (e.g., 'xyz' for staging access)")
     parser.add_argument("--start", type=str, help="Custom start date (YYYY-MM-DD)")
     parser.add_argument("--end", type=str, help="Custom end date (YYYY-MM-DD)")
     parser.add_argument("--gpt", action="store_true",
@@ -519,7 +483,6 @@ def main():
         output_format=args.format,
         prefetch=args.prefetch,
         staging=args.staging,
-        owner=args.owner,
         start=args.start,
         end=args.end,
         gpt=args.gpt,
