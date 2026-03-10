@@ -533,7 +533,7 @@ def _run_full_audit(range: str, output_format="markdown", prefetch_context=None)
 # ============================================================
 @app.get("/")
 def root():
-    return {"message": "IntervalsICU GPTCoach Railway API 🧠 Running"}
+    return {"message": "Montis.icu Coach Railway API 🧠 Running"}
 
 
 @app.get("/run")
@@ -569,9 +569,6 @@ async def run_audit_with_data(
     print("DEBUG PARAM:", debug)
     print("QUERY:", request.query_params)
 
-    if debug:
-        return await get_debug(request)
-
     buffer = io.StringIO()
 
     if demo:
@@ -580,6 +577,18 @@ async def run_audit_with_data(
     try:
 
         raw = await request.body()
+
+        if not raw:
+            raise ValueError("Empty request body")
+
+        data = json.loads(raw)
+
+        # DEBUG TRIGGER HERE
+        if debug:
+            return await get_debug(request)
+
+        report_range = data.get("range","weekly")
+        fmt = data.get("format","markdown").lower()
 
         if not raw:
             raise ValueError("Empty request body")

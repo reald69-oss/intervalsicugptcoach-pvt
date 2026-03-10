@@ -138,35 +138,42 @@ def get_worker_base(staging=False):
 # ─────────────────────────────────────────────
 # DEBUG REPORTS
 # ─────────────────────────────────────────────
+def fetch_debug_report(report_type, staging=False):
+    """
+    Fetch debug report via Cloudflare Worker (prefetch + debug routing).
+    """
 
-def fetch_debug_report(report_type, format="semantic", staging=False):
-    """Fetch report and debug logs directly from Railway's /debug endpoint."""
-    base = "https://intervalsicugptcoach-public-production.up.railway.app"
-    if staging:
-        base = "https://intervalsicugptcoach-public-staging.up.railway.app"
+    worker_base = get_worker_base(staging)
 
-    url = f"{base}/debug?range={report_type}&format={format}"
+    url = f"{worker_base}/run_{report_type}?debug=true&format=semantic"
+
     headers = {
         "Authorization": f"Bearer {os.getenv('ICU_OAUTH', '')}",
         "User-Agent": "IntervalsGPTCoachLocal/1.0"
     }
 
-    print(f"[DEBUG ENDPOINT] Fetching {report_type} report with logs from {url}")
-    resp = requests.get(url, headers=headers, timeout=60)
+    env = "staging" if staging else "prod"
+
+    print(f"[DEBUG] env={env} report={report_type}")
+    print(f"[DEBUG] → {url}")
+
+    resp = requests.get(url, headers=headers, timeout=120)
     resp.raise_for_status()
+
     data = resp.json()
 
-    outname = f"report_{report_type}_{'staging' if staging else 'prod'}_{format}_debug.json"
     Path("reports").mkdir(exist_ok=True)
+
+    outname = f"report_{report_type}_{env}_debug.json"
     out_path = Path("reports") / outname
 
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
-    print(f"[DEBUG ENDPOINT] ✅ Saved {outname}")
-    print(f"[DEBUG ENDPOINT] keys={list(data.keys())}")
+    print(f"[DEBUG] ✅ Saved {outname}")
+
     if "logs" in data:
-        print(f"[DEBUG ENDPOINT] 📜 Logs captured: {len(data['logs'].splitlines())} lines")
+        print(f"[DEBUG] 📜 Logs captured: {len(data['logs'].splitlines())} lines")
 
     return data
 
