@@ -544,6 +544,13 @@ def _run_full_audit(range: str, output_format="markdown", prefetch_context=None,
 
     logs = buffer.getvalue() if buffer else ""
 
+    # fallback to context trace if stdout empty
+    if not logs and isinstance(report, dict):
+        ctx = report.get("context", {}) or {}
+        trace = ctx.get("debug_trace", [])
+        if trace:
+            logs = "\n".join(trace)
+
     if isinstance(report, dict):
         context = report.get("context", {}) or {}
         markdown = report.get("markdown", "")
