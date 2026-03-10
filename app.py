@@ -979,8 +979,6 @@ async def get_debug(request: Request):
 
 async def get_debug_with_data(data: dict):
 
-    buffer = io.StringIO()
-
     report_range = data.get("range", "weekly")
 
     prefetch_context = normalize_prefetched_context(data)
@@ -991,6 +989,29 @@ async def get_debug_with_data(data: dict):
         prefetch_context=prefetch_context
     )
 
+    # ---------------------------------------------------------
+    # Inject execution log (same behaviour as normal /run path)
+    # ---------------------------------------------------------
+    ctx = report.get("context", {}) if isinstance(report, dict) else {}
+
+    period = ctx.get("period", {})
+    start = period.get("start")
+    end = period.get("end")
+
+    report_header = {
+        "athlete": ctx.get("athleteProfile", {}).get("name", "Unknown Athlete"),
+        "report_type": report_range,
+        "timezone": ctx.get("timezone", "Europe/Zurich"),
+        "date_range": f"{start} → {end}" if start and end else "not_passed",
+    }
+
+    logger.info(
+        "[EXEC] report_header injected (debug-run) → %s | report_type=%s | athlete=%s",
+        report_header,
+        report_range,
+        report_header.get("athlete", "unknown")
+    )
+
     MAX_LOG = 250000
     log_tail = logs[-MAX_LOG:]
 
@@ -998,6 +1019,7 @@ async def get_debug_with_data(data: dict):
         "status": "ok",
         "debug": True,
         "report_type": report_range,
+        "report_header": report_header,
         "output_format": "semantic_json",
         "semantic_graph": sanitize(sg),
         "compliance": compliance,
