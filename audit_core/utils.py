@@ -46,7 +46,7 @@ def debug(*args):
             context = args[0]
             msgs = args[1:]
         else:
-            context = None
+            context = {}
             msgs = args
 
         report_type = os.getenv("REPORT_TYPE", "unknown").lower()
@@ -63,8 +63,8 @@ def debug(*args):
         msg = " ".join(str(m) for m in msgs)
         msg_out = f"[{ts}] {msg}"
 
-        if context is not None:
-            context.setdefault("debug_trace", []).append(msg_out)
+       
+        context.setdefault("debug_trace", []).append(msg_out)
 
         # stdout → captured by redirect_stdout()
         print(msg_out)
@@ -97,15 +97,15 @@ def validate_dataset_integrity(df: pd.DataFrame) -> bool:
     return True
 
 
-def validate_wellness_alignment(activity_df: pd.DataFrame, wellness_df: pd.DataFrame) -> bool:
+def validate_wellness_alignment(activity_df: pd.DataFrame, wellness_df: pd.DataFrame, context=None) -> bool:
     """Ensure wellness data covers the same date window as activity dataset."""
 
     # --- Defensive guards ---
     if activity_df is None or activity_df.empty:
-        debug(context,"⚠ No activity data provided — skipping wellness alignment.")
+        debug(context or {}, "⚠ No activity data provided — skipping wellness alignment.")
         return True
     if wellness_df is None or (isinstance(wellness_df, pd.DataFrame) and wellness_df.empty):
-        debug(context,"⚠ No wellness data provided — skipping wellness alignment.")
+        debug(context or {}, "⚠ No wellness data provided — skipping wellness alignment.")
         return True
 
     df = activity_df.copy()
@@ -115,7 +115,7 @@ def validate_wellness_alignment(activity_df: pd.DataFrame, wellness_df: pd.DataF
         # --- Determine activity window ---
     start = pd.to_datetime(df["start_date_local"]).min()
     end = pd.to_datetime(df["start_date_local"]).max()
-    debug(context,f"[T1] Wellness alignment window (tz-aware): {start} → {end}")
+    debug(context or {}, f"[T1] Wellness alignment window (tz-aware): {start} → {end}")
 
     # Convert to naive (date only) for fair comparison
     start_date = start.tz_convert(None).date() if start.tzinfo else start.date()
@@ -129,25 +129,25 @@ def validate_wellness_alignment(activity_df: pd.DataFrame, wellness_df: pd.DataF
         if "id" in wellness_df.columns:
             wellness_df["date"] = pd.to_datetime(wellness_df["id"]).dt.date
         else:
-            debug(context,"⚠ Wellness data missing date/id column — cannot align.")
+            debug(context or {},"⚠ Wellness data missing date/id column — cannot align.")
             return False
 
     w_dates = pd.to_datetime(wellness_df["date"], errors="coerce").dropna().sort_values()
     if w_dates.empty:
-        debug(context,"⚠ Wellness dataset contains no valid dates.")
+        debug(context or {}, "⚠ Wellness dataset contains no valid dates.")
         return False
 
     # Convert wellness timestamps to naive dates
     w_start_date = w_dates.min().date()
     w_end_date = w_dates.max().date()
-    debug(context,f"[T1] Wellness date range: {w_start_date} → {w_end_date}")
+    debug(context or {}, f"[T1] Wellness date range: {w_start_date} → {w_end_date}")
 
     # --- Compare as naive date objects ---
     if w_start_date > end_date or w_end_date < start_date:
-        debug(context,f"⚠ Wellness window misaligned ({w_start_date}–{w_end_date} vs {start_date}–{end_date})")
+        debug(context or {}, f"⚠ Wellness window misaligned ({w_start_date}–{w_end_date} vs {start_date}–{end_date})")
         return False
 
-    debug(context,"✅ Wellness alignment check passed.")
+    debug(context or {}, "✅ Wellness alignment check passed.")
     return True
 
 # PREFETCH RESOLUTION

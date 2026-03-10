@@ -873,7 +873,7 @@ def run_tier1_controller(df_master, wellness, context):
     if wellness is None or (isinstance(wellness, pd.DataFrame) and wellness.empty):
         debug(context,"⚠ No wellness data available for window; continuing with activity-only audit")
     else:
-        validate_wellness_alignment(df_master, wellness)
+        validate_wellness_alignment(df_master, wellness, context)
 
         # --- Step 6: Daily wellness normalization & summary build ---
     df_master["date"] = pd.to_datetime(df_master["start_date_local"]).dt.date
