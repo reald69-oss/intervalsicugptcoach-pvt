@@ -234,6 +234,7 @@ from datetime import datetime
 from contextlib import redirect_stdout
 from pathlib import Path
 
+print("ARGV:", sys.argv)
 # Import project modules
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -276,6 +277,7 @@ def fetch_debug_report(report_type, staging=False):
 
     headers = {
         "Authorization": f"Bearer {os.getenv('ICU_OAUTH', '')}",
+        "X-Montis-Internal": os.getenv("MONTIS_INTERNAL_KEY"),
         "User-Agent": "IntervalsGPTCoachLocal/1.0"
     }
 
@@ -307,7 +309,8 @@ def fetch_debug_report(report_type, staging=False):
     # ------------------------------------------------
     # Save semantic report
     # ------------------------------------------------
-    json_name = f"report_{report_type}_{env}_debug.json"
+    mode = "prefetch" if os.getenv("PREFETCH_MODE") == "1" else "local"
+    json_name = f"report_{report_type}_{mode}_{env}_debug.json"
     json_path = Path("reports") / json_name
 
     with open(json_path, "w", encoding="utf-8") as f:
@@ -319,7 +322,7 @@ def fetch_debug_report(report_type, staging=False):
     # ------------------------------------------------
     # Save logs separately
     # ------------------------------------------------
-    log_name = f"report_{report_type}_{env}_debug.log"
+    log_name = f"report_{report_type}_{mode}_{env}_debug.log"
     log_path = Path("reports") / log_name
 
     with open(log_path, "w", encoding="utf-8") as f:
@@ -337,7 +340,16 @@ def fetch_debug_report(report_type, staging=False):
 # ─────────────────────────────────────────────
 # PREFETCH HELPER — Cloudflare Worker Schema
 # ─────────────────────────────────────────────
-def fetch_remote_report(report_type, staging=False, gpt=False, start=None, end=None, strava_test=False):
+def fetch_remote_report(
+    report_type,
+    staging=False,
+    gpt=False,
+    provider=None,
+    model=None,
+    start=None,
+    end=None,
+    strava_test=False
+):
     """
     Fetch a URF report (semantic+markdown) from Cloudflare Worker.
     If GPT rendering is enabled (?render=gpt), the Worker now returns both
@@ -349,6 +361,12 @@ def fetch_remote_report(report_type, staging=False, gpt=False, start=None, end=N
     params = []
     if gpt:
         params.append("render=gpt")
+
+        if provider:
+            params.append(f"provider={provider}")
+
+        if model:
+            params.append(f"model={model}")
     if start:
         params.append(f"start={start}")
     if end:
@@ -372,6 +390,7 @@ def fetch_remote_report(report_type, staging=False, gpt=False, start=None, end=N
 
     headers = {
         "Authorization": f"Bearer {os.getenv('ICU_OAUTH', '')}",
+        "X-Montis-Internal": os.getenv("MONTIS_INTERNAL_KEY"),
         "User-Agent": "IntervalsGPTCoachLocal/1.0"
     }
 
@@ -381,16 +400,23 @@ def fetch_remote_report(report_type, staging=False, gpt=False, start=None, end=N
 
     resp = requests.get(url, headers=headers, timeout=120)
 
-    # Accept semantic error responses (422) from Worker
+    print(f"[REMOTE] HTTP {resp.status_code}")
+
+    # Only crash for true server failures
+    if resp.status_code >= 500:
+        resp.raise_for_status()
+
+    content_type = resp.headers.get("content-type", "")
+
+    # Try to parse JSON if possible
     try:
         data = resp.json()
     except Exception:
-        resp.raise_for_status()
-        raise
-
-    # Only raise if truly unexpected
-    if resp.status_code >= 500:
-        resp.raise_for_status()
+        # Surface Worker error text instead of crashing
+        text = resp.text
+        print("[REMOTE] Non-JSON response from Worker:")
+        print(text)
+        return {"status": "error", "raw": text}
 
     Path("reports").mkdir(exist_ok=True)
     env_tag = "staging" if staging else "prod"
@@ -399,38 +425,65 @@ def fetch_remote_report(report_type, staging=False, gpt=False, start=None, end=N
 
     # 🔥 Handle unified JSON payload (markdown + semantic)
     if "application/json" in content_type:
+
         data = resp.json()
         markdown = data.get("markdown")
         semantic = data.get("semantic_graph")
 
-        if markdown:
-            md_out = f"report_{report_type}_{env_tag}_gpt.md"
-            md_path = Path("reports") / md_out
-            md_path.write_text(markdown, encoding="utf-8")
+        mode = "prefetch"
+        env_tag = "staging" if staging else "prod"
 
-            print(f"[REMOTE] ✅ Markdown saved → {md_out}")
-            open_report(md_path)
+        # ------------------------------------------------
+        # Write semantic JSON (always if present)
+        # ------------------------------------------------
         if semantic:
-            json_out = f"report_{report_type}_{env_tag}_semantic.json"
+
+            json_out = f"report_{report_type}_{mode}_{env_tag}_semantic.json"
             json_path = Path("reports") / json_out
-            json_path.write_text(json.dumps(semantic, indent=2), encoding="utf-8")
+
+            json_path.write_text(
+                json.dumps(semantic, indent=2),
+                encoding="utf-8"
+            )
 
             print(f"[REMOTE] ✅ Semantic JSON saved → {json_out}")
             open_report(json_path)
+
+        # ------------------------------------------------
+        # Write markdown if GPT requested
+        # ------------------------------------------------
+        if gpt:
+
+            md_out = f"report_{report_type}_{mode}_{env}_gpt_{provider}_{model}.md"
+            md_path = Path("reports") / md_out
+
+            if markdown:
+                md_path.write_text(markdown, encoding="utf-8")
+                print(f"[REMOTE] ✅ Markdown saved → {md_out}")
+            else:
+                md_path.write_text(
+                    "# LLM render unavailable\n\n"
+                    "The worker did not return markdown.\n"
+                    "Check semantic JSON for details.",
+                    encoding="utf-8"
+                )
+                print(f"[REMOTE] ⚠️ Markdown missing — placeholder written → {md_out}")
+
+            open_report(md_path)
 
         return data
 
     # Legacy markdown-only fallback
     if "text/markdown" in content_type:
         text = resp.text
-        md_out = f"report_{report_type}_{env_tag}_gpt.md"
+        md_out = f"report_{report_type}_prefetch_{env_tag}_gpt.md"
         Path(f"reports/{md_out}").write_text(text, encoding="utf-8")
         print(f"[REMOTE] ✅ Markdown saved (legacy) → {md_out}")
         return {"markdown": text, "status": resp.status_code}
 
     # Default JSON flow (no GPT)
     data = resp.json()
-    json_out = f"report_{report_type}_{env_tag}_semantic.json"
+    json_out = f"report_{report_type}_prefetch_{env_tag}_semantic.json"
     Path(f"reports/{json_out}").write_text(json.dumps(data, indent=2), encoding="utf-8")
     print(f"[REMOTE] ✅ Semantic JSON saved → {json_out}")
     return data
@@ -446,6 +499,8 @@ def generate_full_report(
     start=None,
     end=None,
     gpt=False,
+    provider=None,
+    model=None,
     strava_test=False
 ):
     """Run report and capture logs and output into one file."""
@@ -468,6 +523,8 @@ def generate_full_report(
             report_type,
             staging=staging,
             gpt=gpt,
+            provider=provider,
+            model=model,
             start=start,
             end=end,
             strava_test=strava_test
@@ -566,10 +623,11 @@ def generate_full_report(
         print("[SAFEGUARD] 🛑 Prefetch GPT detected — skipping local file writing entirely.")
         return None  # 🧱 Hard stop, prevents duplicate writes
 
+    mode = "prefetch" if prefetch else "local"
     env_tag = "staging" if staging else "prod"
-    prefetch_tag = "_prefetch" if prefetch else ""
     gpt_tag = "_gpt" if gpt else ""
-    base_name = f"report_{report_type}{prefetch_tag}_{env_tag}{gpt_tag}_{output_format}"
+
+    base_name = f"report_{report_type}_{mode}_{env_tag}{gpt_tag}_{output_format}"
 
 
     # ============================================================
@@ -598,15 +656,6 @@ def generate_full_report(
         print(f"[LOCAL] ✅ Saved semantic JSON → {out_path}")
 
         log_path = reports_dir / f"{base_name}.log"
-
-        if 'log_file_output' in locals() and log_file_output:
-            with open(log_path, "w", encoding="utf-8") as f:
-                f.write(log_file_output)
-
-            print(f"[LOCAL] 📜 Logs saved → {log_path}")
-
-            if os.getenv("OPEN_REPORT", "1") == "1":
-                webbrowser.open(log_path.resolve().as_uri())
 
         if os.getenv("OPEN_REPORT", "1") == "1":
             webbrowser.open(out_path.resolve().as_uri())
@@ -643,6 +692,11 @@ def main():
     parser.add_argument("--end", type=str, help="Custom end date (YYYY-MM-DD)")
     parser.add_argument("--gpt", action="store_true",
                         help="Request GPT-rendered report from Cloudflare Worker (adds ?render=gpt)")
+    parser.add_argument("--provider", type=str,
+                        choices=["openai","anthropic","google"],
+                        help="LLM provider")
+    parser.add_argument("--model", type=str,
+                        help="LLM model")    
     parser.add_argument("--debug", action="store_true",
                         help="Run any report type in debug mode (via Railway /debug endpoint if available)")
     parser.add_argument(
@@ -665,9 +719,15 @@ def main():
 
     # 🧠 Debug mode shortcut — directly fetch from /debug and exit
     if args.debug:
+
+        if args.prefetch:
+            os.environ["PREFETCH_MODE"] = "1"
+
         print(f"[CLI] 🧠 Debug mode enabled for '{args.range}' (staging={args.staging})")
+
         fetch_debug_report(args.range, staging=args.staging)
-        return  # ✅ Skip normal report generation entirely
+
+        return
 
     # 🧩 Otherwise, run the normal flow
     generate_full_report(
@@ -679,6 +739,8 @@ def main():
         start=args.start,
         end=args.end,
         gpt=args.gpt,
+        provider=args.provider,
+        model=args.model,
         strava_test=args.strava_test
     )
 

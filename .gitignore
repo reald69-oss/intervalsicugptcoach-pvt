@@ -20,6 +20,9 @@ Thumbs.db
 /docs/devandtest.md 
 /report.py
 /docs/PYTHONCurl.md
+/index.html
+/report_api.py
+/docs/security/
 
 # Python
 __pycache__/
