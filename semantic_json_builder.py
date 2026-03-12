@@ -3347,6 +3347,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     global_profile = RENDERER_PROFILES.get("global", {})
     report_profile = RENDERER_PROFILES.get(report_type, {})
 
+    stack_structure = report_profile.get("stack_structure")
     hard_rules = global_profile.get("hard_rules", [])
     list_rules = global_profile.get("list_rules", [])
     tone_rules = global_profile.get("tone_rules", [])
@@ -3374,6 +3375,43 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     # --------------------------------------------------
     # Optional blocks (existing)
     # --------------------------------------------------
+
+    stack_block = ""
+    if stack_structure:
+
+        stack_lines = []
+
+        for layer, sections in stack_structure.items():
+
+            layer_name = layer.replace("_", " ").title()
+
+            stack_lines.append(f"{layer_name}:")
+            for s in sections:
+                stack_lines.append(f"- {s}")
+
+            stack_lines.append("")
+
+        stack_block = dedent(f"""
+        STACK STRUCTURE RULE:
+
+        The report MUST be organised into the following conceptual intelligence layers:
+
+        {chr(10).join(stack_lines)}
+
+        These layers are PRESENTATIONAL GROUPINGS ONLY.
+
+        They must NOT:
+        - change section order
+        - override section_handling rules
+        - modify interpretation_rules
+        - alter table rendering rules
+
+        Sections must appear in the exact URF section order.
+
+        Each section must appear under its corresponding stack layer while still following the URF section order.
+        """).strip()
+
+
     section_handling_block = ""
     if section_handling:
         section_handling_block = dedent(f"""
@@ -3573,6 +3611,8 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     {emphasis_block}
 
     {framing_block}
+
+    {stack_block}
 
     {section_handling_block}
 

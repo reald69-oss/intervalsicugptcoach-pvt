@@ -88,6 +88,34 @@ RENDERER_PROFILES = {
     # Weekly report (FULL DETAIL, SESSION-LEVEL)
     # ==============================================================
     "weekly": {
+        "stack_structure": {
+            "training_load": [
+                "training_volume",
+                "metrics",
+                "daily_load",
+                "events"
+            ],
+
+            "physiology_response": [
+                "wellness"
+            ],
+
+            "performance_intelligence": [
+                "performance_intelligence"
+            ],
+
+            "adaptation": [
+                "energy_system_progression",
+                "physiology"
+            ],
+
+            "adaptive_decisions": [
+                "actions",
+                "planned_events",
+                "future_forecast",
+                "future_actions"
+            ]
+        },
         "coaching_sentences": {
             "enabled": True,
             "max_per_section": 5,
