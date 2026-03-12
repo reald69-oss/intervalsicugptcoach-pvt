@@ -17,7 +17,7 @@ def get_profile_metrics(context):
 # coaching_profile.py
 
 REPORT_CONTRACT = {
-        "weekly": [
+    "weekly": [
         "meta",
 
         # 🧭 TRAINING LOAD
@@ -28,6 +28,7 @@ REPORT_CONTRACT = {
 
         # 🫀 PHYSIOLOGY RESPONSE
         "wellness",
+        "insight_view",
 
         # ⚙️ PERFORMANCE INTELLIGENCE
         "performance_intelligence",
@@ -35,6 +36,8 @@ REPORT_CONTRACT = {
 
         # 📈 ADAPTATION
         "energy_system_progression",
+
+        # physiological calibration
         "physiology",
         "zones",
 
@@ -46,10 +49,9 @@ REPORT_CONTRACT = {
         "future_forecast",
         "future_actions",
 
-        # optional narrative
+        # hidden narrative (not rendered)
         "phases",
         "insights",
-        "insight_view"
     ],
 
     "season": [
@@ -193,6 +195,7 @@ RENDERER_PROFILES = {
             "planned_summary_by_date": "forbid",
             "actions": "full",
             "future_actions": "full",
+            "insight_view": "summary"
         },
 
             "emphasis": {
