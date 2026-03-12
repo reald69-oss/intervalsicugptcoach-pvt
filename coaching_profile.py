@@ -17,14 +17,39 @@ def get_profile_metrics(context):
 # coaching_profile.py
 
 REPORT_CONTRACT = {
-    "weekly": [
-        "meta", "training_volume",
+        "weekly": [
+        "meta",
+
+        # 🧭 TRAINING LOAD
+        "training_volume",
         "metrics",
-        "performance_intelligence", "energy_system_progression",
-        "zones", "physiology", "daily_load", "events", "wbal_summary",
-        "wellness", "phases", "insights", "insight_view", "actions",
-        "planned_events", "planned_summary_by_date", "current_ISO_weekly_microcycle",
-        "future_forecast", "future_actions"
+        "daily_load",
+        "events",
+
+        # 🫀 PHYSIOLOGY RESPONSE
+        "wellness",
+
+        # ⚙️ PERFORMANCE INTELLIGENCE
+        "performance_intelligence",
+        "wbal_summary",
+
+        # 📈 ADAPTATION
+        "energy_system_progression",
+        "physiology",
+        "zones",
+
+        # 🎯 ADAPTIVE DECISIONS
+        "actions",
+        "planned_events",
+        "planned_summary_by_date",
+        "current_ISO_weekly_microcycle",
+        "future_forecast",
+        "future_actions",
+
+        # optional narrative
+        "phases",
+        "insights",
+        "insight_view"
     ],
 
     "season": [
