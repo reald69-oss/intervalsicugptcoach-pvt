@@ -143,8 +143,70 @@ RENDERER_PROFILES = {
             "adaptation": "high"
         },
 
+        "events_rule": {
+            "column_order": [
+                "Date",
+                "Activity",
+                "Duration (min)",
+                "Distance",
+                "TSS",
+                "IF",
+                "NP",
+                "HRR60"
+            ],
+
+            "duration_conversion": [
+                "The semantic field `duration_seconds` MUST be converted to minutes at render time.",
+                "This conversion applies ONLY to duration.",
+                "Display as integer minutes by default.",
+                "Use one decimal only if duration < 30 minutes and precision is useful.",
+                "Label column as Duration (min). Show HRR60 column when values exist."
+            ],
+
+            "icons": [
+                "⚡ Efficient (optimal efficiency factor)",
+                "🟢 Aerobic (low IF with stable decoupling)",
+                "💥 Anaerobic (heavy W′ engagement)",
+                "🔁 Repeated (repeated W′ depletion pattern)",
+                "📈 Progressive (progressive W′ engagement)",
+                "🧘 Recovery (very low intensity recovery session)",
+                "❤️ Heart_rate_recovery_60s (Heart Rate Recovery within 60s)"
+            ],
+
+            "rules": [
+                "The events section MUST be rendered as a Markdown table.",
+                "EVERY event in the semantic JSON MUST appear as exactly one row.",
+                "The events section MUST NOT be summarised, renamed, grouped, or rewritten.",
+                "Bullet points, highlights, or narrative descriptions of events are FORBIDDEN.",
+                "Coaching sentences for events, if enabled, MUST appear AFTER the table.",
+                "The EVENTS table MUST use the defined column order.",
+                "In the EVENTS table, session-level signal icons MAY be rendered within the Activity column as a prefix using the canonical mapping derived ONLY from existing semantic fields.",
+                "Icons represent independent session signals and MAY appear together for a single event.",
+                "Add rpe_emoji and feel_emoji to the right of activity name tightly coupled.",
+                "When multiple icons apply, they MUST be rendered together in the defined fixed order.",
+                "Icons are visual aliases only and must not replace numeric values, suppress other applicable icons, or reduce table rows.",
+                "When `activity_link` exists, the Activity column MUST render the activity name as a Markdown link: [name](activity_link).",
+                "Icons MUST appear before the link inside the same Activity cell.",
+                "Show icon legends underneath the table tightly coupled."
+            ]
+        },
+
+        "planned_events_rule": [
+            "The planned_events section MUST be rendered as a Markdown table.",
+            "EVERY planned event in the semantic JSON MUST appear as exactly one row.",
+            "The planned_events section MUST NOT be summarised, renamed, grouped, or rewritten.",
+            "Narrative descriptions of planned events are FORBIDDEN.",
+            "Coaching sentences for planned_events, if enabled, MUST appear AFTER the table."
+        ],
+
         "framing": {
             "intent": "tactical_weekly_control"
+        },
+        "question_rule": {
+            "fatigue",
+            "adaptation",
+            "training load",
+            "perceived exertion (RPE / feel)"
         },
         "closing_note": {
             "required": True,
@@ -215,6 +277,12 @@ RENDERER_PROFILES = {
 
         "framing": {
             "intent": "medium_term_block_assessment"
+        },
+        "question_rule": {
+            "adaptation",
+            "training progression",
+            "durability",
+            "fatigue accumulation"
         },
         "closing_note": {
             "required": True,
@@ -343,6 +411,12 @@ RENDERER_PROFILES = {
             "Autonomic suppression combined with elevated ATL indicates recovery pressure.",
             "Stable HRV despite elevated ATL indicates productive adaptation under load."
         ],
+        "question_rule": {
+            "recovery",
+            "fatigue perception",
+            "sleep quality",
+            "morning readiness"
+        },
 
         # ----------------------------------------------------------
         # Closing note
@@ -429,6 +503,12 @@ RENDERER_PROFILES = {
 
         "framing": {
             "intent": "annual_system_health_review"
+        },
+        "question_rule": {
+            "long-term training sustainability",
+            "adaptation progression",
+            "training consistency",
+            "fatigue management across the season"
         },
         "closing_note": {
             "required": True,

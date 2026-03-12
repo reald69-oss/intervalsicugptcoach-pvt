@@ -3361,6 +3361,9 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     section_handling = report_profile.get("section_handling", {})
     signal_hierarchy = report_profile.get("signal_hierarchy", [])
     fatigue_logic = report_profile.get("fatigue_logic", [])
+    question_themes = report_profile.get("question_rule", [])
+    events_rule = report_profile.get("events_rule")
+    planned_events_rule = report_profile.get("planned_events_rule")
 
     # ➕ NEW: presentation config (read directly, no helpers)
     state_presentation = global_profile.get("state_presentation", {})
@@ -3418,19 +3421,19 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
 
 
     question_block = ""
-    if coaching_enabled:
-        question_block = dedent("""
+    if coaching_enabled and question_themes:
+        question_block = dedent(f"""
         CLOSING REFLECTION RULE:
         After the full report is produced, generate exactly ONE short reflective coaching question.
-        The question MUST be based on the dominant signal in the report and relate to one of:
-        - fatigue
-        - adaptation
-        - training load
-        - recovery
-        - perceived exertion (RPE / feel)
-        The closing question may be reflective, diagnostic, or exploratory.
-        It must be grounded in the signals present in the report and must not
-        introduce new metrics or predictions.
+
+        The question MUST be based on the dominant signal in the report.
+
+        Allowed reflection themes:
+        {chr(10).join(f"- {t}" for t in question_themes)}
+
+        The closing question must be grounded in the signals present in the report
+        and must not introduce new metrics or predictions.
+
         Format exactly as:
         ---
         Closing Reflection
@@ -3444,51 +3447,37 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         {chr(10).join(f"- {r}" for r in allowed_enrichment)}
         """).strip()
 
-    section_handling_block = ""
-    if section_handling:
-        section_handling_block = dedent(f"""
-        SECTION HANDLING RULES:
-        {chr(10).join(f"- {k}: {v}" for k, v in section_handling.items())}
+    events_block = ""
 
-        Handling meanings:
-        - full: render entire section exactly as provided
-        - summary: summarise using existing semantic aggregates only
-        - forbid: do NOT render this section
+    if events_rule:
+        icon_list = "\n".join(
+            f"{i+1}) {icon}" for i, icon in enumerate(events_rule.get("icons", []))
+        )
 
+        duration_rules = "\n".join(f"- {r}" for r in events_rule.get("duration_conversion", []))
+        rules = "\n".join(f"- {r}" for r in events_rule.get("rules", []))
+
+        columns = " | ".join(events_rule.get("column_order", []))
+
+        events_block = dedent(f"""
         EVENTS (WEEKLY — NON-NEGOTIABLE):
-        - The events section MUST be rendered as a Markdown table.
-        - EVERY event in the semantic JSON MUST appear as exactly one row.
-        - The events section MUST NOT be summarised, renamed, grouped, or rewritten.
-        - Bullet points, highlights, or narrative descriptions of events are FORBIDDEN.
-        - Coaching sentences for events, if enabled, MUST appear AFTER the table.
+        {rules}
+
         - The EVENTS table MUST use the following column order:
-        Date | Activity | Duration (min) | Distance | TSS | IF | NP | HRR60
-        - The semantic field `duration_seconds` MUST be converted to minutes at render time.
-        - This conversion applies ONLY to duration.
-        - Display as integer minutes by default.
-        - Use one decimal only if duration < 30 minutes and precision is useful.
-        - Label column as Duration (min). Show HRR60 column when values exist.
-        - In the EVENTS table, session-level signal icons MAY be rendered within the Activity column as a prefix using the following canonical mapping derived ONLY from existing semantic fields.
-        - Icons represent independent session signals and MAY appear together for a single event.
-        - Add rpe_emoji and feel_emoji to the right of activity name tightly coupled.
+        {columns}
+
+        {duration_rules}
+
         - When multiple icons apply, they MUST be rendered together in the following fixed order (left → right):
-        1) ⚡ Efficient (optimal efficiency factor)
-        2) 🟢 Aerobic (low IF with stable decoupling)
-        3) 💥 Anaerobic (heavy W′ engagement)
-        4) 🔁 Repeated (repeated W′ depletion pattern)
-        5) 📈 Progressive (progressive W′ engagement)
-        6) 🧘 Recovery (very low intensity recovery session)
-        7) ❤️ Heart_rate_recovery_60s (Heart Rate Recovery within 60s)
-        - Icons are visual aliases only and must not replace numeric values, suppress other applicable icons, or reduce table rows.
-        - When `activity_link` exists, the Activity column MUST render the activity name as a Markdown link: [name](activity_link).
-        - Icons MUST appear before the link inside the same Activity cell.
-        - Show icon legends underneath the table tightly coupled
+        {icon_list}
+        """).strip()
+
+    planned_events_block = ""
+
+    if planned_events_rule:
+        planned_events_block = dedent(f"""
         PLANNED EVENTS (WEEKLY — NON-NEGOTIABLE):
-        - The planned_events section MUST be rendered as a Markdown table.
-        - EVERY planned event in the semantic JSON MUST appear as exactly one row.
-        - The planned_events section MUST NOT be summarised, renamed, grouped, or rewritten.
-        - Narrative descriptions of planned events are FORBIDDEN.
-        - Coaching sentences for planned_events, if enabled, MUST appear AFTER the table.
+        {chr(10).join(f"- {r}" for r in planned_events_rule)}
         """).strip()
 
     # --------------------------------------------------
@@ -3573,7 +3562,9 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
 
     {framing_block}
 
-    {section_handling_block}
+    {events_block}
+
+    {planned_events_block}
 
     LIST RENDERING RULES (NON-NEGOTIABLE):
     {chr(10).join(f"- {r}" for r in list_rules)}
