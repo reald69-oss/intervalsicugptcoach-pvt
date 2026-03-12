@@ -61,7 +61,8 @@ RENDERER_PROFILES = {
             "Do NOT add numeric prefixes to section headers.",
             "Use emoji-based section headers only.",
             "Preserve section order exactly as defined by the contract.",
-            "Metric context MUST be derived exclusively from each metric’s `context_window` and `confidence_model` fields."
+            "Metric context MUST be derived exclusively from each metric’s `context_window` and `confidence_model` fields.",
+            "When both wellness signals and performance_intelligence metrics are present, interpret recovery state as the physiological response to recent training stress. Insights should reconcile these layers rather than repeating them independently."
         ],
         "list_rules": [
             "If a section value is a JSON array (list), render it as a Markdown table.",
