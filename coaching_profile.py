@@ -57,7 +57,7 @@ RENDERER_PROFILES = {
         "hard_rules": [
             "Render exactly ONE report.",
             "All sections MUST appear under their corresponding stack layer header.",
-            "Stack layer headers MUST be rendered as section separators using the layer name in UPPERCASE followed by a horizontal rule made of box-drawing characters (─).",
+            "Stack layer headers MUST be rendered as section separators using the layer name in UPPERCASE",
             "Do NOT add numeric prefixes to section headers.",
             "Use emoji-based section headers only.",
             "Preserve section order exactly as defined by the contract.",
@@ -115,6 +115,13 @@ RENDERER_PROFILES = {
                 "future_forecast",
                 "future_actions"
             ]
+        },
+        "stack_labels": {
+            "training_load": "🧭 TRAINING LOAD",
+            "physiology_response": "🫀 PHYSIOLOGY RESPONSE",
+            "performance_intelligence": "⚙️ PERFORMANCE INTELLIGENCE",
+            "adaptation": "📈 ADAPTATION",
+            "adaptive_decisions": "🎯 ADAPTIVE DECISIONS"
         },
         "coaching_sentences": {
             "enabled": True,

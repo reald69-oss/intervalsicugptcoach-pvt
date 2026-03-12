@@ -3347,7 +3347,8 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     global_profile = RENDERER_PROFILES.get("global", {})
     report_profile = RENDERER_PROFILES.get(report_type, {})
 
-    stack_structure = report_profile.get("stack_structure")
+    stack_structure = report_profile.get("stack_structure", {})
+
     hard_rules = global_profile.get("hard_rules", [])
     list_rules = global_profile.get("list_rules", [])
     tone_rules = global_profile.get("tone_rules", [])
@@ -3360,6 +3361,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     coaching_max = coaching_cfg.get("max_per_section", 0)
 
     section_handling = report_profile.get("section_handling", {})
+    stack_labels = report_profile.get("stack_labels", {})
     signal_hierarchy = report_profile.get("signal_hierarchy", [])
     fatigue_logic = report_profile.get("fatigue_logic", [])
     question_themes = report_profile.get("question_rule", [])
@@ -3375,6 +3377,14 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     # --------------------------------------------------
     # Optional blocks (existing)
     # --------------------------------------------------
+
+    stack_lines = []
+    for layer, sections in stack_structure.items():
+        label = stack_labels.get(layer, layer.upper())
+
+        stack_lines.append(label)
+        for s in sections:
+            stack_lines.append(f"- {s}")
 
     stack_block = ""
     if stack_structure:
