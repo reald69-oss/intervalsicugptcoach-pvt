@@ -36,7 +36,6 @@ REPORT_CONTRACT = {
 
         # 📈 ADAPTATION
         "energy_system_progression",
-
         # physiological calibration
         "physiology",
         "zones",
@@ -125,22 +124,28 @@ RENDERER_PROFILES = {
 
             "physiology_response": [
                 "wellness"
+                "insight_view",
             ],
 
             "performance_intelligence": [
-                "performance_intelligence"
+                "performance_intelligence",
+                "wbal_summary",
             ],
 
             "adaptation": [
                 "energy_system_progression",
-                "physiology"
+                # physiological calibration
+                "physiology",
+                "zones",
             ],
 
             "adaptive_decisions": [
                 "actions",
                 "planned_events",
+                "planned_summary_by_date",
+                "current_ISO_weekly_microcycle",
                 "future_forecast",
-                "future_actions"
+                "future_actions",
             ]
         },
         "stack_labels": {
