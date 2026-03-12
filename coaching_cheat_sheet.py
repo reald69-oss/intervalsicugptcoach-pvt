@@ -88,6 +88,11 @@ CHEAT_SHEET["thresholds"] = {
     },
     # --- Performance Intelligence ---
     "mean_depletion_pct_7d": {"green":(0.2,0.45),"amber":(0.45,0.7)},
+    "moderate_depletion_sessions_7d": {
+        "green": (0, 3),
+        "amber": (4, 6),
+        "red": (7, 10)
+    },
     "high_depletion_sessions_7d": {"green":(0,2),"amber":(3,4)},
     "mean_depletion_pct_90d": {"green":(0.15,0.35),"amber":(0.35,0.55)},
     "high_depletion_sessions_90d": {"green":(0,6),"amber":(6,10)},
@@ -96,8 +101,8 @@ CHEAT_SHEET["thresholds"] = {
     "mean_decoupling_90d": {"green":(0,4),"amber":(4,7)},
     "high_drift_sessions_90d": {"green":(0,10),"amber":(10,20)},
     "rolling_joules_above_ftp_7d": {
-        "green": (0,160000),
-        "amber": (160000,250000),
+        "green": (0,150000),
+        "amber": (150000,250000),
         "red": (250000,1000000),
     },
     "high_intensity_days_7d": {
@@ -330,8 +335,11 @@ CHEAT_SHEET["metric_groups"] = {
     # --- WDRM ---
     "mean_depletion_pct_7d": "AnaerobicRepeatability",
     "max_depletion_pct_7d": "AnaerobicRepeatability",
+    "moderate_depletion_sessions_7d": "AnaerobicRepeatability",
     "high_depletion_sessions_7d": "AnaerobicRepeatability",
     "mean_depletion_pct_90d": "AnaerobicRepeatability",
+    "max_depletion_pct_90d": "AnaerobicRepeatability",
+    "moderate_depletion_sessions_90d": "AnaerobicRepeatability",
     "high_depletion_sessions_90d": "AnaerobicRepeatability",
     # --- ISDM ---
     "mean_decoupling_7d": "DurabilityProfile",
@@ -343,6 +351,8 @@ CHEAT_SHEET["metric_groups"] = {
     "rolling_joules_above_ftp_7d": "NeuralDensity",
     "high_intensity_days_7d": "NeuralDensity",
     "high_intensity_sessions_90d": "NeuralDensity",
+    "mean_variability_index_7d": "NeuralDensity",
+    "mean_efficiency_factor_7d": "NeuralDensity",
     # --- Alignment ---
     "delta_ratio": "LoadAlignment",
 }
@@ -903,6 +913,7 @@ CHEAT_SHEET["display_names"] = {
     # WDRM metrics
     "max_depletion_pct_7d": "Max W′ Depletion (7-day)",
     "mean_depletion_pct_7d": "Mean W′ Depletion (7-day)",
+    "moderate_depletion_sessions_7d": "Moderate W′ Depletion Sessions (7-day)",
     "high_depletion_sessions_7d": "High W′ Depletion Sessions (7-day)",
     "total_joules_above_ftp_7d": "Total Work Above FTP (7-day)",
 
@@ -918,7 +929,7 @@ CHEAT_SHEET["display_names"] = {
     "mean_if_7d": "Mean Intensity Factor (7-day)",
     "mean_variability_index_7d": "Mean Variability Index (7-day)",
     "mean_efficiency_factor_7d": "Mean Efficiency Factor (7-day)",
-    
+
     # WDRM metrics (90d)
     "max_depletion_pct_90d": "Max W′ Depletion (90-day)",
     "mean_depletion_pct_90d": "Mean W′ Depletion (90-day)",

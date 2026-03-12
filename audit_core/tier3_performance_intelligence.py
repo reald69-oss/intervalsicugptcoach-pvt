@@ -15,7 +15,7 @@ Season → 90d LIGHT chronic aggregation + 7d acute overlay
 from audit_core.utils import debug
 import pandas as pd
 
-PI_VERSION = "PI_v1.1"
+PI_VERSION = "PI_v1.2"
 # ===========================================================
 # Public Entry
 # ===========================================================
@@ -110,7 +110,8 @@ def _compute_weekly(context, df_full):
         "anaerobic_repeatability": {
             "max_depletion_pct_7d": _safe_max(depletion_pct),
             "mean_depletion_pct_7d": _safe_mean(depletion_pct),
-            "high_depletion_sessions_7d": _safe_count(depletion_pct, 0.7),
+            "moderate_depletion_sessions_7d": _safe_count(depletion_pct, 0.5),
+            "high_depletion_sessions_7d": _safe_count(depletion_pct, 0.6),
             "total_joules_above_ftp_7d": _safe_sum(joules),
         },
         "model_diagnostics": {
@@ -257,7 +258,8 @@ def _compute_season(context, df_light, df_full):
         "anaerobic_repeatability": {
             "mean_depletion_pct_90d": _safe_mean(depletion_pct),
             "max_depletion_pct_90d": _safe_max(depletion_pct),
-            "high_depletion_sessions_90d": _safe_count(depletion_pct, 0.7),
+            "moderate_depletion_sessions_90d": _safe_count(depletion_pct, 0.5),
+            "high_depletion_sessions_90d": _safe_count(depletion_pct, 0.6),
             "total_joules_above_ftp_90d": _safe_sum(joules),
         },
 
@@ -298,6 +300,7 @@ def _compute_season(context, df_light, df_full):
     debug(context, "[T3][SEASON][WDRM] Chronic Anaerobic Repeatability (90d)",
         f"mean_dep_pct={wdrm_c['mean_depletion_pct_90d']}",
         f"max_dep_pct={wdrm_c['max_depletion_pct_90d']}",
+        f"moderate_dep_sessions={wdrm_c['moderate_depletion_sessions_90d']}",
         f"high_dep_sessions={wdrm_c['high_depletion_sessions_90d']}",
         f"total_joules_above_ftp={wdrm_c['total_joules_above_ftp_90d']}")
 
@@ -479,7 +482,7 @@ def _safe_max(series):
 def _safe_count(series, threshold):
     if series is None:
         return None
-    return int((series > threshold).sum())
+    return int((series >= threshold).sum())
 
 
 def _empty_weekly():
