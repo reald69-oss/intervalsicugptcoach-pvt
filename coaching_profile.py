@@ -260,7 +260,7 @@ RENDERER_PROFILES = {
         "signal_hierarchy": [
             "Autonomic signals (HRV, HRV stability, resting HR, sleep)",
             "Load context (CTL, ATL, TSB, FatigueTrend)",
-            "Stress mechanisms (neural density, durability drift, intensity density)"
+            "Training stress mechanisms (from performance_intelligence: neural density, durability drift, anaerobic depletion)"
         ],
 
         # ----------------------------------------------------------
@@ -274,7 +274,8 @@ RENDERER_PROFILES = {
             "Use CTL, ATL, and TSB as load context rather than primary fatigue indicators.",
             "Avoid day-by-day narration when aggregates or trends exist.",
             "When HRV remains stable despite high ATL, describe this as maintenance-under-load adaptation.",
-            "When autonomic signals disagree with load signals, prioritise autonomic interpretation."
+            "When autonomic signals disagree with load signals, prioritise autonomic interpretation.",
+            "When performance_intelligence exists, relate autonomic recovery signals to training stress signals (durability drift, neural density, anaerobic depletion) to explain whether the athlete is tolerating current training load."
         ],
 
         # ----------------------------------------------------------
@@ -288,7 +289,8 @@ RENDERER_PROFILES = {
             "Explain interaction between HRV behaviour and training load.",
             "Include sleep and resting heart rate analysis when available.",
             "Highlight absence of subjective recovery data when relevant.",
-            "Describe possible neural or durability fatigue only when supported by insight metrics."
+            "Describe possible neural or durability fatigue only when supported by insight metrics.",
+            "Reference performance_intelligence stress metrics when explaining recovery tolerance."
         ],
 
         # ----------------------------------------------------------
@@ -368,7 +370,8 @@ RENDERER_PROFILES = {
                 "Sleep_score",
                 "CTL",
                 "ATL",
-                "TSB"
+                "TSB",
+                "performance_intelligence"
             ],
 
             "intent_rule":
