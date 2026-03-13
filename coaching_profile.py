@@ -673,7 +673,7 @@ RENDERER_PROFILES = {
             ],
 
             "physiology_response": [
-                "wellness"
+                "wellness",
                 "insights"
             ],
 
