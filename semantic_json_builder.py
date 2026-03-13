@@ -2732,7 +2732,7 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     # 🗓️ Microcycle Execution Model (ISO Aligned)
     # ---------------------------------------------------------
-    if semantic["meta"].get("report_type") == "weekly":
+    if semantic["meta"].get("report_type") in "weekly, season":
 
         semantic["current_ISO_weekly_microcycle"] = None
 
