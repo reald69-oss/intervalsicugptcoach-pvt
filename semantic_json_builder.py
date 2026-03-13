@@ -3230,10 +3230,9 @@ def build_semantic_json(context):
 
                 for block in summaries:
 
-                    # find matching ISO week block
+                    # derive ISO week from block start date
                     start = pd.Timestamp(block["start"])
                     iso = start.isocalendar()
-
                     block_week = f"{iso.year}-W{iso.week}"
 
                     if block_week == iso_week:
@@ -3248,12 +3247,18 @@ def build_semantic_json(context):
                         block["completed_hours"] = micro.get("completed_hours")
                         block["projected_hours"] = micro.get("projected_hours")
 
-                        # ensure totals match projected state
-                        if micro.get("projected_total_tss"):
+                        # ensure totals reflect projected state
+                        if micro.get("projected_total_tss") is not None:
                             block["tss_total"] = micro["projected_total_tss"]
 
-                        if micro.get("projected_hours"):
+                        if micro.get("projected_hours") is not None:
                             block["hours_total"] = round(micro["projected_hours"], 1)
+
+                        # invalidate phase classification for projected weeks
+                        block["phase"] = "Projected"
+                        block["descriptor"] = "🔮 **Projected training week** — classification deferred until execution."
+                        block["calc_method"] = "projection_override"
+                        block["calc_context"] = None
 
                         break
 
