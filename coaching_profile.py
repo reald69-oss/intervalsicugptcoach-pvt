@@ -719,7 +719,7 @@ RENDERER_PROFILES = {
             "phases": "forbid",
             "phases_summary": "full",
             "insight_view": "forbid",
-            "insights": "summary",
+            "insights": "headline",
             "performance_summary": "full",
             "current_ISO_weekly_microcycle": "forbid",
         },
