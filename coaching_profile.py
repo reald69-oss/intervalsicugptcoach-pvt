@@ -684,8 +684,8 @@ RENDERER_PROFILES = {
 
             "adaptation": [
                 "phases",
-                "phases_summary"
-                "current_ISO_weekly_microcycle",
+                "phases_summary",
+                "current_ISO_weekly_microcycle"
             ]
         },
 
