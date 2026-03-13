@@ -102,6 +102,7 @@ REPORT_CONTRACT = {
         # 📈 ADAPTATION
         "phases",
         "phases_summary",
+        "current_ISO_weekly_microcycle",
 
         # hidden narrative
         "insights",
@@ -682,6 +683,7 @@ RENDERER_PROFILES = {
             "adaptation": [
                 "phases",
                 "phases_summary"
+                "current_ISO_weekly_microcycle",
             ]
         },
 
@@ -716,6 +718,7 @@ RENDERER_PROFILES = {
             "phases_summary": "full",
             "insight_view": "forbid",
             "insights": "forbid",
+            "current_ISO_weekly_microcycle": "forbid",
         },
         
         "emphasis": {
