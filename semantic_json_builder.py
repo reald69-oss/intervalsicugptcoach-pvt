@@ -2992,30 +2992,30 @@ def build_semantic_json(context):
                 # -----------------------------------------------------
                 # 🧠 Adjust CURRENT ISO week load using projected plan
                 # -----------------------------------------------------
+
                 micro = semantic.get("current_ISO_weekly_microcycle")
 
                 if micro and micro.get("week_iso"):
 
                     current_week = micro["week_iso"]
+                    projected = micro.get("projected_total_tss")
 
-                    if "week" in df_weeks.columns:
+                    if projected and projected > 0:
 
+                        # update dataframe
                         mask = df_weeks["week"] == current_week
-
                         if mask.any():
+                            df_weeks.loc[mask, "tss"] = projected
+                            df_weeks.loc[mask, "is_projected"] = True
 
-                            projected = micro.get("projected_total_tss")
+                        # update original weekly_phases source
+                        for wk in raw_weeks:
+                            if wk.get("week") == current_week:
+                                wk["tss"] = projected
+                                wk["is_projected"] = True
+                                break
 
-                            if projected and projected > 0:
-
-                                df_weeks.loc[mask, "tss"] = projected
-
-                                df_weeks.loc[mask, "is_projected"] = True
-
-                                debug(
-                                    context,
-                                    f"[PHASES] 🔧 Current ISO week adjusted using projected TSS ({projected})"
-                                )
+                        debug(context, f"[PHASES] 🔧 Current week projected TSS applied ({projected})")
 
                 # Diagnostic
                 debug(

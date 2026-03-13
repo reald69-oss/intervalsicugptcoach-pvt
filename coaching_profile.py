@@ -302,7 +302,7 @@ RENDERER_PROFILES = {
                 "The EVENTS table MUST use the defined column order.",
                 "In the EVENTS table, session-level signal icons MAY be rendered within the Activity column as a prefix using the canonical mapping derived ONLY from existing semantic fields.",
                 "Icons represent independent session signals and MAY appear together for a single event.",
-                "Add rpe_emoji and feel_emoji to the right of activity name tightly coupled.",
+                "Add rpe_emoji and feel_emoji to the right of TSS value tightly coupled.",
                 "When multiple icons apply, they MUST be rendered together in the defined fixed order.",
                 "Icons are visual aliases only and must not replace numeric values, suppress other applicable icons, or reduce table rows.",
                 "When `activity_link` exists, the Activity column MUST render the activity name as a Markdown link: [name](activity_link).",
