@@ -1085,16 +1085,14 @@ def run_tier1_controller(df_master, wellness, context):
         wellness_metrics = {
             "rest_hr": rest_hr,
             "hrv_trend": hrv_trend,
-            "rest_days": rest_days,
-            **subjective_avgs
+            "rest_days": rest_days
         }
-        # Add recovery index if computed earlier
-        if "recovery_index" in context.get("wellness", {}):
-            wellness_metrics["recovery_index"] = context["wellness"]["recovery_index"]
 
         context["wellness_metrics"] = wellness_metrics
         context["wellness_summary"] = wellness_metrics
 
+        # keep subjective values but outside the wellness summary
+        context["subjective_metrics"] = subjective_avgs
 
         debug(context, f"[T1] Wellness summary → rest_days={rest_days}, rest_hr={rest_hr}, hrv_trend={hrv_trend}")
 

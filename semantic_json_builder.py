@@ -1217,7 +1217,13 @@ def build_semantic_json(context):
 
     subjective_block = {}
 
-    for k, v in context.get("wellness_summary", {}).items():
+    subjective_source = (
+        context.get("subjective_metrics")
+        or context.get("wellness_summary")
+        or {}
+    )
+
+    for k, v in subjective_source.items():
 
         # Only process defined subjective fields
         if k not in SUBJECTIVE_SCALES:
