@@ -512,14 +512,7 @@ def finalize_and_validate_render(context, reportType="weekly"):
             report.add_line("Derived metrics validated ✅ (FOxI/CUR/GR variance < 1 %)")
 
     # --- Step 7: Inject Efficiency Metrics (context only, not recomputed) ---
-    eff = {
-        "Efficiency Factor": f"{context.get('efficiency_factor', 1.90):.2f} W·bpm⁻¹",
-        "Endurance Fade": f"{context.get('endurance_fade', 3.8):.1f} %",
-        "Z2 Stability": f"{context.get('z2_variance', 0.04):.2f}",
-        "Decoupling": f"{context.get('decoupling', 0.03):.2f}",
-        "Aerobic Decay": f"{context.get('aerobic_decay', 0.02):.2f}",
-    }
-    context.setdefault("metrics", {})["efficiency"] = eff
+    context.setdefault("metrics", {})["efficiency"] = context.get("adaptation_metrics", {})
     
     # --- Step 8: Validation Chain (framework + schema) ---
     # Ensure full metrics block exists and sync derived from context if missing
