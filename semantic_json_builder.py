@@ -2989,6 +2989,34 @@ def build_semantic_json(context):
                 df_ctl.columns = ["week", "ctl", "atl", "tsb"]
                 df_weeks = df_weeks.merge(df_ctl, on="week", how="left")
 
+                # -----------------------------------------------------
+                # 🧠 Adjust CURRENT ISO week load using projected plan
+                # -----------------------------------------------------
+                micro = semantic.get("current_ISO_weekly_microcycle")
+
+                if micro and micro.get("week_iso"):
+
+                    current_week = micro["week_iso"]
+
+                    if "week" in df_weeks.columns:
+
+                        mask = df_weeks["week"] == current_week
+
+                        if mask.any():
+
+                            projected = micro.get("projected_total_tss")
+
+                            if projected and projected > 0:
+
+                                df_weeks.loc[mask, "tss"] = projected
+
+                                df_weeks.loc[mask, "is_projected"] = True
+
+                                debug(
+                                    context,
+                                    f"[PHASES] 🔧 Current ISO week adjusted using projected TSS ({projected})"
+                                )
+
                 # Diagnostic
                 debug(
                     context,
@@ -3448,9 +3476,35 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         {chr(10).join(f"- {k}: {v}" for k, v in section_handling.items())}
 
         Handling meanings:
-        - full: render entire section exactly as provided
-        - summary: summarise using existing semantic aggregates only
-        - forbid: do NOT render this section
+
+        - full:
+        Render the entire section exactly as provided.
+        Tables remain tables, lists remain lists.
+        Do not remove rows or fields.
+
+        - summary:
+        Render a compact representation using ONLY existing semantic aggregates
+        already present in the section. Do NOT derive new metrics.
+
+        Summary rules:
+        • Prefer a short table if aggregate values exist.
+        • If aggregates do not exist, show the top-level fields only.
+        • Do NOT iterate full arrays or lists.
+        • Do NOT narrate each element of a list.
+        • Maximum 3–5 rows or key metrics.
+
+        - table_summary:
+        Render a condensed table using aggregate fields only.
+        Do NOT render the full underlying dataset.
+
+        Rules:
+        • Maximum 5 rows.
+        • Prefer totals, means, or trend indicators already provided.
+        • Do NOT derive calculations.
+
+        - forbid:
+        This section MUST NOT be rendered in the report output.
+        It may still be used internally for reasoning.
         """).strip()
 
     closing_note_block = ""

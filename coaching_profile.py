@@ -230,6 +230,7 @@ RENDERER_PROFILES = {
             "derive_stepwise_forecast"
         ],
         "section_handling": {
+            "meta": "full",
             "training_volume": "full",
             "events": "full",
             "current_ISO_weekly_microcycle": "full",
@@ -407,6 +408,7 @@ RENDERER_PROFILES = {
             "Restate phase descriptors already present in semantic data."
         ],
         "section_handling": {
+            "meta": "full",
             "training_volume": "full",
             "events": "forbid",
             "daily_load": "forbid",
@@ -470,26 +472,24 @@ RENDERER_PROFILES = {
     # ==============================================================
     # Wellness report (URF v5.2 — SIGNAL-FIRST, MULTI-LAYER RECOVERY)
     # ==============================================================
-
-    "stack_structure": {
-
-        "physiology_response": [
-            "wellness",
-            "insights",
-            "insight_view"
-        ],
-
-        "performance_intelligence": [
-            "performance_intelligence"
-        ]
-    },
-
-    "stack_labels": {
-        "physiology_response": "🫀 PHYSIOLOGY RESPONSE",
-        "performance_intelligence": "⚙️ PERFORMANCE INTELLIGENCE"
-    },
-
     "wellness": {
+
+        "stack_structure": {
+
+            "physiology_response": [
+                "wellness",
+                "insight_view"
+            ],
+
+            "performance_intelligence": [
+                "performance_intelligence"
+            ]
+        },
+
+        "stack_labels": {
+            "physiology_response": "🫀 PHYSIOLOGY RESPONSE",
+            "performance_intelligence": "⚙️ PERFORMANCE INTELLIGENCE"
+        },
 
         "coaching_sentences": {
             "enabled": True,
@@ -544,9 +544,9 @@ RENDERER_PROFILES = {
         "section_handling": {
             "meta": "full",
             "wellness": "full",
-            "hrv_daily": "summary",
+            "hrv_daily": "table_summary",
             "performance_intelligence": "summary",
-            "insights": "full",
+            "insights": "forbid",
             "insight_view": "full",
             "events": "forbid",
             "daily_load": "forbid",
@@ -644,35 +644,33 @@ RENDERER_PROFILES = {
     # ==============================================================
     # Summary report (ANNUAL / EXECUTIVE)
     # ==============================================================
-    
-    "stack_structure": {
-
-        "training_load": [
-            "training_volume"
-        ],
-
-        "physiology_response": [
-            "wellness"
-        ],
-
-        "performance_intelligence": [
-            "performance_summary"
-        ],
-
-        "adaptation": [
-            "phases",
-            "phases_summary"
-        ]
-    },
-
-    "stack_labels": {
-        "training_load": "🧭 TRAINING LOAD",
-        "physiology_response": "🫀 PHYSIOLOGY RESPONSE",
-        "performance_intelligence": "⚙️ PERFORMANCE INTELLIGENCE",
-        "adaptation": "📈 ADAPTATION"
-    },
-
     "summary": {
+        "stack_structure": {
+
+            "training_load": [
+                "training_volume"
+            ],
+
+            "physiology_response": [
+                "wellness"
+            ],
+
+            "performance_intelligence": [
+                "performance_summary"
+            ],
+
+            "adaptation": [
+                "phases_summary"
+            ]
+        },
+
+        "stack_labels": {
+            "training_load": "🧭 TRAINING LOAD",
+            "physiology_response": "🫀 PHYSIOLOGY RESPONSE",
+            "performance_intelligence": "⚙️ PERFORMANCE INTELLIGENCE",
+            "adaptation": "📈 ADAPTATION"
+        },
+
         "coaching_sentences": {
             "enabled": True,
             "max_per_section": 5,
@@ -695,7 +693,8 @@ RENDERER_PROFILES = {
             "extended_metrics": "forbid",
             "zones": "summary",
             "wellness": "summary",
-            "phases": "full",
+            "phases": "forbid",
+            "phases_summary": "full",
             "insight_view": "forbid",
             "insights": "forbid",
         },
