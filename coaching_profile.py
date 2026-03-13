@@ -302,6 +302,45 @@ RENDERER_PROFILES = {
     # Season report (PHASE-LEVEL, STRATEGIC)
     # ==============================================================
     "season": {
+        "stack_structure": {
+
+            "training_load": [
+                "training_volume",
+                "metrics",
+                "trend_metrics"
+            ],
+
+            "physiology_response": [
+                "adaptation_metrics"
+            ],
+
+            "performance_intelligence": [
+                "performance_intelligence",
+                "wbal_summary"
+            ],
+
+            "adaptation": [
+                "energy_system_progression",
+                "physiology",
+                "phases",
+                "phases_summary"
+            ],
+
+            "adaptive_decisions": [
+                "actions",
+                "future_forecast",
+                "future_actions"
+            ]
+        },
+
+        "stack_labels": {
+            "training_load": "🧭 TRAINING LOAD",
+            "physiology_response": "🫀 PHYSIOLOGY RESPONSE",
+            "performance_intelligence": "⚙️ PERFORMANCE INTELLIGENCE",
+            "adaptation": "📈 ADAPTATION",
+            "adaptive_decisions": "🎯 ADAPTIVE DECISIONS"
+        },
+
         "coaching_sentences": {
             "enabled": True,
             "max_per_section": 5,
