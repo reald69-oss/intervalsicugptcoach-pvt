@@ -491,7 +491,8 @@ RENDERER_PROFILES = {
             ],
             "physiology_response": [
                 "wellness",
-                "insight_view"
+                "insight_view",
+                "insights"
             ],
 
             "performance_intelligence": [
@@ -562,7 +563,7 @@ RENDERER_PROFILES = {
             "wellness": "full",
             "hrv_daily": "table_summary",
             "performance_intelligence": "headine",
-            "insights": "forbid",
+            "insights": "summary",
             "insight_view": "full",
             "events": "forbid",
             "daily_load": "forbid",
