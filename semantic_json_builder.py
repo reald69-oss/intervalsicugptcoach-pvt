@@ -430,6 +430,19 @@ def build_insights(semantic):
                 "coaching_implication": ef_block.get("coaching_implication"),
             }
 
+        # --- Endurance Decay (cardiac drift / decoupling) ---
+        if "Endurance Decay" in adaptation:
+            dec_val = adaptation.get("Endurance Decay")
+            dec_block = semantic_block_for_metric("EnduranceDecay", dec_val, semantic)
+            insights["endurance_decay"] = {
+                "value": dec_val,
+                "window": window,
+                "basis": "Cardiac drift / power–HR decoupling",
+                "classification": dec_block.get("classification"),
+                "interpretation": dec_block.get("interpretation"),
+                "coaching_implication": dec_block.get("coaching_implication"),
+            }
+
     # --------------------------------------------------
     # Energy System Progression (Tier-3 interpretation)
     # Weekly reports only for now
@@ -768,7 +781,6 @@ def build_semantic_json(context):
         # ---------------------------------------------------------
 
         "metrics": {},
-        "extended_metrics": {},
         "adaptation_metrics": {},
         "trend_metrics": {},
         "correlation_metrics": {},
@@ -1266,8 +1278,6 @@ def build_semantic_json(context):
     # AUTHORITATIVE Tier-2 metric injection
     # ---------------------------------------------------------
     for k in (
-        "extended_metrics",
-        "adaptation_metrics",
         "trend_metrics",
         "correlation_metrics",
     ):
@@ -2601,7 +2611,7 @@ def build_semantic_json(context):
             f"acute={list(semantic['performance_intelligence'].get('acute', {}).keys())}, "
             f"chronic={list(semantic['performance_intelligence'].get('chronic', {}).keys())}"
         )
-
+ 
     # ---------------------------------------------------------
     # 🧠 Energy System Progression (Tier-3 ESPE)
     # ---------------------------------------------------------
@@ -2621,6 +2631,35 @@ def build_semantic_json(context):
     else:
 
         debug(context, "[SEMANTIC] energy_system_progression not present")
+
+    # ---------------------------------------------------------
+    # 🔬 Adaptation Metrics (derived from performance signals)
+    # ---------------------------------------------------------
+    adaptation = {}
+
+    pi = semantic.get("performance_intelligence", {})
+    chronic = pi.get("chronic", {})
+
+    # ---- Efficiency Factor ----
+    neural = chronic.get("neural_density", {})
+    ef_metric = neural.get("mean_efficiency_factor_90d")
+
+    if isinstance(ef_metric, dict):
+        ef = ef_metric.get("value")
+        if ef is not None:
+            adaptation["Efficiency Factor"] = round(float(ef), 2)
+
+    # ---- Endurance / Aerobic Decay ----
+    durability = chronic.get("durability", {})
+    dec_metric = durability.get("mean_decoupling_90d")
+
+    if isinstance(dec_metric, dict):
+        dec = dec_metric.get("value")
+        if dec is not None:
+            adaptation["Endurance Decay"] = round(float(dec) / 100, 3)
+            adaptation["Aerobic Decay"] = round(float(dec) / 100, 3)
+
+    semantic["adaptation_metrics"] = adaptation
 
     # ---------------------------------------------------------
     # 🧬 WELLNESS CONSOLIDATION (URF v5.2 canonical structure)

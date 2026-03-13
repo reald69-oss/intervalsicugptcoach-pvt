@@ -4,16 +4,6 @@ coaching_profile.py — Unified Coaching Profile (v17-Sync)
 Structured reference of frameworks, formulas, and methodology anchors. UPD
 """
 
-def get_profile_metrics(context):
-    """Return adaptive coaching metrics based on context and COACH_PROFILE."""
-    return {
-        "eff_factor": context.get("efficiency_factor", 1.9),
-        "fatigue_resistance": context.get("fatigue_resistance", 0.95),
-        "endurance_decay": context.get("aerobic_decay", 0.02),
-        "z2_stability": context.get("z2_variance", 0.04),
-        "aerobic_decay": context.get("aerobic_decay", 0.02),
-    }
-
 # coaching_profile.py
 
 REPORT_CONTRACT = {
@@ -436,7 +426,9 @@ RENDERER_PROFILES = {
             "actions": "full",
             "future_actions": "full",
             "insights": "forbid",
-            "insight_view": "summary"
+            "insight_view": "summary",
+            "adaptation_metrics": "full"
+            
         },
 
         "emphasis": {

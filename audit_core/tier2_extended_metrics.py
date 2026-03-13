@@ -33,20 +33,6 @@ def compute_extended_metrics(context):
     )
 
     # ---------------------------------------------------------
-    # 1️⃣ ADAPTATION METRICS
-    # ---------------------------------------------------------
-    from coaching_profile import get_profile_metrics
-    profile = get_profile_metrics(context)
-
-    context["adaptation_metrics"] = {
-        "Efficiency Factor": profile.get("eff_factor", "—"),
-        "Fatigue Resistance": profile.get("fatigue_resistance", "—"),
-        "Endurance Decay": profile.get("endurance_decay", "—"),
-        "Z2 Stability": profile.get("z2_stability", "—"),
-        "Aerobic Decay": profile.get("aerobic_decay", "—"),
-    }
-
-    # ---------------------------------------------------------
     # 2️⃣ TREND METRICS
     # ---------------------------------------------------------
     from coaching_heuristics import derive_trends

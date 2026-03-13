@@ -46,8 +46,17 @@ CHEAT_SHEET["thresholds"] = {
     "IFDrift": {"green": (0.0, 0.05), "amber": (0.05, 0.10), "red": (0.10, 1.0)},
     "Lactate": {"lt1_mmol": 2.0,"lt2_mmol": 4.0,"corr_threshold": 0.6},
     "FatigueResistance": {"green": (0.9, 1.1), "amber": (0.8, 1.2)},  # ratio of long vs short power
-    "EfficiencyFactor": {"green": (1.8, 2.2), "amber": (1.5, 2.5)},   # Power-to-HR ratio
+    "EfficiencyFactor": {
+        "green": (1.4, 2.5),
+        "amber": (1.0, 1.4),
+        "red": (0.0, 1.0)
+    },   #Power-to-HR ratio (np / avg HR)
     "LoadVariabilityIndex": {"green": (0.7, 1.0),"amber": (0.4, 0.69),"red": (0.0, 0.39)}, #replaced RI for now
+    "EnduranceDecay": {
+        "green": (0.0, 0.03),   # <3%
+        "amber": (0.03, 0.05),  # 3–5%
+        "red": (0.05, 1.0)      # >5%
+    },
     # === Wellness Metrics ===
     "HRV": {
         "green": (60, 200),
@@ -745,6 +754,12 @@ CHEAT_SHEET["context"] = {
         "Adaptation_pressure indicates recovery suppression under load. "
         "Maladaptation_risk indicates recovery breakdown relative to training stress."
     ),
+    "EnduranceDecay": (
+        "Endurance Decay represents aerobic durability measured as heart-rate decoupling "
+        "during sustained efforts. Values below ~3% indicate strong durability and stable "
+        "aerobic efficiency, while values above ~5% suggest cardiovascular drift and reduced "
+        "fatigue resistance during prolonged work."
+    ),
 }
 
 CHEAT_SHEET["coaching_links"] = {
@@ -892,6 +907,11 @@ CHEAT_SHEET["coaching_links"] = {
         "Adaptation_pressure — recovery signals falling under load; reduce intensity density or insert recovery.\n"
         "Maladaptation_risk — recovery suppressed relative to load; prioritize rest or deload."
     ),
+    "EnduranceDecay": (
+        "If EnduranceDecay exceeds ~5%, prioritise longer steady Z2 endurance sessions "
+        "and reduce excessive intensity density. Improving aerobic durability reduces "
+        "cardiovascular drift during long efforts."
+),
 }
 
 CHEAT_SHEET["display_names"] = {
