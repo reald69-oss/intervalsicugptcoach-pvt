@@ -63,6 +63,7 @@ REPORT_CONTRACT = {
         "trend_metrics",
 
         # 🫀 PHYSIOLOGY RESPONSE
+        "wellness",
         "adaptation_metrics",
         "insight_view",
 
@@ -366,6 +367,7 @@ RENDERER_PROFILES = {
             ],
 
             "physiology_response": [
+                "wellness",
                 "adaptation_metrics",
                 "insights_view"
             ],
@@ -426,12 +428,11 @@ RENDERER_PROFILES = {
             "phases": "headline",
             "phases_summary": "full",
             "metrics": "table_summary",
-            "extended_metrics": "forbid",
             "performance_intelligence": "full",
             "current_ISO_weekly_microcycle": "full",
             "energy_system_progression": "summary",
             "physiology": "summary",
-            "wellness": "summary",
+            "wellness": "headline",
             "actions": "full",
             "future_actions": "full",
             "insights": "forbid",
