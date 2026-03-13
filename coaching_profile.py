@@ -365,7 +365,7 @@ RENDERER_PROFILES = {
             ],
 
             "physiology_response": [
-                "adaptation_metrics"
+                "adaptation_metrics",
                 "insights_view"
             ],
 
@@ -674,6 +674,7 @@ RENDERER_PROFILES = {
             ],
 
             "adaptation": [
+                "phases",
                 "phases_summary"
             ]
         },
@@ -701,12 +702,9 @@ RENDERER_PROFILES = {
             "show full phases in markdown table."
         ],
         "section_handling": {
+            "meta": "full",
             "training_volume": "full",
-            "events": "forbid",
             "daily_load": "forbid",
-            "metrics": "summary",
-            "extended_metrics": "forbid",
-            "zones": "summary",
             "wellness": "summary",
             "phases": "forbid",
             "phases_summary": "full",

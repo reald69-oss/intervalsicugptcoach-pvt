@@ -3395,6 +3395,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     question_themes = report_profile.get("question_rule", [])
     events_rule = report_profile.get("events_rule")
     planned_events_rule = report_profile.get("planned_events_rule")
+    resolution = REPORT_RESOLUTION.get(report_type, {})
 
     # ➕ NEW: presentation config (read directly, no helpers)
     state_presentation = global_profile.get("state_presentation", {})
@@ -3413,7 +3414,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
 
         for section in sections:
             stack_map_lines.append(f"{section} → {label}")
-
+    #-----------------------------------------------------------------
     stack_lines = []
     for layer, sections in stack_structure.items():
         label = stack_labels.get(layer, layer.upper())
@@ -3421,7 +3422,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         stack_lines.append(label)
         for s in sections:
             stack_lines.append(f"- {s}")
-
+    #-----------------------------------------------------------------
     stack_block = ""
     if stack_structure:
 
@@ -3459,7 +3460,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         A stack layer header MUST be rendered once when the first section belonging to that layer appears.
         Subsequent sections mapped to the same stack layer MUST remain under that header and MUST NOT repeat the header.
         """).strip()
-
+    #-----------------------------------------------------------------
     stack_map_block = ""
 
     if stack_map_lines:
@@ -3468,7 +3469,23 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         {chr(10).join(stack_map_lines)}
         """).strip()
 
+    resolution_block = ""
+    #-----------------------------------------------------------------
+    if resolution:
+        resolution_block = dedent(f"""
+        DATA RESOLUTION MODEL:
 
+        This report uses the following semantic resolution rules.
+
+        {chr(10).join(f"- {k}: {v}" for k, v in resolution.items())}
+
+        These rules determine which metrics are authoritative,
+        which signals may appear, and the time horizon used
+        for interpretation.
+
+        Resolution rules MUST NOT be printed in the report output.
+        """).strip()
+    #-----------------------------------------------------------------
     section_handling_block = ""
     if section_handling:
         section_handling_block = dedent(f"""
@@ -3506,7 +3523,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         This section MUST NOT be rendered in the report output.
         It may still be used internally for reasoning.
         """).strip()
-
+    #-----------------------------------------------------------------
     closing_note_block = ""
 
     if closing_cfg.get("required"):
@@ -3539,7 +3556,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
             closing_note_block += "\n- The six sentences MUST follow this structure:"
             for s in sentence_structure:
                 closing_note_block += f"\n  {s}"
-    
+    #-----------------------------------------------------------------
     coaching_block = ""
     if coaching_enabled and coaching_max > 0:
         coaching_block = dedent(f"""
@@ -3552,7 +3569,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         - Coaching sentences MUST NOT introduce new metrics.
         """).strip()
 
-
+    #-----------------------------------------------------------------
     question_block = ""
     if coaching_enabled and question_themes:
         question_block = dedent(f"""
@@ -3572,14 +3589,14 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         Closing Reflection
         <question>
         """).strip()
-
+    #-----------------------------------------------------------------
     enrichment_block = ""
     if allowed_enrichment:
         enrichment_block = dedent(f"""
         ALLOWED ENRICHMENT:
         {chr(10).join(f"- {r}" for r in allowed_enrichment)}
         """).strip()
-
+    #-----------------------------------------------------------------
     events_block = ""
 
     if events_rule:
@@ -3604,7 +3621,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         - When multiple icons apply, they MUST be rendered together in the following fixed order (left → right):
         {icon_list}
         """).strip()
-
+    #-----------------------------------------------------------------
     planned_events_block = ""
 
     if planned_events_rule:
@@ -3613,8 +3630,6 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         {chr(10).join(f"- {r}" for r in planned_events_rule)}
         """).strip()
 
-    # --------------------------------------------------
-    # inline presentation blocks
     # --------------------------------------------------
     state_presentation_block = ""
     if state_presentation.get("enabled"):
@@ -3625,7 +3640,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         - Do NOT derive, compute, or infer new states.
         - Style: {state_presentation.get("style")}
         """).strip()
-
+    #-----------------------------------------------------------------
     emphasis_block = ""
     if emphasis:
         emphasis_block = dedent(f"""
@@ -3634,7 +3649,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         This does NOT change section order, inclusion, or data fidelity.
         {chr(10).join(f"- {k}: {v}" for k, v in emphasis.items())}
         """).strip()
-
+    #-----------------------------------------------------------------
     framing_block = ""
     if framing:
         framing_block = dedent(f"""
@@ -3652,7 +3667,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         FATIGUE INTERPRETATION MODEL:
         {chr(10).join(f"- {r}" for r in fatigue_logic)}
         """).strip()
-    
+    #-----------------------------------------------------------------
     signal_block = ""
     if signal_hierarchy:
         signal_block = dedent(f"""
@@ -3674,7 +3689,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     **Scope:** {scope}
     **Data Sources:** {sources}
     **Intended Use:** {intended}
-
+    {resolution_block}
     HARD RULES:
     {chr(10).join(f"- {r}" for r in hard_rules)}
 
