@@ -255,7 +255,7 @@ RENDERER_PROFILES = {
             "insight_view": "summary"
         },
 
-            "emphasis": {
+        "emphasis": {
             "metrics": "high",
             "actions": "high",
             "events": "medium",
@@ -435,7 +435,7 @@ RENDERER_PROFILES = {
         },
 
         "emphasis": {
-            "phases": "high",
+            "phases_summary": "high",
             "trend_metrics": "high",
             "metrics": "medium",
             "adaptation": "high"
@@ -572,7 +572,7 @@ RENDERER_PROFILES = {
 
         "emphasis": {
             "wellness": "high",
-            "insights": "high",
+            "insight_view": "high",
             "autonomic_signals": "high",
             "load_context": "medium",
             "stress_mechanisms": "medium"
