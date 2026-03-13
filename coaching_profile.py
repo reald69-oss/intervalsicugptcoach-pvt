@@ -498,7 +498,7 @@ RENDERER_PROFILES = {
         "stack_labels": {
             "meta_context": "📊 REPORT CONTEXT",
             "physiology_response": "🫀 PHYSIOLOGY RESPONSE",
-            "performance_intelligence": "⚙️ PERFORMANCE INTELLIGENCE"
+            "performance_intelligence": "⚙️ TRAINING STRESS CONTEXT"
         },
 
         "coaching_sentences": {
@@ -555,7 +555,7 @@ RENDERER_PROFILES = {
             "meta": "full",
             "wellness": "full",
             "hrv_daily": "table_summary",
-            "performance_intelligence": "summary",
+            "performance_intelligence": "headine",
             "insights": "forbid",
             "insight_view": "full",
             "events": "forbid",

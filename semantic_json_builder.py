@@ -3495,24 +3495,31 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         Handling meanings:
 
         - full:
-        Render the entire section exactly as provided.
-        Tables remain tables, lists remain lists.
-        Do not remove rows or fields.
+            Render the entire section exactly as provided.
+            Tables remain tables, lists remain lists.
+            Do not remove rows or fields.
 
         - summary:
-        Render a compact representation using ONLY existing semantic aggregates
-        already present in the section. Do NOT derive new metrics.
+            Render a compact representation using ONLY existing semantic aggregates
+            already present in the section. Do NOT derive new metrics.
 
         Summary rules:
-        • Prefer a short table if aggregate values exist.
-        • If aggregates do not exist, show the top-level fields only.
-        • Do NOT iterate full arrays or lists.
-        • Do NOT narrate each element of a list.
-        • Maximum 3–5 rows or key metrics.
+            Prefer a short table if aggregate values exist.
+            If aggregates do not exist, show the top-level fields only.
+            Do NOT iterate full arrays or lists.
+            Do NOT narrate each element of a list.
+            Maximum 3–5 rows or key metrics.
 
         - table_summary:
-        Render a condensed table using aggregate fields only.
-        Do NOT render the full underlying dataset.
+            Render a condensed table using aggregate fields only.
+            Do NOT render the full underlying dataset.
+
+        - headline:
+            Render only the primary indicators of the section.
+            Maximum 3–4 metrics.
+            No tables longer than one row.
+            No subsections.
+            No detailed narrative.
 
         Rules:
         • Maximum 5 rows.
