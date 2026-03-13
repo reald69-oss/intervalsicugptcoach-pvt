@@ -456,9 +456,9 @@ def evaluate_actions(context):
     # ---------------- Fatigue Trend ----------------
     ft_range = heur["fatigue_delta_green"]
     ft = context.get("FatigueTrend", 0.0)
-    if ft < ft_range[0]/100:
+    if ft < ft_range[0]:
         actions.append(f"⚠ FatigueTrend {ft:.2f} — recovery phase, maintain steady load.")
-    elif ft > ft_range[1]/100:
+    elif ft > ft_range[1]:
         actions.append(f"✅ FatigueTrend {ft:.2f} — rising fatigue, monitor intensity.")
 
     # ---------------- Benchmark / FatMax ----------------

@@ -564,7 +564,7 @@ RENDERER_PROFILES = {
             "hrv_daily": "table_summary",
             "performance_intelligence": "headine",
             "insights": "summary",
-            "insight_view": "headline",
+            "insight_view": "forbid",
             "events": "forbid",
             "daily_load": "forbid",
             "metrics": "forbid",
@@ -579,7 +579,7 @@ RENDERER_PROFILES = {
 
         "emphasis": {
             "wellness": "high",
-            "insight_view": "high",
+            "insights": "high",
             "autonomic_signals": "high",
             "performance_intelligence": "low",
             "load_context": "low",
