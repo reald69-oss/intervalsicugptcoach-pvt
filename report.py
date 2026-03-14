@@ -742,10 +742,6 @@ def main():
     )
 
     args = parser.parse_args()
-    if args.debug:
-        os.environ["CLI_DEBUG"] = "1"
-    else:
-        os.environ["CLI_DEBUG"] = "0"
     # 🧠 Debug mode shortcut — directly fetch from /debug and exit
     if args.debug and args.prefetch:
 
