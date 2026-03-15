@@ -579,6 +579,7 @@ RENDERER_PROFILES = {
             "insights": "high",
             "autonomic_signals": "high",
             "performance_intelligence": "low",
+            "performance_intelligence.training_state:": "high",
             "load_context": "low",
             "stress_mechanisms": "low"
         },
