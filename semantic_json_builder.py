@@ -2930,9 +2930,10 @@ def build_semantic_json(context):
         iso = now.isocalendar()
 
         if pd.notna(report_end):
-            iso_monday = pd.Timestamp.fromisocalendar(iso.year, iso.week, 1).date()
 
-        if today >= iso_monday: ### THIS IS CORRECT AS WE DONT OUPTE MICROCYCLE FOR HISTORICAL
+            report_iso = report_end.isocalendar()
+
+            if (report_iso.year, report_iso.week) == (iso.year, iso.week):  # only compute for current ISO week
 
                 current_ISO_weekly_microcycle = {
                     "week_iso": None,
