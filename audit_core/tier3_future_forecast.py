@@ -95,15 +95,19 @@ def run_future_forecast(context, forecast_days="auto"):
     # -----------------------------------------------------------------
     # 2️⃣ Determine forecast horizon
     # -----------------------------------------------------------------
+
+    start_date = datetime.now().date()
+
     if forecast_days == "auto":
 
-        start_date = datetime.now().date()
-        # only count future planned days
-        future_days = df[df["date"].dt.date >= start_date]["date"].dt.date.unique()
-        distinct_days = len(future_days)
-        forecast_days = max(7, distinct_days)
-    start_date = datetime.now().date()
+        future_df = df[df["date"].dt.date >= start_date]
+
+        last_event_date = future_df["date"].max().date()
+
+        forecast_days = max(7, (last_event_date - start_date).days)
+
     end_date = start_date + timedelta(days=forecast_days)
+
     forecast_window = pd.date_range(start=start_date, end=end_date, freq="D")
 
     # -----------------------------------------------------------------
