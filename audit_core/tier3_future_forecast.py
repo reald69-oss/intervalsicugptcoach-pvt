@@ -111,52 +111,23 @@ def run_future_forecast(context, forecast_days="auto"):
     debug(context, f"[T3] ⚙️ Seeded CTL={ctl:.2f}, ATL={atl:.2f}, TSB={tsb:.2f}")
 
     # -----------------------------------------------------------------
-    # 4️⃣ Build daily load series
+    # 4️⃣ Use Intervals projected CTL/ATL directly
     # -----------------------------------------------------------------
-    daily_load = (
-        df.groupby("date", as_index=True)["icu_training_load"]
-        .sum()
-        .astype(float)
-        .sort_index()
-    )
-    load_series = daily_load.reindex(forecast_window, fill_value=0.0)
 
-    # -----------------------------------------------------------------
-    # 4️⃣b Inject maintenance load on planned rest / note days
-    # -----------------------------------------------------------------
-    # Rationale:
-    # Planned OFF / NOTE days should not be treated as zero impulse,
-    # otherwise CTL decays unrealistically during structured plans.
+    last_row = df.iloc[-1]
 
-    maintenance_load = ctl * 0.3  # ~20–25 TSS for CTL ≈ 70
+    ctl_future = float(last_row.get("icu_ctl", ctl))
+    atl_future = float(last_row.get("icu_atl", atl))
+    latest_tsb = ctl_future - atl_future
 
-    load_series = load_series.apply(
-        lambda x: x if x > 0 else maintenance_load
-    )
-
-    debug(
-        context,
-        f"[T3] 🧩 Applied maintenance load ({maintenance_load:.1f}) "
-        f"to planned zero-load days"
-    )
-
-    # -----------------------------------------------------------------
-    # 5️⃣ Compute CTL/ATL/TSB via Banister model
-    # -----------------------------------------------------------------
-    ctl_values, atl_values, tsb_values = [], [], []
-    for load in load_series:
-        atl = atl + (load - atl) / 7.0
-        ctl = ctl + (load - ctl) / 42.0
-        tsb = ctl - atl
-        ctl_values.append(ctl)
-        atl_values.append(atl)
-        tsb_values.append(tsb)
-
+    # determine trend vs current CTL
+    current_ctl = float(context.get("wellness_summary", {}).get("ctl", ctl_future))
+    load_trend = "increasing" if ctl_future > current_ctl else "declining"
     # -----------------------------------------------------------------
     # 6️⃣ Derive fatigue/form zone aligned with Intervals.icu categories
     # -----------------------------------------------------------------
     thresholds = CHEAT_SHEET.get("thresholds", {}).get("TSB", {})
-    latest_tsb = tsb_values[-1]
+    latest_tsb = ctl_future - atl_future
     fatigue_class = "grey"  # default fallback
 
     # Dynamically classify based on Cheat Sheet numeric ranges
@@ -184,12 +155,13 @@ def run_future_forecast(context, forecast_days="auto"):
         "start_date": str(start_date),
         "end_date": str(end_date),
         "horizon_days": forecast_days,
-        "CTL_future": round(float(ctl_values[-1]), 2),
-        "ATL_future": round(float(atl_values[-1]), 2),
-        "TSB_future": round(float(latest_tsb), 2),
-        "load_trend": "increasing" if ctl_values[-1] > ctl_values[0] else "declining",
+        "CTL_future": round(ctl_future, 2),
+        "ATL_future": round(atl_future, 2),
+        "TSB_future": round(latest_tsb, 2),
+        "load_trend": load_trend,
         "fatigue_class": fatigue_class,
     }
+
     # -----------------------------------------------------------------
     # 8️⃣ Coaching actions (canonical from CHEAT_SHEET with labels/colors)
     # -----------------------------------------------------------------
