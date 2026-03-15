@@ -204,11 +204,11 @@ CHEAT_SHEET["thresholds"] = {
         "amber": (0.60, 0.78),
     },  # Global descriptor; lower precision than sport-specific
     "TSB": {
-        "transition": [10, 999],     # Very fresh, low load (fitness declining)
-        "fresh": [5, 10],            # Race-ready freshness
-        "grey": [-5, 5],             # Balanced / neutral training
-        "optimal": [-30, -5],        # Productive training fatigue (good zone)
-        "high_risk": [-999, -30]     # Overreached / excessive fatigue
+        "transition": [10, 999],
+        "fresh": [5, 10],
+        "neutral": [-5, 5],
+        "productive_fatigue": [-30, -5],
+        "overreached": [-999, -30]
     },
     # ================================================================
     # 🧠 SCIENTIFICALLY VALIDATED PHASE DETECTION (v17.4)
@@ -1256,31 +1256,36 @@ CHEAT_SHEET["labels"] = {
 }
 
 CHEAT_SHEET["future_actions"] = {
+
     "transition": {
         "title": "Transition / Recovery",
         "reason": "Training load is low; focus on maintaining activity and recovery.",
         "priority": "low"
     },
+
     "fresh": {
         "title": "Freshness high",
         "reason": "You are well recovered; training is going well.",
         "priority": "normal"
     },
-    "grey": {
-        "title": "Grey Zone / Balanced Training",
-        "reason": "Training stimulus and recovery are balanced; neutral load trend.",
+
+    "neutral": {
+        "title": "Neutral load",
+        "reason": "Training stimulus and recovery are balanced.",
         "priority": "normal"
     },
-    "optimal": {
-        "title": "Optimal training zone",
-        "reason": "Form indicates productive training load; continue structured progression.",
+
+    "productive_fatigue": {
+        "title": "Productive training fatigue",
+        "reason": "Training load is high but within a productive overload zone.",
         "priority": "normal"
     },
-    "high_risk": {
-        "title": "High Risk / Overreaching",
+
+    "overreached": {
+        "title": "High fatigue risk",
         "reason": "Form suggests significant fatigue; consider recovery actions.",
         "priority": "high"
-    },
+    }
 }
 
 CHEAT_SHEET["future_labels"] = {

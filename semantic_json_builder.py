@@ -1275,12 +1275,6 @@ def build_semantic_json(context):
                 )
 
     # ---------------------------------------------------------
-    # 🧹 Remove subjective fields from the top-level wellness
-    # ---------------------------------------------------------
-    #for k in ["recovery", "fatigue", "fitness", "form"]:
-    #    semantic["wellness"].pop(k, None)
-
-    # ---------------------------------------------------------
     # 🧠 Wrap subjective markers (with scale + label)
     # ---------------------------------------------------------
 
@@ -1652,12 +1646,12 @@ def build_semantic_json(context):
 
         core_fields = [
             "id","start_date_local", "name", "type",
-            "distance", "moving_time", "icu_training_load", "IF",
+            "distance", "moving_time", "icu_training_load",
             "average_heartrate", "average_cadence",
             "icu_average_watts", "icu_variability_index", "icu_weighted_avg_watts",
             "strain_score", "trimp", "hr_load",
             "ss", "ss_cp", "ss_w", "ss_pmax",
-            "icu_efficiency_factor", "icu_intensity", "icu_power_hr",
+            "icu_efficiency_factor", "icu_intensity", "IF", "icu_power_hr",
             "decoupling", "icu_pm_w_prime", "icu_w_prime",
             "icu_max_wbal_depletion", "icu_joules_above_ftp",
             "total_elevation_gain", "calories", "VO2MaxGarmin",
@@ -1692,8 +1686,39 @@ def build_semantic_json(context):
 
             # 2️⃣ Scalar fields
             for k in available_fields:
-                if k in row and pd.notna(row[k]) and row[k] != "":
-                    ev[k] = row[k]
+
+                val = row.get(k)
+
+                # skip empty / NaN
+                if val is None:
+                    continue
+                if isinstance(val, float) and pd.isna(val):
+                    continue
+
+                # convert numpy → python scalar
+                if hasattr(val, "item"):
+                    try:
+                        val = val.item()
+                    except Exception:
+                        pass
+
+                ev[k] = val
+
+            # Intensity Factor (canonicalised)
+                val = row.get("icu_intensity")
+
+                if val is not None and pd.notna(val):
+                    try:
+                        val = float(val)
+
+                        # normalize legacy % values
+                        if val > 2:
+                            val = val / 100
+
+                        ev["IF"] = round(val, 3)
+
+                    except Exception:
+                        pass
 
             # ---------------------------------------------------------
             # Subjective perception (RPE emoji + Feel emoji)
@@ -2150,7 +2175,7 @@ def build_semantic_json(context):
             }
         else:
             perf_fields = {
-                "IF": "mean_IF",
+                "icu_intensity": "mean_IF",
                 "icu_intensity": "mean_intensity",
                 "icu_efficiency_factor": "mean_efficiency_factor",
                 "decoupling": "mean_decoupling",

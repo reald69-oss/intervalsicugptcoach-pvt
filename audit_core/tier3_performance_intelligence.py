@@ -375,21 +375,37 @@ def interpret_training_state(context):
     tsb_class = future.get("fatigue_class")
     recovery_index = wellness.get("recovery_index")
 
+
     # --------------------------------------------------
-    # Load vs Recovery mismatch detection
+    # Load vs Recovery detection
     # --------------------------------------------------
 
-    autonomic_ratio = wellness.get("Autonomic_ratio")
-    atl = wellness.get("ATL")
-    ctl = wellness.get("CTL")
+    wellness = context.get("wellness_summary", {})
+
+    autonomic_ratio = wellness.get("hrv_ratio")
+
+    atl = wellness.get("atl") or wellness.get("ATL")
+    ctl = wellness.get("ctl") or wellness.get("CTL")
+
+    # convert Series → scalar if needed
+    try:
+        if hasattr(atl, "iloc"):
+            atl = float(atl.iloc[-1])
+        if hasattr(ctl, "iloc"):
+            ctl = float(ctl.iloc[-1])
+    except Exception:
+        pass
+
+    debug(
+        context,
+        f"[T3-STATE] signals → autonomic={autonomic_ratio}, ATL={atl}, CTL={ctl}"
+    )
 
     load_recovery_state = "balanced"
-
     if autonomic_ratio is not None and atl is not None and ctl is not None:
 
         load_pressure = atl - ctl
 
-        # taper / recovery protection
         if load_pressure <= 0:
             load_recovery_state = "balanced"
 
@@ -402,25 +418,35 @@ def interpret_training_state(context):
         elif autonomic_ratio >= 1.05 and load_pressure > 5:
             load_recovery_state = "productive_load"
 
+
     # --------------------------------------------------
     # Decision Framing (no new math — just logic)
     # --------------------------------------------------
 
-    # --- Am I cooked? ---
-    if tsb_class == "high_risk" or (recovery_index and recovery_index < 0.8):
+    # --- readiness / fatigue interpretation ---
+
+    if tsb_class == "overreached" or (recovery_index and recovery_index < 0.8):
         readiness = "You are carrying significant fatigue."
         state_label = "Overreached"
         recommendation = "Back off"
         next_session = "Recovery ride or full rest"
+
     elif tsb_class in ("fresh", "transition"):
         readiness = "You are fresh and well recovered."
         state_label = "Fresh"
         recommendation = "Push"
         next_session = "High-quality intensity session"
-    else:
-        readiness = "You are in a productive training zone."
-        state_label = "Productive"
+
+    elif tsb_class == "productive_fatigue":
+        readiness = "You are training under productive fatigue."
+        state_label = "Productive Load"
         recommendation = "Maintain progression"
+        next_session = "Structured endurance or threshold session"
+
+    else:  # neutral
+        readiness = "Training load and recovery appear balanced."
+        state_label = "Stable"
+        recommendation = "Maintain training structure"
         next_session = "Planned structured session"
 
     # --- Am I adapting? ---
@@ -436,6 +462,25 @@ def interpret_training_state(context):
         next_session = "Low-intensity aerobic session to absorb load"
         recommendation = "Absorb before adding intensity"
 
+
+    # --------------------------------------------------
+    # Load vs Recovery override (autonomic + load model)
+    # --------------------------------------------------
+
+    if load_recovery_state == "maladaptation_risk":
+        state_label = "Maladaptation Risk"
+        readiness = "Autonomic recovery suppressed relative to training load."
+        recommendation = "Reduce load and prioritise recovery"
+        next_session = "Recovery ride or full rest"
+
+    elif load_recovery_state == "adaptation_pressure":
+        state_label = "Adaptation Pressure"
+        readiness = "Training load elevated — monitor recovery carefully."
+
+    elif load_recovery_state == "productive_load":
+        state_label = "Productive Load"
+        readiness = "Load and recovery interaction suggests productive stimulus."
+        
     # --------------------------------------------------
     # Confidence
     # --------------------------------------------------

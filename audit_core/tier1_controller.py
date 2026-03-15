@@ -853,17 +853,20 @@ def run_tier1_controller(df_master, wellness, context):
             hrv_mean = wellness.get("hrv_mean") or wellness.get("HRV_mean")
             hrv_latest = wellness.get("hrv_latest") or wellness.get("HRV_latest")
             hrv_series = wellness.get("hrv_series", [])
+
         elif dfw is not None and "hrv" in dfw.columns:
             hrv_series = dfw[["date", "hrv"]].to_dict(orient="records")
             hrv_latest = float(dfw["hrv"].iloc[-1])
             hrv_mean = float(dfw["hrv"].mean())
 
-        if hrv_mean and hrv_latest:
-            # normalize to ratio (1.0 = normal, >1.0 = above baseline)
-            hrv_ratio = round(hrv_latest / hrv_mean, 2)
-            context["wellness"]["hrv_ratio"] = hrv_ratio
-            debug(context, f"[T1-WELLNESS] HRV ratio computed → {hrv_ratio:.2f}")
+        if hrv_mean is not None and hrv_latest is not None:
+            hrv_mean = float(hrv_mean)
+            hrv_latest = float(hrv_latest)
 
+            hrv_ratio = round(hrv_latest / hrv_mean, 2)
+
+            context.setdefault("wellness_summary", {})["hrv_ratio"] = hrv_ratio
+            debug(context, f"[T1-WELLNESS] HRV ratio computed → {hrv_ratio:.2f}")
 
     except Exception as e:
         debug(context, f"[T1-WELLNESS] ⚠️ Wellness processing failed: {e}")
@@ -1089,7 +1092,7 @@ def run_tier1_controller(df_master, wellness, context):
         }
 
         context["wellness_metrics"] = wellness_metrics
-        context["wellness_summary"] = wellness_metrics
+        context.setdefault("wellness_summary", {}).update(wellness_metrics)
 
         # keep subjective values but outside the wellness summary
         context["subjective_metrics"] = subjective_avgs
@@ -1169,9 +1172,10 @@ def run_tier1_controller(df_master, wellness, context):
             "ctl": context["ctl"],
             "atl": context["atl"],
             "tsb": context["tsb"],
-            "recovery": last.get("recovery"),
-            "fitness": last.get("fitness"),
-            "form": last.get("form"),
+            # do not exist in wellness data
+ #           "recovery": last.get("recovery"),
+ #           "fitness": last.get("fitness"),
+ #           "form": last.get("form"),
         }
 
         existing = context.get("wellness_summary", {})
