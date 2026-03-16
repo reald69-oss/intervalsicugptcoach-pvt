@@ -29,7 +29,7 @@ Includes (URF v5.1 Canonical Layout):
 
 
 import json, math, copy
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timezone, timedelta
 import pandas as pd
 from math import isnan
 from coaching_cheat_sheet import CHEAT_SHEET
@@ -2324,16 +2324,16 @@ def build_semantic_json(context):
 
         if "→" in period:
             _, end_str = [x.strip() for x in period.split("→")]
-            report_end = pd.to_datetime(end_str)
+            report_end = pd.to_datetime(end_str).date()
         else:
-            report_end = pd.to_datetime(context.get("end"))
+            report_end = pd.to_datetime(context.get("end")).date()
 
 
         # ---------------------------------------------------------
         # Determine report week vs real current week
         # ---------------------------------------------------------
 
-        report_iso = report_end.isocalendar()
+        report_iso = pd.Timestamp(report_end).isocalendar()
         report_week_key = f"{report_iso.year}-W{report_iso.week:02d}"
 
         now = pd.Timestamp.now(tz=context.get("timezone") or "UTC")
@@ -2345,11 +2345,10 @@ def build_semantic_json(context):
         # 📊 PLANNED SUMMARY — ISO WEEK (Future Weeks Only)
         # ---------------------------------------------------------
 
-        if report_week_key != current_week_key:
+        today = datetime.now().date()
 
-            # Historical reports → no future forecast
+        if report_end < (today - timedelta(days=6)):
             semantic["planned_summary_by_iso_week"] = {}
-
         else:
 
             planned_by_week = {}
@@ -2926,17 +2925,21 @@ def build_semantic_json(context):
         else:
             report_end = pd.to_datetime(context.get("period", {}).get("end"), errors="coerce").date()
 
-        now = pd.Timestamp.now(tz=tz).date()
-        iso = now.isocalendar()
-
         if pd.notna(report_end):
 
+            today_iso  = today.isocalendar()
             report_iso = report_end.isocalendar()
 
-            if (report_iso.year, report_iso.week) == (iso.year, iso.week):  # only compute for current ISO week
+            # Prevent historical weeks from showing a microcycle
+            if (report_iso.year, report_iso.week) <= (today_iso.year, today_iso.week):
+
+                iso = today_iso
+
+                monday = pd.Timestamp.fromisocalendar(int(iso.year), int(iso.week), 1)
+                sunday = monday + pd.Timedelta(days=6)
 
                 current_ISO_weekly_microcycle = {
-                    "week_iso": None,
+                    "week_iso": f"{iso.year}-W{iso.week}",
                     "weekly_target_tss": 0.0,
                     "completed_tss": 0.0,
                     "planned_remaining_tss": 0.0,
@@ -2946,7 +2949,6 @@ def build_semantic_json(context):
                 }
 
                 try:
-                    # existing code unchanged
                     # -------------------------------------------------
                     # 1️⃣ ISO week (TRUE current week — time anchored)
                     # -------------------------------------------------
