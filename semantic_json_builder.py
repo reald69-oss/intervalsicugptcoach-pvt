@@ -40,7 +40,7 @@ from math import isnan
 import pytz
 from audit_core.tier2_derived_metrics import classify_marker
 from textwrap import dedent
-from questions_engine import detect_signals, select_question, generate_question
+from questions_engine import detect_signals, select_question, generate_question, dominant_signal
 
 # ---------------------------------------------------------
 # Helpers
