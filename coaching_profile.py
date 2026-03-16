@@ -34,8 +34,8 @@ REPORT_CONTRACT = {
         "actions",
         "planned_events",
         "planned_summary_by_date",
-        "planned_summary_by_iso_week",
         "current_ISO_weekly_microcycle",
+        "planned_summary_by_iso_week",
         "future_forecast",
         "future_actions",
 
