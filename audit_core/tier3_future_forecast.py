@@ -93,7 +93,7 @@ def run_future_forecast(context, forecast_days="auto"):
         return {"future_forecast": {}, "actions_future": []}
 
     # -----------------------------------------------------------------
-    # 2️⃣ Determine forecast horizon
+    # 2️⃣ Determine forecast horizon (max 14 days)
     # -----------------------------------------------------------------
 
     start_date = datetime.now().date()
@@ -102,13 +102,22 @@ def run_future_forecast(context, forecast_days="auto"):
 
         future_df = df[df["date"].dt.date >= start_date]
 
-        last_event_date = future_df["date"].max().date()
+        if not future_df.empty:
+            last_event_date = future_df["date"].max().date()
+            forecast_days = max(7, (last_event_date - start_date).days)
+        else:
+            forecast_days = 7
 
-        forecast_days = max(7, (last_event_date - start_date).days)
+        # Hard cap to match calendar planning window
+        forecast_days = min(forecast_days, 14)
 
     end_date = start_date + timedelta(days=forecast_days)
 
-    forecast_window = pd.date_range(start=start_date, end=end_date, freq="D")
+    forecast_window = pd.date_range(
+        start=start_date,
+        end=end_date,
+        freq="D"
+    )
 
     # -----------------------------------------------------------------
     # 3️⃣ Seed CTL/ATL from latest or fallback
