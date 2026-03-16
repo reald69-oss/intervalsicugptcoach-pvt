@@ -496,7 +496,25 @@ def interpret_training_state(context):
         else "load_accepting"
     )
 
+    operational_state_context = {
+        "framework": "Autonomic–Load Interaction Model",
+        "model_basis": "Operational coaching mode derived from autonomic recovery and training load interaction.",
+        "signals_used": {
+            "hrv_ratio": autonomic_ratio,
+            "atl": atl,
+            "ctl": ctl,
+            "load_pressure": (atl - ctl) if atl is not None and ctl is not None else None
+        },
+        "physiological_state": load_recovery_state,
+        "operational_state": operational_state,
+        "decision_logic": (
+            "recovery_priority when autonomic recovery is suppressed relative to training load; "
+            "otherwise load_accepting"
+        )
+    }
+
     context["operational_state"] = operational_state
+    context["operational_state_context"] = operational_state_context
 
     debug(
         context,
@@ -520,8 +538,14 @@ def interpret_training_state(context):
         "next_session": next_session,
         "confidence": confidence,
         "phase_context": phase,
+        "signals": {
+            "hrv_ratio": autonomic_ratio,
+            "atl": atl,
+            "ctl": ctl
+        },
         "load_recovery_state": load_recovery_state,
-        "operational_state": operational_state
+        "operational_state": operational_state,
+        "operational_state_context": operational_state_context
     }
 
 

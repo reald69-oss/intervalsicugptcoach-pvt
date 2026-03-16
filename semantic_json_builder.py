@@ -2727,35 +2727,62 @@ def build_semantic_json(context):
         if training_state:
 
             load_state = training_state.get("load_recovery_state")
-
             classification = CLASSIFICATION_ALIASES.get(load_state)
 
             semantic["performance_intelligence"]["training_state"] = {
                 "framework": "Autonomic–Load Interaction Model",
 
-                # scientific explanation
+                # -------------------------------------------------
+                # Scientific interpretation
+                # -------------------------------------------------
+
                 "interpretation": CHEAT_SHEET["context"].get("load_recovery_state"),
 
-                # coaching interpretation
                 "coaching_implication": CHEAT_SHEET["advice"]
                     .get("LoadRecoveryState", {})
                     .get(load_state),
 
                 "context_window": "current_microcycle",
 
-                # traffic-light classification
+                # -------------------------------------------------
+                # Classification layer
+                # -------------------------------------------------
+
                 "classification": classification,
                 "classification_source": "load_recovery_state",
+
+                # -------------------------------------------------
+                # Coaching state
+                # -------------------------------------------------
 
                 "state_label": training_state.get("state_label"),
                 "operational_state": training_state.get("operational_state"),
                 "confidence": training_state.get("confidence"),
 
+                # -------------------------------------------------
+                # Signals used
+                # -------------------------------------------------
+
                 "signals": {
                     "readiness_signal": training_state.get("readiness"),
                     "adaptation_signal": training_state.get("adaptation"),
-                    "load_recovery_state": load_state
+                    "load_recovery_state": load_state,
+
+                    # physiological signals used for decision
+                    "hrv_ratio": (training_state.get("signals") or {}).get("hrv_ratio"),
+                    "atl": (training_state.get("signals") or {}).get("atl"),
+                    "ctl": (training_state.get("signals") or {}).get("ctl"),
                 },
+
+                # -------------------------------------------------
+                # Operational context (NEW)
+                # -------------------------------------------------
+
+                "operational_context": training_state.get("operational_state_context"),
+
+                # -------------------------------------------------
+                # Recommended action
+                # -------------------------------------------------
 
                 "recommended_action": {
                     "recommendation": training_state.get("recommendation"),
@@ -2771,7 +2798,6 @@ def build_semantic_json(context):
                 f"{training_state.get('state_label')} | "
                 f"{training_state.get('next_session')}"
             )
-
         debug(
             context,
             f"[SEMANTIC] Injected performance_intelligence → "
@@ -2779,6 +2805,29 @@ def build_semantic_json(context):
             f"chronic={list(semantic['performance_intelligence'].get('chronic', {}).keys())}"
         )
  
+    # ---------------------------------------------------------
+    # 🧭 Tier-3 State → Primary Action
+    # ---------------------------------------------------------
+
+    if training_state:
+
+        primary_action = training_state.get("recommendation")
+        readiness = training_state.get("readiness")
+
+        if primary_action:
+
+            semantic.setdefault("actions", [])
+
+            semantic["actions"].insert(0, {
+                "type": "state_action",
+                "source": "tier3_training_state",
+                "recommendation": primary_action,
+                "readiness_signal": readiness,
+                "state_label": training_state.get("state_label"),
+                "operational_state": training_state.get("operational_state"),
+                "operational_context": training_state.get("operational_state_context")
+            })
+
     # ---------------------------------------------------------
     # 🧠 Energy System Progression (Tier-3 ESPE)
     # ---------------------------------------------------------
