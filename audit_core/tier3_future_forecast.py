@@ -122,6 +122,19 @@ def run_future_forecast(context, forecast_days="auto"):
     else:
         forecast_window = pd.DatetimeIndex([])
 
+    # -------------------------------------------------
+    # Restrict plan to forecast window
+    # -------------------------------------------------
+
+    df_future = df[
+        (df["date"].dt.date >= start_date) &
+        (df["date"].dt.date <= end_date)
+    ]
+
+    if df_future.empty:
+        debug(context, "[T3] ⚠️ No planned events inside forecast window")
+        return {"future_forecast": {}, "actions_future": []}
+
     # -----------------------------------------------------------------
     # 3️⃣ Seed CTL/ATL from latest or fallback
     # -----------------------------------------------------------------
@@ -144,7 +157,7 @@ def run_future_forecast(context, forecast_days="auto"):
             return float(fallback)
 
 
-    last_row = df.iloc[-1]
+    last_row = df_future.iloc[-1]
 
     ctl_future = _safe_float(last_row.get("icu_ctl"), ctl)
     atl_future = _safe_float(last_row.get("icu_atl"), atl)
