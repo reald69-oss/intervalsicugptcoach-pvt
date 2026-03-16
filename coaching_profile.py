@@ -256,7 +256,6 @@ RENDERER_PROFILES = {
             "events": "medium",
             "wellness": "medium",
             "adaptation": "high",
-            "performance_intelligence.training_state": "high"
         },
 
         "events_rule": {
@@ -339,7 +338,9 @@ RENDERER_PROFILES = {
                 "NDLI",
                 "Durability",
                 "performance_intelligence.training_state",
-                "energy_system_progression"
+                "energy_system_progression",
+                "actions"
+
             ],
             "intent_rule": "Assess whether acute load and recovery state align with immediate training intent.",
             "max_sentences": 4
@@ -442,7 +443,7 @@ RENDERER_PROFILES = {
             "trend_metrics": "high",
             "metrics": "medium",
             "adaptation": "high",
-            "performance_intelligence.training_state": "high"
+            "actions": "high"
         },
 
         "framing": {
@@ -473,6 +474,7 @@ RENDERER_PROFILES = {
                 "performance_intelligence.chronic",
                 "performance_intelligence.acute",
                 "performance_intelligence.training_state",
+                "actions",
                 "energy_system_progression",
             ],
             "intent_rule": "Determine whether the training block reflects expansion, consolidation, or plateau.",
