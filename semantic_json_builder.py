@@ -2614,7 +2614,6 @@ def build_semantic_json(context):
             "question": question
         })
 
-    semantic["actions"] = actions
     # ---------------------------------------------------------
     # 🧠 Performance Intelligence (Tier-3)
     # ---------------------------------------------------------
@@ -3660,6 +3659,46 @@ def build_semantic_json(context):
         **semantic,
         "phases_detail": full_phases_for_view
     })
+
+    
+    # ---------------------------------------------------------
+    # 📊 Metric Signals (Tier-2 commentary → insight_view)
+    # ---------------------------------------------------------
+
+    metric_signals = context.get("metric_signals", []) or []
+
+    if metric_signals:
+
+        insight_view = semantic.setdefault(
+            "insight_view",
+            {"critical": [], "watch": [], "positive": []}
+        )
+
+        for s in metric_signals:
+
+            metric = s.get("metric")
+            state = s.get("state")
+            value = s.get("value")
+
+            if not metric:
+                continue
+
+            interpretation = CHEAT_SHEET["context"].get(metric)
+            coaching = CHEAT_SHEET["coaching_links"].get(metric)
+
+            classification = CLASSIFICATION_ALIASES.get(state, "green")
+
+            entry = {
+                "name": metric,
+                "classification": classification,
+                "interpretation": interpretation,
+                "coaching_implication": coaching,
+            }
+
+            if value is not None:
+                entry["value"] = value
+
+            insight_view["positive"].append(entry)
 
     # ---------------------------------------------------------
     # ✅ Contract Enforcement

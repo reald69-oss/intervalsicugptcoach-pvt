@@ -302,94 +302,8 @@ def evaluate_actions(context):
     debug(context, "[T2-ACTIONS] Derived metrics integrated")
 
     actions = []
+    metric_signals = []
     primary_message = None
-    secondary_actions = []  # reserved for future phase-specific actions
-
-    # ---------------- Metric Context Summary ----------------
-    metric_links = CHEAT_SHEET.get("coaching_links", {})
-    derived = context.get("derived_metrics", {})
-    adapt = context.get("adaptation_metrics", {})
-    metric_contexts = []
-
-    def summarize_metric(k, v):
-        if not isinstance(v, dict):
-            return None
-        val, status = v.get("value"), v.get("status", "")
-        desc = metric_links.get(k, "")
-        if status in ["out of range", "borderline"]:
-            return f"⚠ {k} ({val}) — {desc}"
-        elif status == "optimal":
-            return f"✅ {k} ({val}) — {desc}"
-        return None
-
-    for metrics in [derived, adapt]:
-        for k, v in metrics.items():
-            rec = summarize_metric(k, v)
-            if rec:
-                metric_contexts.append(rec)
-    context["metric_contexts"] = metric_contexts
-
-    # ---------------- Polarisation / Intensity Balance (fully dynamic via Cheat Sheet) ----------------
-    adv = CHEAT_SHEET["advice"]
-    thr = CHEAT_SHEET["thresholds"]
-
-    # Collect all metrics whose names begin with "Polarisation"
-    polarisation_keys = [
-        k for k in adv.keys() if k.startswith("Polarisation") and not k.endswith("_summary")
-    ]
-
-    polarisations = {
-        key: metric_value(context, key, 0.0)
-        for key in polarisation_keys
-        if metric_value(context, key, 0.0) > 0
-    }
-
-    # Evaluate individual metrics with cheat-sheet thresholds + advice
-    for key in polarisation_keys:
-        val = metric_semantic_value(context, key, 0.0)
-        if val <= 0:
-            continue
-
-        confidence = metric_confidence(context, key)
-        if confidence != "high":
-            debug(context, f"[T2-ACTIONS] ⏭ Skipping {key} (confidence={confidence})")
-            continue
-
-        th = thr.get(key, thr.get("Polarisation", {}))
-        adv_block = adv.get(key, {})
-        if not th or not adv_block:
-            continue
-
-        if val < th.get("amber", (0, 1))[0]:
-            msg = adv_block.get("low", "").format(val)
-        elif val < th.get("green", (0, 1))[0]:
-            msg = adv_block.get("z2_base", adv_block.get("low", "")).format(val)
-        else:
-            msg = adv_block.get("optimal", "").format(val)
-
-        if msg:
-            actions.append(msg)
-
-    # Multi-variant summary message (cross-discipline check)
-    low_keys = []
-    for key in polarisation_keys:
-        if metric_confidence(context, key) != "high":
-            continue
-        val = metric_semantic_value(context, key, 0.0)
-        if val <= 0:
-            continue
-        if val < thr.get(key, thr.get("Polarisation", {})).get("amber", (0, 1))[0]:
-            low_keys.append(key)
-
-    # ---------------- Metabolic Efficiency ----------------
-    fox = context.get("FatOxidation")
-    decoup = context.get("Decoupling")
-
-    if fox is not None and decoup is not None:
-        if fox >= 0.8 and decoup <= 0.05:
-            actions.append("✅ Metabolic efficiency maintained (San Millán Z2).")
-        else:
-            actions.append("⚠ Improve Zone 2 efficiency — extend duration or adjust IF.")
 
     # ---------------- Stateful DELOAD latch ----------------
     lvi = context.get("LoadVariabilityIndex", 1.0)
@@ -457,15 +371,15 @@ def evaluate_actions(context):
     ft_range = heur["fatigue_delta_green"]
     ft = context.get("FatigueTrend", 0.0)
     if ft < ft_range[0]:
-        actions.append(f"⚠ FatigueTrend {ft:.2f} — recovery phase, maintain steady load.")
+        metric_signals.append(f"⚠ FatigueTrend {ft:.2f} — recovery phase, maintain steady load.")
     elif ft > ft_range[1]:
-        actions.append(f"✅ FatigueTrend {ft:.2f} — rising fatigue, monitor intensity.")
+        metric_signals.append(f"✅ FatigueTrend {ft:.2f} — rising fatigue, monitor intensity.")
 
     # ---------------- Benchmark / FatMax ----------------
     if context.get("weeks_since_last_FTP", 0) >= 6:
-        actions.append("🔄 Retest FTP/LT1 for updated benchmarks.")
+        metric_signals.append("🔄 Retest FTP/LT1 for updated benchmarks.")
     if abs(context.get("FatMaxDeviation", 1.0)) <= 0.05 and decoup <= 0.05:
-        actions.append("✅ FatMax calibration verified (±5 %).")
+        metric_signals.append("✅ FatMax calibration verified (±5 %).")
 
     # ---------------- UI Flag ----------------
     if lvi < 0.6:
@@ -476,55 +390,54 @@ def evaluate_actions(context):
         context["ui_flag"] = "🟢 Normal"
 
     # ---------------- Derived Metric Feedback ----------------
+
     th = CHEAT_SHEET["thresholds"]
-    adv = CHEAT_SHEET["advice"]
-    dur = context.get("Durability", 1.0)
-    lir = context.get("LoadIntensityRatio", None)
-    er = context.get("EnduranceReserve", 1.0)
-    drift = context.get("IFDrift", 0.0)
 
-    # Durability
-    if dur < th["Durability"]["amber"][0]:
-        actions.append(adv["Durability"]["low"].format(dur))
-    elif dur >= th["Durability"]["green"][0]:
-        actions.append(adv["Durability"]["improving"].format(dur))
-    # LIR
-    if isinstance(lir, (int, float)) and not np.isnan(lir):
-        if lir > th["LIR"]["amber"][0]:
-            actions.append(adv["LIR"]["high"].format(lir))
-        elif lir < th["LIR"]["green"][0]:
-            actions.append(adv["LIR"]["low"].format(lir))
-        else:
-            actions.append(adv["LIR"]["balanced"].format(lir))
-    # Endurance Reserve
-    if er < th["EnduranceReserve"]["amber"][0]:
-        actions.append(adv["EnduranceReserve"]["depleted"].format(er))
-    elif er >= th["EnduranceReserve"]["green"][0]:
-        actions.append(adv["EnduranceReserve"]["strong"].format(er))
-    # Efficiency Drift
-    if drift > th["IFDrift"]["amber"][0]:
-        actions.append(adv["EfficiencyDrift"]["high"].format(drift))
-    else:
-        actions.append(adv["EfficiencyDrift"]["stable"].format(drift))
-    # ---------------- Load Variability Index ----------------
     lvi = context.get("LoadVariabilityIndex", 1.0)
+    fox = context.get("FatOxidation")
+    decoup = context.get("Decoupling")
 
+    # ---- Metabolic efficiency ----
+    if fox is not None and decoup is not None:
+
+        if fox >= 0.8 and decoup <= 0.05:
+
+            metric_signals.append({
+                "metric": "FatOxidation",
+                "state": "efficient"
+            })
+
+        else:
+
+            metric_signals.append({
+                "metric": "FatOxidation",
+                "state": "needs_improvement"
+            })
+
+
+    # ---- Load Variability Index ----
     if lvi < th["LoadVariabilityIndex"]["amber"][0]:
-        actions.append(
-            adv["LoadVariabilityIndex"]["poor"].format(lvi)
-        )
+
+        metric_signals.append({
+            "metric": "LoadVariabilityIndex",
+            "state": "poor"
+        })
+
     elif lvi < th["LoadVariabilityIndex"]["green"][0]:
-        actions.append(
-            adv["LoadVariabilityIndex"]["moderate"].format(lvi)
-        )
+
+        metric_signals.append({
+            "metric": "LoadVariabilityIndex",
+            "state": "moderate"
+        })
+
     else:
-        actions.append(
-            adv["LoadVariabilityIndex"]["healthy"].format(lvi)
-        )
+
+        metric_signals.append({
+            "metric": "LoadVariabilityIndex",
+            "state": "healthy"
+        })
 
     # ---------------- Append metric feedback ----------------
-    if metric_contexts:
-        actions.extend(["---", "📊 Metric-based Feedback:"] + metric_contexts)
 
     final_actions = []
 
@@ -546,6 +459,7 @@ def evaluate_actions(context):
 
     context["derived_metrics"] = derived
     context["actions"] = final_actions
+    context["metric_signals"] = metric_signals
     return context
 
 
