@@ -33,7 +33,8 @@ from athlete_profile import map_icu_athlete_to_profile
 from audit_core.tier2_actions import detect_phases
 from audit_core.tier3_performance_intelligence import compute_performance_intelligence
 from audit_core.tier3_espe import run_espe
-
+from audit_core.tier3_adaptive_decision_engine import run_adaptive_decision_engine
+from audit_core.tier3_future_forecast import run_future_forecast
 
 def run_report(
     reportType: str = "weekly",
@@ -779,7 +780,7 @@ def run_report(
     # ============================================================
     # 🗓️ TIER-3: CALENDAR & FUTURE FORECAST
     # ============================================================
-    from audit_core.tier3_future_forecast import run_future_forecast
+
 
     debug(context, "[T3] Starting Tier-3 Future Forecast module …")
 
@@ -797,6 +798,21 @@ def run_report(
         debug(context, f"[T3] ❌ Future forecast failed with error: {e}")
         traceback.print_exc()
 
+    # ============================================================
+    # 🧠 TIER-3: ADAPTIVE DECISION ENGINE
+    # ============================================================
+
+    debug(context, "[T3] Starting Tier-3 ADE ...")
+
+    ade_result = run_adaptive_decision_engine(context)
+
+    if isinstance(ade_result, dict):
+        context.update(ade_result)
+
+    debug(
+        context,
+        f"[T3] ADE ready → directive={context.get('adaptive_decision', {}).get('directive')}"
+    )
 
     # --- Ensure minimum required context keys for validator ---
     if "actions" not in context:

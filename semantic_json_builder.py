@@ -2803,6 +2803,7 @@ def build_semantic_json(context):
 
             semantic["actions"].insert(0, {
                 "type": "state_action",
+                "priority": "supporting",
                 "label": "Training State",
                 "source": "tier3_training_state",
                 "model": "Seiler Load Governance",
@@ -2858,6 +2859,7 @@ def build_semantic_json(context):
 
         semantic["actions"].append({
             "type": "system_guidance",
+            "priority": "supporting",
             "label": "Energy System Direction",
             "sport": sport,
             "source": "energy_system_progression",
@@ -2877,6 +2879,7 @@ def build_semantic_json(context):
         semantic.setdefault("actions", [])
         semantic["actions"].append({
             "type": "reflection",
+            "priority": "supporting",
             "source": "montis_question_engine",
             "signal": dominant_signal(signals),
             "question": question
@@ -3737,6 +3740,26 @@ def build_semantic_json(context):
                 entry["value"] = value
 
             insight_view["positive"].append(entry)
+
+    # ---------------------------------------------------------
+    # ADE
+    # ---------------------------------------------------------
+
+    ade = context.get("adaptive_decision")
+
+    if ade:
+
+        semantic.setdefault("actions", [])
+
+        semantic["actions"].insert(0, {
+            "type": "adaptive_summary",
+            "role": "directive",
+            "priority": "primary",
+            "label": "Coaching Directive",
+            "source": "adaptive_decision_engine",
+
+            **ade
+        })
 
     # ---------------------------------------------------------
     # ✅ Contract Enforcement
