@@ -3711,6 +3711,9 @@ def build_semantic_json(context):
 
         for s in metric_signals:
 
+            if not isinstance(s, dict):
+                continue
+
             metric = s.get("metric")
             state = s.get("state")
             value = s.get("value")
