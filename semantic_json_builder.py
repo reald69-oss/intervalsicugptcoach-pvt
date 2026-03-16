@@ -2819,6 +2819,7 @@ def build_semantic_json(context):
 
             semantic["actions"].insert(0, {
                 "type": "state_action",
+                "label": "Training State",
                 "source": "tier3_training_state",
                 "model": "Seiler Load Governance",
                 "recommendation": primary_action,

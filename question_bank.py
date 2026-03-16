@@ -103,6 +103,8 @@ SIGNAL_MAP = {
 
 "durability_decline": "durability",
 "durability_pressure": "durability",
+"durability_trend_decline": "durability",
+"durability_trend_improving": "durability",
 
 "anaerobic_depletion": "repeatability",
 "anaerobic_load": "repeatability",
@@ -219,6 +221,24 @@ QUESTION_TEMPLATES = {
 
 },
 
+"durability_trend_decline": {
+"signals": ["durability_trend_decline"],
+"question_variants": [
+"Is long-term durability trending downward across recent blocks?",
+"Is endurance resilience declining across longer training windows?",
+"Is sustained durability slipping compared with earlier phases?"
+]
+},
+
+"durability_trend_improving": {
+"signals": ["durability_trend_improving"],
+"question_variants": [
+"Is long-term durability steadily improving?",
+"Are endurance adaptations consolidating across blocks?",
+"Is durability strengthening across recent training cycles?"
+]
+},
+
 # ------------------------------------------------
 # ANAEROBIC
 # ------------------------------------------------
@@ -314,6 +334,15 @@ QUESTION_TEMPLATES = {
 ]
 
 },
+
+"adaptation_plateau": {
+"signals": ["adaptation_stable"],
+"question_variants": [
+"Has adaptation plateaued under the current stimulus?",
+"Is training stimulus no longer driving measurable improvement?",
+"Is a change in training stimulus required to progress further?"
+]
+}
 
 # ------------------------------------------------
 # ADAPTATION STABILITY
