@@ -2820,6 +2820,7 @@ def build_semantic_json(context):
             semantic["actions"].insert(0, {
                 "type": "state_action",
                 "source": "tier3_training_state",
+                "model": "Seiler Load Governance",
                 "recommendation": primary_action,
                 "readiness_signal": readiness,
                 "state_label": training_state.get("state_label"),
@@ -2846,6 +2847,39 @@ def build_semantic_json(context):
     else:
 
         debug(context, "[SEMANTIC] energy_system_progression not present")
+
+    # ---------------------------------------------------------
+    # ⚡ ESPE → Coaching Action(s)
+    # ---------------------------------------------------------
+
+    espe = context.get("energy_system_progression") or {}
+    sports = espe.get("sports") or {}
+
+    for sport, block in sports.items():
+
+        if not isinstance(block, dict):
+            continue
+
+        if not block.get("supported"):
+            continue
+
+        system_guidance = block.get("system_guidance")
+        system_state = block.get("adaptation_state")
+
+        if not system_guidance:
+            continue
+
+        semantic.setdefault("actions", [])
+
+        semantic["actions"].append({
+            "type": "system_guidance",
+            "label": "Energy System Direction",
+            "sport": sport,
+            "source": "energy_system_progression",
+            "model": "Energy System Progression Engine",
+            "system_state": system_state,
+            "message": system_guidance
+        })
 
     # ---------------------------------------------------------
     # 🔬 Adaptation Metrics (derived from performance signals)

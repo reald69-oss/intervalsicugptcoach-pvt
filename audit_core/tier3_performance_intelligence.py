@@ -15,7 +15,7 @@ Season → 90d LIGHT chronic aggregation + 7d acute overlay
 from audit_core.utils import debug
 import pandas as pd
 
-PI_VERSION = "PI_v1.2"
+PI_VERSION = "PI_v1.3"
 # ===========================================================
 # Public Entry
 # ===========================================================
@@ -425,74 +425,83 @@ def interpret_training_state(context):
 
 
     # --------------------------------------------------
-    # Decision Framing (no new math — just logic)
+    # Decision Engine (Tier-3 governance) Seiler load governance philosophy
     # --------------------------------------------------
 
-    # --- readiness / fatigue interpretation ---
-
-    if tsb_class == "overreached" or (recovery_index and recovery_index < 0.8):
-        readiness = "You are carrying significant fatigue."
-        state_label = "Overreached"
-        recommendation = "Back off"
-        next_session = "Recovery ride or full rest"
-
-    elif tsb_class in ("fresh", "transition"):
-        readiness = "You are fresh and well recovered."
-        state_label = "Fresh"
-        recommendation = "Push"
-        next_session = "High-quality intensity session"
-
-    elif tsb_class == "productive_fatigue":
-        readiness = "You are training under productive fatigue."
-        state_label = "Productive Load"
-        recommendation = "Maintain progression"
-        next_session = "Structured endurance or threshold session"
-
-    else:  # neutral
-        readiness = "Training load and recovery appear balanced."
-        state_label = "Stable"
-        recommendation = "Maintain training structure"
-        next_session = "Planned structured session"
-
-    # --- Am I adapting? ---
-    adapting = "Adaptation signals are stable."
-
-    if wdrm and wdrm > 0.6:
-        adapting = "High anaerobic stimulus — adaptation likely but recovery critical."
-    if durability is not None and abs(durability) > 6:
-        adapting = "Durability strain rising — aerobic consolidation advised."
-
-    # --- Neural density check ---
-    if neural and neural > 200000:
-        next_session = "Low-intensity aerobic session to absorb load"
-        recommendation = "Absorb before adding intensity"
-
-
-    # --------------------------------------------------
-    # Load vs Recovery override (autonomic + load model)
-    # --------------------------------------------------
+    # Primary decision driver → autonomic + load interaction
 
     if load_recovery_state == "maladaptation_risk":
+
         state_label = "Maladaptation Risk"
-        readiness = "Autonomic recovery suppressed relative to training load."
+        readiness = "Autonomic recovery is suppressed relative to training load."
         recommendation = "Reduce load and prioritise recovery"
         next_session = "Recovery ride or full rest"
 
     elif load_recovery_state == "adaptation_pressure":
+
         state_label = "Adaptation Pressure"
-        readiness = "Training load elevated — monitor recovery carefully."
+        readiness = "Training load is elevated and approaching recovery limits."
+        recommendation = "Hold load and consolidate adaptation"
+        next_session = "Moderate endurance or controlled intensity"
 
     elif load_recovery_state == "productive_load":
+
         state_label = "Productive Load"
-        readiness = "Load and recovery interaction suggests productive stimulus."
+        readiness = "Training load is being absorbed effectively."
+        recommendation = "Continue load progression"
+        next_session = "Execute planned structured session"
+
+    else:
+
+        state_label = "Stable"
+        readiness = "Training load and recovery are balanced."
+        recommendation = "Maintain training structure"
+        next_session = "Planned structured session"
+
 
     # --------------------------------------------------
-    # Operational coaching state (2-state model) aligns with Sieler approach
+    # Freshness context (TSB / recovery overlay)
+    # --------------------------------------------------
+
+    if tsb_class == "overreached" or (recovery_index and recovery_index < 0.8):
+
+        readiness += " Acute fatigue is currently elevated."
+
+    elif tsb_class in ("fresh", "transition"):
+
+        readiness += " Freshness is currently high."
+
+
+    # --------------------------------------------------
+    # Adaptation context (physiology commentary)
+    # --------------------------------------------------
+
+    adapting = "Adaptation signals are stable."
+
+    if wdrm and wdrm > 0.6:
+        adapting = "High anaerobic stimulus detected — adaptation likely but recovery important."
+
+    if durability is not None and abs(durability) > 6:
+        adapting = "Durability strain rising — aerobic consolidation advised."
+
+
+    # --------------------------------------------------
+    # Neural density adjustment (execution layer)
+    # --------------------------------------------------
+
+    if neural and neural > 200000:
+
+        recommendation = "Absorb load before adding intensity"
+        next_session = "Low-intensity aerobic session"
+
+
+    # --------------------------------------------------
+    # Operational coaching mode (2-state governance)
     # --------------------------------------------------
 
     operational_state = (
         "recovery_priority"
-        if load_recovery_state in ("adaptation_pressure", "maladaptation_risk")
+        if load_recovery_state == "maladaptation_risk"
         else "load_accepting"
     )
 
@@ -508,18 +517,15 @@ def interpret_training_state(context):
         "physiological_state": load_recovery_state,
         "operational_state": operational_state,
         "decision_logic": (
-            "recovery_priority when autonomic recovery is suppressed relative to training load; "
-            "otherwise load_accepting"
+            "recovery_priority only when maladaptation risk is detected; "
+            "otherwise athlete remains in load_accepting mode"
         )
     }
 
     context["operational_state"] = operational_state
     context["operational_state_context"] = operational_state_context
 
-    debug(
-        context,
-        f"[T3-STATE] operational_state → {operational_state}"
-    )
+    debug(context, f"[T3-STATE] operational_state → {operational_state}")
 
     # --------------------------------------------------
     # Confidence

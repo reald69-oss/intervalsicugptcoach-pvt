@@ -1,6 +1,6 @@
 """
 Energy System Progression Engine (ESPE)
-Version: v1
+Version: v1.1
 
 Stateless physiological engine comparing two rolling power-curve windows.
 
@@ -17,7 +17,7 @@ from coaching_cheat_sheet import CHEAT_SHEET
 from audit_core.utils import debug
 from coaching_profile import COACH_PROFILE
 
-ESPE_VERSION = "espe_v1"
+ESPE_VERSION = "espe_v1.1"
 
 # ---------------------------------------------------------------------
 # Power Anchor Helpers
@@ -224,6 +224,34 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
         f"[ESPE] {sport} bias={adaptation_bias} balance={balance_score}"
     )
 
+    system_guidance = None
+
+    if adaptation_state == "aerobic_consolidation":
+
+        if system_status.get("vo2") == "decline":
+            system_guidance = (
+                "Aerobic development progressing while VO₂ capacity drifts — "
+                "reintroduce VO₂ stimulus within the next microcycle."
+            )
+
+    elif adaptation_state == "vo2_expansion":
+
+        system_guidance = (
+            "VO₂ capacity expanding — consolidate gains with threshold work."
+        )
+
+    elif adaptation_state == "anaerobic_build":
+
+        system_guidance = (
+            "Anaerobic power improving — maintain short high-intensity efforts."
+        )
+
+    elif adaptation_state == "plateau":
+
+        system_guidance = (
+            "Power curve stable across systems — introduce new stimulus to drive adaptation."
+        )
+
     return {
         "supported": True,
 
@@ -265,8 +293,11 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
         "adaptation_bias": adaptation_bias,
         "adaptation_state": adaptation_state,
 
-        "curve_profile": curve_profile
+        "curve_profile": curve_profile,
+        "system_guidance": system_guidance
     }
+
+
 
 def _compute_curve_dynamics(delta: Dict[str, float]) -> Dict[str, Any]:
 
