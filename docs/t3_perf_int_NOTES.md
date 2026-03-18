@@ -715,3 +715,4 @@ current (recent)
 ```
 
 All other curves returned by Intervals should be ignored for ESPE analysis.
+
