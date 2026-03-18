@@ -164,7 +164,10 @@ def run_future_forecast(context, forecast_days="auto"):
     latest_tsb = ctl_future - atl_future
     
     # determine trend vs current CTL
-    current_ctl = float(context.get("wellness_summary", {}).get("ctl", ctl_future))
+    current_ctl = _safe_float(
+        context.get("wellness_summary", {}).get("ctl"),
+        ctl_future
+    )
     load_trend = "increasing" if ctl_future > current_ctl else "declining"
     # -----------------------------------------------------------------
     # 6️⃣ Derive fatigue/form zone aligned with Intervals.icu categories

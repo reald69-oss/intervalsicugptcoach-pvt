@@ -610,13 +610,19 @@ def run_audit(
     try:
         report, compliance, logs, context, sg, markdown = _run_full_audit(range=range, output_format=format)
         if format in ("json", "semantic"):
-            return JSONResponse({
-                "status":"ok",
-                "report_type":range,
-                "output_format":"semantic_json",
-                "semantic_graph":sanitize(sg),
-                "compliance":compliance
-            })
+            payload = {
+                "status": "ok",
+                "report_type": range,
+                "output_format": "semantic_json",
+                "semantic_graph": sg,
+                "compliance": compliance,
+            }
+
+            clean = sanitize(payload)
+            clean = json.loads(json.dumps(clean, allow_nan=False))
+
+            return JSONResponse(clean)
+
         return JSONResponse({
             "status":"ok",
             "report_type":range,
@@ -952,15 +958,19 @@ async def run_audit_with_data(
 
                 semantic_graph = report.get("semantic_graph", {}) if isinstance(report, dict) else {}
 
-                return JSONResponse({
+                payload = {
                     "status": "ok",
                     "report_type": report_range,
                     "report_header": report_header,
                     "output_format": "semantic_json",
-                    "semantic_graph": sanitize(semantic_graph),
+                    "semantic_graph": semantic_graph,
                     "compliance": compliance,
-#                    "logs": logs[-20000:], # no logs needed unless debug
-                })
+                }
+
+                clean = sanitize(payload)
+                clean = json.loads(json.dumps(clean, allow_nan=False))
+
+                return JSONResponse(clean)
 
             return JSONResponse({
                 "status": "ok",
@@ -968,7 +978,6 @@ async def run_audit_with_data(
                 "report_header": report_header,
                 "output_format": "markdown",
                 "markdown": report.get("markdown",""),
-#                "logs": logs[-20000:], # no logs needed unless debug
             })
 
         except AuditHalt as e:
@@ -1070,16 +1079,19 @@ async def get_debug_with_data(data: dict):
     MAX_LOG = 250000
     log_tail = logs[-MAX_LOG:]
 
-    return JSONResponse({
+    payload = {
         "status": "ok",
-        "debug": True,
         "report_type": report_range,
         "report_header": report_header,
         "output_format": "semantic_json",
-        "semantic_graph": sanitize(sg),
+        "semantic_graph": sg,
         "compliance": compliance,
-        "logs": log_tail
-    })
+    }
+
+    clean = sanitize(payload)
+    clean = json.loads(json.dumps(clean, allow_nan=False))
+
+    return JSONResponse(clean)
 
 def data_quality_audit(ctx: dict) -> dict:
     score = 0

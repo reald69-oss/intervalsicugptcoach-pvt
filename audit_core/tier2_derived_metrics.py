@@ -547,13 +547,13 @@ def compute_derived_metrics(df_events, context):
             fatigue_trend = round((ema7 - ema14) / (ema14 + 1e-6) * 100, 1)
             src = "EWMA fallback"
         else:
-            fatigue_trend = np.nan
+            fatigue_trend = None
             src = "insufficient data"
 
         debug(context, f"[T2] FatigueTrend computed ({src}): Δ={fatigue_trend:+.1f}%")
 
     except Exception as e:
-        fatigue_trend = np.nan
+        fatigue_trend = None
         debug(context, f"[T2] ⚠️ FatigueTrend computation failed: {e}")
 
 
