@@ -2368,6 +2368,24 @@ def build_semantic_json(context):
 
                 planned_by_week.setdefault(week_key, []).extend(events)
 
+            # ---------------------------------------------------------
+            # 🧱 DROP LAST ISO WEEK IF WINDOW TRUNCATED
+            # ---------------------------------------------------------
+
+            if planned_by_week:
+
+                last_week = sorted(planned_by_week.keys())[-1]
+
+                max_date = max(pd.to_datetime(d).date() for d in planned_by_date.keys())
+
+                iso_year, iso_week, _ = max_date.isocalendar()
+                last_week_from_data = f"{iso_year}-W{iso_week:02d}"
+
+                week_end = max_date + timedelta(days=(7 - max_date.isoweekday()))
+
+                if max_date < week_end:
+                    planned_by_week.pop(last_week_from_data, None)
+
             planned_summary_by_iso_week = {
                 week: {
                     "total_events": len(events),
