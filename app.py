@@ -1081,11 +1081,13 @@ async def get_debug_with_data(data: dict):
 
     payload = {
         "status": "ok",
+        "debug": True,
         "report_type": report_range,
         "report_header": report_header,
         "output_format": "semantic_json",
         "semantic_graph": sg,
         "compliance": compliance,
+        "logs": log_tail,
     }
 
     clean = sanitize(payload)
