@@ -46,33 +46,49 @@ app = FastAPI(title="Montis.icu GPT Coach Railway API", version="2.0")
 # 🧹 SANITIZER
 # ============================================================
 def sanitize(obj, seen=None):
-    import pandas as pd, numpy as np
+    import pandas as pd, numpy as np, math
+
     if isinstance(obj, (str, int, float, bool)) or obj is None:
         if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
             return None
         return obj
+
     if isinstance(obj, (datetime, date, pd.Timestamp)):
         try:
             return obj.isoformat()
         except Exception:
             return str(obj)
+
     if isinstance(obj, (np.integer, np.floating)):
-        return float(obj)
+        val = float(obj)
+        if math.isnan(val) or math.isinf(val):
+            return None
+        return val
+
     if seen is None:
         seen = set()
+
     if isinstance(obj, (dict, list, tuple, pd.DataFrame, pd.Series)):
         oid = id(obj)
         if oid in seen:
-            return obj  # allow reuse, not recursion
+            return None
         seen.add(oid)
+
     if isinstance(obj, pd.DataFrame):
         return sanitize(obj.to_dict(orient="records"), seen)
+
     if isinstance(obj, pd.Series):
         return sanitize(obj.to_dict(), seen)
+
     if isinstance(obj, dict):
-        return {sanitize(k, seen): sanitize(v, seen) for k, v in obj.items()}
+        return {
+            str(sanitize(k, seen)): sanitize(v, seen)
+            for k, v in obj.items()
+        }
+
     if isinstance(obj, (list, tuple)):
         return [sanitize(i, seen) for i in obj]
+
     return str(obj)
 
 
