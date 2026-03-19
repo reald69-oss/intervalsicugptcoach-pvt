@@ -541,7 +541,7 @@ def compute_nutrition_balance(context):
         "protein_delta": round(protein_delta, 2),
         "fat_delta": round(fat_delta, 2),
         "status": status,
-        "confidence": "confidence"
+        "confidence": confidence
     }
 
     context["nutrition_balance"] = balance
