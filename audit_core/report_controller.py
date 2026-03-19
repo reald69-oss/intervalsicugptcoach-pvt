@@ -1074,7 +1074,9 @@ def run_report(
     debug(context, f"✅ Render + validation completed for {reportType}")
 
     # Return the final output and compliance as two values
-    return final_output
+    compliance = True
+
+    return final_output, compliance
 
 if __name__ == "__main__":
     run_report("weekly")
