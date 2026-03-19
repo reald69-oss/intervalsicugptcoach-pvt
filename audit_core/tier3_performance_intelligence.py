@@ -14,8 +14,9 @@ Season → 90d LIGHT chronic aggregation + 7d acute overlay
 
 from audit_core.utils import debug
 import pandas as pd
+from coaching_profile import COACH_PROFILE
 
-PI_VERSION = "PI_v1.3"
+PI_VERSION = "PI_v1.4"
 # ===========================================================
 # Public Entry
 # ===========================================================
@@ -51,6 +52,8 @@ def compute_performance_intelligence(context, contract_type="weekly"):
     context["training_state"] = interpretation
     debug(context, f"[T3 OUTPUT KEYS] {list(result.keys())}")
 
+    compute_nutrition_demand(context)
+    compute_nutrition_balance(context)
     return result
 
 
@@ -350,19 +353,212 @@ def _compute_season(context, df_light, df_full):
         "acute_overlay": acute_overlay
     }
 
+def compute_nutrition_demand(context):
+
+    debug(context, "[T3][NUTRITION] Starting demand model")
+
+    model = COACH_PROFILE.get("nutrition_demand_model", {})
+
+    carb_model = model.get("carbohydrates", {})
+    protein_model = model.get("protein", {})
+    fat_model = model.get("fat", {})
+    load_model = model.get("load_classification", {})
+
+    wellness = context.get("wellness_summary", {}) or {}
+    training_state = context.get("training_state", {}) or {}
+
+    ctl = wellness.get("ctl")
+    atl = wellness.get("atl")
+    fatigue_state = training_state.get("load_recovery_state")
+
+    # --------------------------------------------------
+    # Load classification (data-driven)
+    # --------------------------------------------------
+    load_class = "moderate"
+
+    if atl is not None and ctl is not None:
+        delta = atl - ctl
+
+        if "low" in load_model and delta <= load_model["low"].get("atl_ctl_delta_max", 0):
+            load_class = "low"
+
+        elif "high" in load_model and delta >= load_model["high"].get("atl_ctl_delta_min", 999):
+            load_class = "high"
+
+    # --------------------------------------------------
+    # Demand values (from profile)
+    # --------------------------------------------------
+    carbs_req = carb_model.get(load_class)
+    protein_req = protein_model.get("baseline")
+    debug(context, f"[T3][NUTRITION] load_class={load_class} type={type(load_class)}")
+    if fatigue_state in ("adaptation_pressure", "maladaptation_risk"):
+        protein_req = protein_model.get("elevated_recovery", protein_req)
+
+    fat_req = fat_model.get("baseline")
+
+    debug(context, f"[T3][NUTRITION] model_keys={list(COACH_PROFILE.keys())}")
+    debug(context, f"[T3][NUTRITION] model_loaded={bool(model)}")
+    debug(context, f"[T3][NUTRITION] carb_model={carb_model}")
+    debug(context, f"[T3][NUTRITION] lookup_key={load_class}")
+
+    # --------------------------------------------------
+    # Output
+    # --------------------------------------------------
+    demand = {
+        "carbs_gkg_required": carbs_req,
+        "protein_gkg_required": protein_req,
+        "fat_gkg_target": fat_req,
+        "load_class": load_class,
+        "recovery_state": fatigue_state
+    }
+
+    context["nutrition_demand"] = demand
+
+    debug(
+        context,
+        "[T3][NUTRITION] Demand",
+        f"load={load_class}",
+        f"carbs={carbs_req}",
+        f"protein={protein_req}",
+        f"fat={fat_req}"
+    )
+
+    return demand
+
+def compute_nutrition_balance(context):
+
+    debug(context, "[T3][NUTRITION] Evaluating balance")
+
+    demand = context.get("nutrition_demand") or {}
+    daily = context.get("wellness")  # DataFrame
+    weight = (context.get("athlete") or {}).get("icu_weight")
+
+    debug(context, f"[T3][NUTRITION] weight={weight}")
+
+    # -----------------------------
+    # Validate inputs
+    # -----------------------------
+    if not demand:
+        context["nutrition_balance"] = {
+            "status": "unknown",
+            "confidence": "none"
+        }
+        return
+
+    if daily is None or daily.empty:
+        context["nutrition_balance"] = {
+            "status": "no_data",
+            "confidence": "none"
+        }
+        return
+
+    if weight is None or weight <= 0:
+        context["nutrition_balance"] = {
+            "status": "invalid_input",
+            "confidence": "none"
+        }
+        return
+
+    # -----------------------------
+    # Build valid rolling window (pandas)
+    # -----------------------------
+    valid_days = daily[
+        daily["carbohydrates"].notna() &
+        daily["protein"].notna() &
+        daily["fatTotal"].notna()
+    ]
+
+    debug(context, f"[T3][NUTRITION] total_days={len(daily)}")
+    debug(context, f"[T3][NUTRITION] valid_days={len(valid_days)}")
+
+    if valid_days.empty:
+        context["nutrition_balance"] = {
+            "status": "no_data",
+            "confidence": "none"
+        }
+        return
+
+    window = valid_days.tail(3)
+
+    debug(context, f"[T3][NUTRITION] window_days={len(window)}")
+
+    if len(window) < 3:
+        context["nutrition_balance"] = {
+            "status": "insufficient_data",
+            "confidence": "low"
+        }
+        return
+
+    # -----------------------------
+    # Demand values (no defaults)
+    # -----------------------------
+    carbs_req = demand.get("carbs_gkg_required")
+    protein_req = demand.get("protein_gkg_required")
+    fat_req = demand.get("fat_gkg_target")
+
+    if carbs_req is None or protein_req is None:
+        context["nutrition_balance"] = {
+            "status": "invalid_input",
+            "confidence": "none"
+        }
+        return
+
+    # -----------------------------
+    # Rolling averages (g/kg)
+    # -----------------------------
+    carbs_gkg = window["carbohydrates"].mean() / weight
+    protein_gkg = window["protein"].mean() / weight
+    fat_gkg = window["fatTotal"].mean() / weight
+
+    carbs_delta = carbs_gkg - carbs_req
+    protein_delta = protein_gkg - protein_req
+    fat_delta = fat_gkg - fat_req
+
+    # -----------------------------
+    # Classification
+    # -----------------------------
+    status = "balanced"
+
+    if carbs_delta < -3:
+        status = "severely_underfuelled"
+    elif carbs_delta < -1 or protein_delta < -0.3:
+        status = "underfuelled"
+    elif carbs_delta > 1.5:
+        status = "overfuelled"
+
+    balance = {
+        "carbs_gkg_actual": round(carbs_gkg, 2),
+        "protein_gkg_actual": round(protein_gkg, 2),
+        "fat_gkg_actual": round(fat_gkg, 2),
+        "carbs_delta": round(carbs_delta, 2),
+        "protein_delta": round(protein_delta, 2),
+        "fat_delta": round(fat_delta, 2),
+        "status": status,
+        "confidence": "moderate"
+    }
+
+    context["nutrition_balance"] = balance
+
+    debug(context, "[T3][NUTRITION] Balance", f"status={status}", f"conf=moderate")
+
+    return
+
 
 def interpret_training_state(context):
 
     # Synthesizes Tier-3 metrics into athlete-facing decisions.
 
     pi = context.get("performance_intelligence", {})
+
     # weekly + season compatibility
     if "acute" in pi:
         pi = pi["acute"]
     elif "acute_overlay" in pi:
         pi = pi["acute_overlay"]
+
     future = context.get("future_forecast", {})
     wellness = context.get("wellness_summary", {})
+
     phase = (
         context.get("current_phase")
         or context.get("phase_detected")
@@ -370,7 +566,7 @@ def interpret_training_state(context):
     )
 
     # --------------------------------------------------
-    # Pull signals (safe extraction)
+    # Pull signals
     # --------------------------------------------------
 
     wdrm = (pi.get("anaerobic_repeatability") or {}).get("mean_depletion_pct_7d")
@@ -380,15 +576,7 @@ def interpret_training_state(context):
     tsb_class = future.get("fatigue_class")
     recovery_index = wellness.get("recovery_index")
 
-
-    # --------------------------------------------------
-    # Load vs Recovery detection
-    # --------------------------------------------------
-
-    wellness = context.get("wellness_summary", {})
-
     autonomic_ratio = wellness.get("hrv_ratio")
-
     atl = wellness.get("atl") or wellness.get("ATL")
     ctl = wellness.get("ctl") or wellness.get("CTL")
 
@@ -401,15 +589,46 @@ def interpret_training_state(context):
     except Exception:
         pass
 
-    debug(
-        context,
-        f"[T3-STATE] signals → autonomic={autonomic_ratio}, ATL={atl}, CTL={ctl}"
-    )
+    # --------------------------------------------------
+    # TSB (hard fatigue signal)
+    # --------------------------------------------------
+
+    tsb = None
+    try:
+        tsb = context.get("tsb") or context.get("TSB") or future.get("tsb")
+        if hasattr(tsb, "iloc"):
+            tsb = float(tsb.iloc[-1])
+        elif tsb is not None:
+            tsb = float(tsb)
+    except Exception:
+        tsb = None
+
+    debug(context, f"[T3-STATE] signals → autonomic={autonomic_ratio}, ATL={atl}, CTL={ctl}, TSB={tsb}")
+
+    # --------------------------------------------------
+    # Load vs Recovery detection (TSB governed)
+    # --------------------------------------------------
 
     load_recovery_state = "balanced"
-    if autonomic_ratio is not None and atl is not None and ctl is not None:
+    load_pressure = None
 
+    if atl is not None and ctl is not None:
         load_pressure = atl - ctl
+
+    # --- HARD GOVERNOR (TSB dominates) ---
+    if tsb is not None:
+
+        if tsb <= -15:
+            load_recovery_state = "maladaptation_risk"
+
+        elif tsb <= -10:
+            load_recovery_state = "load_pressure"
+
+        elif tsb >= 10:
+            load_recovery_state = "fresh"
+
+    # --- Secondary: autonomic + load interaction ---
+    elif autonomic_ratio is not None and load_pressure is not None:
 
         if load_pressure <= 0:
             load_recovery_state = "balanced"
@@ -423,12 +642,9 @@ def interpret_training_state(context):
         elif autonomic_ratio >= 1.05 and load_pressure > 5:
             load_recovery_state = "productive_load"
 
-
     # --------------------------------------------------
-    # Decision Engine (Tier-3 governance) Seiler load governance philosophy
+    # Decision Engine
     # --------------------------------------------------
-
-    # Primary decision driver → autonomic + load interaction
 
     if load_recovery_state == "maladaptation_risk":
 
@@ -436,6 +652,13 @@ def interpret_training_state(context):
         readiness = "Autonomic recovery is suppressed relative to training load."
         recommendation = "Reduce load and prioritise recovery"
         next_session = "Recovery ride or full rest"
+
+    elif load_recovery_state == "load_pressure":
+
+        state_label = "Load Pressure"
+        readiness = "Training load is high with accumulating fatigue."
+        recommendation = "Stabilise load and prioritise recovery"
+        next_session = "Endurance or recovery session"
 
     elif load_recovery_state == "adaptation_pressure":
 
@@ -458,22 +681,18 @@ def interpret_training_state(context):
         recommendation = "Maintain training structure"
         next_session = "Planned structured session"
 
-
     # --------------------------------------------------
-    # Freshness context (TSB / recovery overlay)
+    # Freshness overlay
     # --------------------------------------------------
 
     if tsb_class == "overreached" or (recovery_index and recovery_index < 0.8):
-
         readiness += " Acute fatigue is currently elevated."
 
     elif tsb_class in ("fresh", "transition"):
-
         readiness += " Freshness is currently high."
 
-
     # --------------------------------------------------
-    # Adaptation context (physiology commentary)
+    # Adaptation context
     # --------------------------------------------------
 
     adapting = "Adaptation signals are stable."
@@ -484,16 +703,13 @@ def interpret_training_state(context):
     if durability is not None and abs(durability) > 6:
         adapting = "Durability strain rising — aerobic consolidation advised."
 
-
     # --------------------------------------------------
-    # Neural density adjustment (execution layer)
+    # Neural density adjustment
     # --------------------------------------------------
 
     if neural and neural > 200000:
-
         recommendation = "Absorb load before adding intensity"
         next_session = "Low-intensity aerobic session"
-
 
     # --------------------------------------------------
     # Operational coaching mode (2-state governance)
@@ -501,7 +717,7 @@ def interpret_training_state(context):
 
     operational_state = (
         "recovery_priority"
-        if load_recovery_state == "maladaptation_risk"
+        if load_recovery_state in ("maladaptation_risk", "adaptation_pressure", "load_pressure")
         else "load_accepting"
     )
 
@@ -512,13 +728,14 @@ def interpret_training_state(context):
             "hrv_ratio": autonomic_ratio,
             "atl": atl,
             "ctl": ctl,
-            "load_pressure": (atl - ctl) if atl is not None and ctl is not None else None
+            "tsb": tsb,
+            "load_pressure": load_pressure
         },
         "physiological_state": load_recovery_state,
         "operational_state": operational_state,
         "decision_logic": (
-            "recovery_priority only when maladaptation risk is detected; "
-            "otherwise athlete remains in load_accepting mode"
+            "recovery_priority when fatigue or load exceeds recovery capacity; "
+            "load_accepting when athlete is absorbing load effectively"
         )
     }
 
@@ -532,7 +749,6 @@ def interpret_training_state(context):
     # --------------------------------------------------
 
     confidence = "moderate"
-
     if tsb_class and recovery_index:
         confidence = "high"
 
@@ -547,13 +763,13 @@ def interpret_training_state(context):
         "signals": {
             "hrv_ratio": autonomic_ratio,
             "atl": atl,
-            "ctl": ctl
+            "ctl": ctl,
+            "tsb": tsb
         },
         "load_recovery_state": load_recovery_state,
         "operational_state": operational_state,
         "operational_state_context": operational_state_context
     }
-
 
 # ===========================================================
 # Utilities

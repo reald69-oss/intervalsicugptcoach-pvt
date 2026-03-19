@@ -765,6 +765,9 @@ CHEAT_SHEET["context"] = {
         "aerobic efficiency, while values above ~5% suggest cardiovascular drift and reduced "
         "fatigue resistance during prolonged work."
     ),
+    "ProteinIntake": "Adequate protein intake supports recovery, muscle repair, and adaptation to training load.",
+    "CarbohydrateAvailability": "Carbohydrate availability determines glycogen replenishment and endurance capacity.",
+    "FatIntake": "Fat intake contributes to hormonal stability and long-term energy balance."
 }
 
 CHEAT_SHEET["coaching_links"] = {
@@ -916,7 +919,10 @@ CHEAT_SHEET["coaching_links"] = {
         "If EnduranceDecay exceeds ~5%, prioritise longer steady Z2 endurance sessions "
         "and reduce excessive intensity density. Improving aerobic durability reduces "
         "cardiovascular drift during long efforts."
-),
+    ),
+    "ProteinIntake": "Increase intake during high load or recovery phases to support adaptation.",
+    "CarbohydrateAvailability": "Align carbohydrate intake with training load to avoid low energy availability.",
+    "FatIntake": "Maintain sufficient intake to support hormonal health."
 }
 
 CHEAT_SHEET["display_names"] = {

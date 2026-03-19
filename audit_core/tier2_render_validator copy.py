@@ -1,7 +1,4 @@
 """
-
-DEPRECTAED _ NOT USED
-
 Tier-2 Step 8 — Render Validator (v16.14-Stable)
 Final validation and schema enforcement.
 Strict event-only verification.
@@ -126,6 +123,18 @@ def finalize_and_validate_render(context, reportType="weekly"):
     # --- Athlete Profile Check ---
     if "athleteProfile" not in context or not context["athleteProfile"]:
         raise AuditHalt("❌ Missing athleteProfile — Section 1 cannot render")
+
+        # --- Step 1: Validate enforced totals, do not recompute ---
+    df = context.get("df_events")
+    report_type = str(context.get("report_type", reportType)).lower()
+
+    if df is None or getattr(df, "empty", True):
+        if report_type == "season":
+            debug(context, "🧩 [T2] Season mode → skipping df_events validation (lightweight mode).")
+            context["df_events"] = pd.DataFrame()
+            df = context["df_events"]
+        else:
+            raise AuditHalt("❌ Renderer: missing df_events for validation")
 
     # --- Ensure report object initialized even when skipping validation (season mode) ---
     if report_type == "season":
@@ -424,7 +433,7 @@ def finalize_and_validate_render(context, reportType="weekly"):
         val = context.get(k)
 
         # Only patch if truly missing or invalid (None, not a dict, or empty dict)
-        if val is None:
+        if not isinstance(val, dict) or not val:
             src = context.get("derived_metrics", {}).get(k)
             if isinstance(src, dict) and src:
                 context[k] = src
@@ -594,6 +603,19 @@ def finalize_and_validate_render(context, reportType="weekly"):
 
     # Mirror to satisfy both components
     report["actions"] = actions_list          # for validate_report_output
+    report["actions_block"] = actions_block   # for enforce_report_schema
+
+    debug(context, f"[PATCH] actions dual-structure applied → {len(actions_list)} items")
+
+    # --- Finalize compliance ---
+    # Ensure derived metrics are flattened for validator
+    if "derived_metrics" in context:
+        for k, v in context["derived_metrics"].items():
+            if isinstance(v, dict):
+                try:
+                    context[k] = float(v.get("value", np.nan))
+                except Exception:
+                    context[k] = np.nan
 
     # Ensure validator sees the true report structure, not markdown-only output
     if isinstance(report, str) and "context" in context:
@@ -645,12 +667,25 @@ def finalize_and_validate_render(context, reportType="weekly"):
         "validation_status": "✅ Full Framework + Schema Validation Passed",
     })
 
+    # === Context completeness diagnostic ===
+#    debug(context,"\n[DEBUG] Context keys available before finalize_and_validate_render() return:")
+#    for k in sorted(context.keys()):
+#        debug(context,f"  - {k}")
+#    debug(context,"[DEBUG] End of context key list\n")
+
+    for section in ["derived_metrics", "load_metrics", "adaptation_metrics", "actions", "trend_metrics"]:
+        value = context.get(section)
+        if not value:
+            debug(context,f"[WARN] ⚠️ Missing or empty section in context: {section}")
+
     debug(context,"✅ Report passed framework + schema validation (event-only, markdown).")
     report["metrics"].setdefault("derived_metrics", context.get("derived_metrics", {}))
     debug(context, "[TRACE-FINAL] totalHours =", context.get("totalHours"))
     debug(context, "[TRACE-FINAL] totalTss   =", context.get("totalTss"))
     if "eventTotals" in context:
         debug(context, "[TRACE-FINAL] eventTotals(hours,tss) =", context["eventTotals"].get("hours"), context["eventTotals"].get("tss"))
+    if "summary_patch" in context:
+        debug(context, "[TRACE-FINAL] summary_patch =", context["summary_patch"])
 
     # --- Finalization guard ---
     # Avoid re-validating empty or duplicate structures
@@ -659,6 +694,31 @@ def finalize_and_validate_render(context, reportType="weekly"):
         debug(context, "[FINALIZER] Skipping redundant validation (report already validated).")
     else:
         debug(context, "[FINALIZER] Reusing validated report structure.")
+
+    # --- Ensure core structure for render ---
+   
+    report.setdefault("header", {
+        "title": f"{reportType.title()} Training Report",
+        "framework": "Unified_Reporting_Framework_v5.1",
+        "athlete": context.get("athlete", {}).get("name", "Unknown Athlete"),
+        "period": f"{context.get('window_start')} → {context.get('window_end')}",
+        "timestamp": context.get("timestamp", datetime.utcnow().isoformat()),
+        "discipline": context.get("discipline", "cycling"),
+    })
+
+    report.setdefault("summary", {
+        "totalHours": context.get("totalHours", 0),
+        "totalTss": context.get("totalTss", 0),
+        "eventCount": context.get("event_count", 0),
+        "period": f"{context.get('window_start')} → {context.get('window_end')}",
+        "athlete": context.get("athlete", {}).get("name", "Unknown Athlete"),
+    })
+
+    report.setdefault("footer", {
+        "framework": "URF v5.1",
+        "version": "v16.14",
+        "timestamp": context.get("timestamp", datetime.utcnow().isoformat()),
+    })
 
     # --- SAFETY GUARD: Prevent invalid renders only when 7d_full truly failed ---
     data_source = context.get("data_source", "")

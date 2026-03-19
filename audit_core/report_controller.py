@@ -26,7 +26,6 @@ from audit_core.utils import (
 )
 from audit_core.tier2_derived_metrics import compute_derived_metrics
 from audit_core.tier2_actions import evaluate_actions
-from audit_core.tier2_render_validator import finalize_and_validate_render
 from audit_core.tier2_extended_metrics import compute_extended_metrics
 from semantic_json_builder import build_semantic_json
 from athlete_profile import map_icu_athlete_to_profile
@@ -500,33 +499,7 @@ def run_report(
             debug(context, "[T1] WARNING: No valid df_light source found — df_light = empty.")
 
 
-    # ------------------------------------------------------------
-    # T1 FIXES — ensure load_metrics & scalar markers exist
-    # ------------------------------------------------------------
 
-    # 1. Ensure load_metrics exists (markdown uses this)
-    if "load_metrics" not in context or not context["load_metrics"]:
-        debug(context, "[T1-FIX] load_metrics missing → injecting empty container")
-        context["load_metrics"] = {}
-
-    # 2. Rehydrate derived metric scalars needed by extended metrics
-    dm = context.get("derived_metrics", {})
-
-    for key in ("ACWR", "Monotony", "Strain", "Polarisation"):
-        if key in dm:
-            context[key] = dm[key].get("value")
-        else:
-            context[key] = None
-
-    debug(context, f"[T1-FIX] Rehydrated scalars for extended: "
-                f"ACWR={context.get('ACWR')} "
-                f"Monotony={context.get('Monotony')} "
-                f"Strain={context.get('Strain')} "
-                f"Polarisation={context.get('Polarisation')}")
-
-
-    # --- Tier-2 Enforcement Chain ---
-    df_master, _ = validate_event_completeness(df_master)
 
     # ============================================================
     # Tier-2 ANALYSIS SCOPE (authoritative switch)
@@ -653,6 +626,17 @@ def run_report(
     context["auditFinal"] = True
     context["auditPartial"] = False
     context["fetch_status"] = "complete"
+
+    # 🔒 Ensure zone distributions exist (REQUIRED for Polarisation)
+    if not context.get("zone_dist_power") and not context.get("zone_dist_fused"):
+        debug(context, "[FIX] zone distributions missing → recomputing from df_scope")
+
+        if isinstance(df_scope, pd.DataFrame) and not df_scope.empty:
+            if "zone_dist_power" not in context:
+                context["zone_dist_power"] = compute_zone_distribution(df_scope, mode="power")
+
+            if "zone_dist_fused" not in context:
+                context["zone_dist_fused"] = compute_zone_distribution(df_scope, mode="fused")
 
     # --- Tier-2 core metrics ---
     debug(context, f"[CHECK] zone columns in df_events: {[c for c in context['df_events'].columns if 'z' in c.lower()]}")
@@ -971,9 +955,6 @@ def run_report(
     context["enforce_render_source"] = "tier2_enforced_totals"  # ✅ use canonical source
     context["allow_intent_inference"] = False
 
-    # --- Final render ----
-    final_output, compliance = finalize_and_validate_render(context, reportType=reportType)
-
     # Check if the requested format is "semantic" or "markdown"
     if output_format == "semantic":
         # Generate the semantic graph
@@ -1080,38 +1061,20 @@ def run_report(
             except Exception as e:
                 debug(context, f"[WELLNESS-EXPOSE] failed: {e}")
 
+        semantic_output = build_semantic_json(context)
 
-        semantic_output = build_semantic_json(context)  # Ensure semantic_output is generated
-
-        # If the output format is "semantic", return the semantic graph
         final_output = {
             "status": "ok",
             "message": f"{reportType.title()} Semantic Report Generated",
-            "semantic_graph": semantic_output,  # Directly use the generated semantic_output
-            "context": context,  # Add the full context for reference
-            "logs": final_output.get("logs", "") if isinstance(final_output, dict) else "",  # Optional, include logs if needed
+            "semantic_graph": semantic_output,
+            "context": context
         }
-
-    elif isinstance(final_output, dict) and "markdown" in final_output:
-        # Existing logic for Markdown output
-        final_output = {
-            "markdown": final_output.get("markdown", "No Markdown Content Available"),  # Ensure markdown is populated
-            "context": context,
-            "summary": final_output.get("summary", {}),
-            "header": final_output.get("header", {}),
-        }
-
-    elif not isinstance(final_output, dict):
-        # Fallback if final_output is not a dictionary (safely convert to markdown string)
-        final_output = {"markdown": str(final_output), "context": {}}
 
     # Log the completion of rendering
     debug(context, f"✅ Render + validation completed for {reportType}")
 
     # Return the final output and compliance as two values
-    return final_output, compliance
-
-
+    return final_output
 
 if __name__ == "__main__":
     run_report("weekly")

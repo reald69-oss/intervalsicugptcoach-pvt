@@ -1474,6 +1474,45 @@ COACH_PROFILE = {
             "interpretation": "Exposure to prolonged endurance stress.",
             "coaching_implication": "Supports durability development but increases cumulative fatigue."
         },
+        #NUTRITION MARKERS (NOT THRESHOLDS)
+        "ProteinIntake": {
+            "framework": "Recovery Nutrition",
+            "unit": "g/kg",
+            "criteria": {
+                "low": "<1.6 — insufficient for recovery support",
+                "optimal": "1.6–2.2 — supports repair and adaptation",
+                "high": ">2.2 — no additional recovery benefit"
+            },
+            "interpretation": "Protein intake relative to body mass and recovery demand.",
+            "coaching_implication": "Adequate intake supports muscle repair and adaptation.",
+            "related_metrics": ["HRV", "SleepQuality", "FatigueTrend"]
+        },
+
+        "CarbohydrateAvailability": {
+            "framework": "Fuel Availability",
+            "unit": "g/kg",
+            "criteria": {
+                "low": "<3 — insufficient glycogen support",
+                "moderate": "3–5 — supports light to moderate load",
+                "high": ">5 — supports high training demand"
+            },
+            "interpretation": "Carbohydrate intake relative to training load.",
+            "coaching_implication": "Low intake under high load impairs glycogen restoration and performance.",
+            "related_metrics": ["HRV", "SleepQuality", "TrainingLoad"]
+        },
+
+        "FatIntake": {
+            "framework": "Energy Balance",
+            "unit": "g/kg",
+            "criteria": {
+                "low": "<0.8 — may impact hormonal function",
+                "optimal": "0.8–1.2 — supports endocrine stability",
+                "high": ">1.2 — elevated energy density"
+            },
+            "interpretation": "Fat intake contributing to energy balance and hormonal function.",
+            "coaching_implication": "Supports long-term metabolic stability.",
+            "related_metrics": []
+        },
     },
     "metadata": {
         "framework_chain": [
@@ -1483,9 +1522,31 @@ COACH_PROFILE = {
         "unified_framework": "v5.1",
         "audit_validation": "Tier-2 verified, event-only totals enforced",
         "variance": "<= 2%",
-        "last_revision": "2025-11-03"
+        "last_revision": "2026-03-19"
+    },
+    "nutrition_demand_model": {
+
+        "carbohydrates": {
+            "low": 3.5,
+            "moderate": 4.5,
+            "high": 6.0
+        },
+
+        "protein": {
+            "baseline": 1.6,
+            "elevated_recovery": 2.0
+        },
+
+        "fat": {
+            "baseline": 1.0
+        },
+
+        "load_classification": {
+            "low": {"atl_ctl_delta_max": 0},
+            "moderate": {"atl_ctl_delta_min": 0, "atl_ctl_delta_max": 10},
+            "high": {"atl_ctl_delta_min": 10}
+        }
     }
 }
-
 # Alias for compatibility with derived metrics imports
 PROFILE_DATA = COACH_PROFILE

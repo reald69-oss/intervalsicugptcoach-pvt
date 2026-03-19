@@ -15,6 +15,9 @@ def run_adaptive_decision_engine(context):
     fatigue_class = forecast.get("fatigue_class")
     load_trend = forecast.get("load_trend")
 
+    nutrition = context.get("nutrition_balance", {}) or {}
+    nutrition_status = nutrition.get("status")
+
     system_state = None
     sports = espe.get("sports") or {}
 
@@ -31,6 +34,29 @@ def run_adaptive_decision_engine(context):
     elif fatigue_class == "amber":
         risk_flag = "moderate"
 
+    nutrition = context.get("nutrition_balance", {}) or {}
+    nutrition_status = nutrition.get("status")
+    nutrition_conf = nutrition.get("confidence")
+
+    # --------------------------------------------------
+    # Nutrition = supplementary signal only
+    # --------------------------------------------------
+
+    nutrition_note = None
+
+    if nutrition_conf == "moderate":
+
+        if nutrition_status == "underfuelled":
+            nutrition_note = "Energy intake appears below demand; monitor fuelling."
+
+        elif nutrition_status == "overfuelled":
+            nutrition_note = "Energy intake exceeds current demand."
+
+    # DO NOT change:
+    # - directive
+    # - operational_state
+    # - risk_flag
+
     decision = {
         "directive": directive,
         "operational_state": operational_state,
@@ -38,6 +64,9 @@ def run_adaptive_decision_engine(context):
         "risk_flag": risk_flag,
         "forecast_context": fatigue_class,
         "load_trend": load_trend,
+        "nutrition_status": nutrition_status,
+        "nutrition_confidence": nutrition_conf,
+        "nutrition_note": nutrition_note,
         "version": ADE_VERSION
     }
 

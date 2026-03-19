@@ -440,7 +440,7 @@ def fetch_athlete_profile(headers, from_cache=None, context=None):
 
         profile_json = profile_resp.json()
         athlete = profile_json.get("athlete", profile_json)
-
+    
     # -------------------------------------------------
     # 🔒 COMMON NORMALISATION (ALWAYS RUNS)
     # -------------------------------------------------

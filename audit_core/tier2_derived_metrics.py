@@ -1090,6 +1090,12 @@ def compute_derived_metrics(df_events, context):
             "icon": classified["FatOxEfficiency"]["icon"],
             "desc": "Fat oxidation efficiency",
         },
+        "Polarisation": {
+            "value": polarisation,
+            "classification": classified["Polarisation"]["state"],
+            "icon": classified["Polarisation"]["icon"],
+            "desc": "Seiler 3-zone polarisation ratio (Z1+Z3)/(2×Z2)",
+        },
         "PolarisationIndex": {
             "value": polarisation_index,
             "classification": classified["PolarisationIndex"]["state"],

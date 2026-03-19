@@ -2774,6 +2774,94 @@ def build_semantic_json(context):
                 f"{training_state.get('state_label')} | "
                 f"{training_state.get('next_session')}"
             )
+            
+            # -----------------------------------------------------
+            # 3️⃣ Inject Nutrition (Supplementary Only)
+            # -----------------------------------------------------
+
+            nutrition = context.get("nutrition_balance") or {}
+            nutrition_demand = context.get("nutrition_demand") or {}
+            weight = (context.get("athlete") or {}).get("icu_weight")
+            if nutrition:
+
+                classification = nutrition.get("status")
+
+                marker_key = None
+
+                if classification and "underfuelled" in classification:
+                    marker_key = "CarbohydrateAvailability"
+                elif classification == "overfuelled":
+                    marker_key = "CarbohydrateAvailability"
+                elif classification == "balanced":
+                    marker_key = "ProteinIntake"
+
+                interpretation = None
+                coaching = None
+
+                if marker_key:
+                    interpretation = CHEAT_SHEET["context"].get(marker_key)
+                    coaching = CHEAT_SHEET["coaching_links"].get(marker_key)
+
+                semantic["performance_intelligence"]["nutrition"] = {
+
+                    "framework": "Energy Availability & Recovery Nutrition",
+
+                    # -------------------------------------------------
+                    # Interpretation (marker-driven)
+                    # -------------------------------------------------
+
+                    "interpretation": interpretation,
+                    "coaching_implication": coaching,
+
+                    "context_window": "rolling_3d",
+
+                    # -------------------------------------------------
+                    # Classification (light)
+                    # -------------------------------------------------
+
+                    "classification": classification,
+                    "classification_source": "nutrition_balance",
+
+                    # -------------------------------------------------
+                    # Confidence gating
+                    # -------------------------------------------------
+
+                    "confidence": nutrition.get("confidence"),
+
+                    # -------------------------------------------------
+                    # Actual vs Demand (transparent, no judgement)
+                    # -------------------------------------------------
+
+                    "signals": {
+
+                                                "carbs_actual_g": round(nutrition.get("carbs_gkg_actual", 0) * weight, 0) if weight else None,
+                        "protein_actual_g": round(nutrition.get("protein_gkg_actual", 0) * weight, 0) if weight else None,
+                        "fat_actual_g": round(nutrition.get("fat_gkg_actual", 0) * weight, 0) if weight else None,
+
+                        "carbs_required_g": round(nutrition_demand.get("carbs_gkg_required", 0) * weight, 0) if weight else None,
+                        "protein_required_g": round(nutrition_demand.get("protein_gkg_required", 0) * weight, 0) if weight else None,
+                        "fat_required_g": round(nutrition_demand.get("fat_gkg_target", 0) * weight, 0) if weight else None,
+
+                        "carbs_delta_g": round(
+                            (nutrition.get("carbs_gkg_actual", 0) - nutrition_demand.get("carbs_gkg_required", 0)) * weight, 0
+                        ) if weight else None,
+
+                        "protein_delta_g": round(
+                            (nutrition.get("protein_gkg_actual", 0) - nutrition_demand.get("protein_gkg_required", 0)) * weight, 0
+                        ) if weight else None,
+
+                        "fat_delta_g": round(
+                            (nutrition.get("fat_gkg_actual", 0) - nutrition_demand.get("fat_gkg_target", 0)) * weight, 0
+                        ) if weight else None,
+                    }
+                }
+
+                debug(
+                    context,
+                    f"[SEMANTIC] Injected nutrition → "
+                    f"{classification} ({nutrition.get('confidence')})"
+                )
+
         debug(
             context,
             f"[SEMANTIC] Injected performance_intelligence → "
@@ -3757,7 +3845,38 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     # ✅ Contract Enforcement
     # ---------------------------------------------------------
-    return apply_report_type_contract(semantic)
+
+    def safe_len(x):
+        try:
+            if hasattr(x, "shape"):
+                return int(x.shape[0])
+            if isinstance(x, (list, tuple, dict)):
+                return len(x)
+        except Exception:
+            pass
+        return 0
+
+    light_src = context.get("activities_light")
+    if light_src is None:
+        light_src = context.get("df_light")
+
+    wellness_src = context.get("wellness_daily")
+    if wellness_src is None:
+        wellness_src = context.get("df_wellness")
+
+    summary = {
+        "status": "ok",
+        "note": "semantic JSON finalized (markdown skipped)",
+        "rows": {
+            "full": safe_len(df_events),
+            "light": safe_len(light_src),
+            "wellness": safe_len(wellness_src),
+            "power_curves": safe_len(context.get("power_curve")),
+        }
+    }
+    semantic = apply_report_type_contract(semantic)
+    semantic["summary"] = summary
+    return semantic
 
 
 # ==============================================================
