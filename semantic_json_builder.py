@@ -2447,15 +2447,24 @@ def build_semantic_json(context):
                 if max_date < week_end:
                     planned_by_week.pop(last_week_from_data, None)
 
-            planned_summary_by_iso_week = {
-                week: {
-                    "total_events": len(events),
-                    "total_duration_minutes": sum((e.get("duration_minutes") or 0) for e in events),
-                    "total_load": sum((e.get("icu_training_load") or 0) for e in events),
-                    "categories": sorted({e.get("category") for e in events if e.get("category")}),
-                }
-                for week, events in planned_by_week.items()
-            }
+                planned_summary_by_iso_week = {}
+
+                for week, events in planned_by_week.items():
+
+                    total_load = sum((e.get("icu_training_load") or 0) for e in events)
+
+                    is_current = (week == current_week_key)
+
+                    planned_summary_by_iso_week[week] = {
+                        "total_events": len(events),
+                        "total_duration_minutes": sum((e.get("duration_minutes") or 0) for e in events),
+
+                        # 🔥 KEY FIX
+                        "remaining_load" if is_current else "planned_load": total_load,
+
+                        "categories": sorted({e.get("category") for e in events if e.get("category")}),
+                        "is_current_week": is_current
+                    }
 
             semantic["planned_summary_by_iso_week"] = dict(
                 sorted(planned_summary_by_iso_week.items())
