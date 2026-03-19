@@ -34,43 +34,6 @@ def compute_extended_metrics(context):
     )
 
     # ---------------------------------------------------------
-    # CORRELATION METRICS
-    # ---------------------------------------------------------
-    df = context.get("df_events")
-
-    corr_metrics = {
-        "power_hr_correlation": None,
-        "fatigue_vs_load": None,
-        "efficiency_factor_change": None,
-    }
-
-    if df is not None and not df.empty:
-        try:
-            df = df.tail(90)
-
-            if "power" in df and "hr" in df:
-                power = df["power"].values
-                hr = df["hr"].values
-                corr = np.corrcoef(power, hr)[0, 1]
-                corr_metrics["power_hr_correlation"] = float(np.clip(corr, -1, 1))
-
-            if "fatigue" in df and "icu_training_load" in df:
-                fatigue = df["fatigue"].values
-                load = df["icu_training_load"].values
-                corr = np.corrcoef(fatigue, load)[0, 1]
-                corr_metrics["fatigue_vs_load"] = float(np.clip(corr, -1, 1))
-
-            if "efficiency_factor" in df:
-                ef = df["efficiency_factor"].dropna()
-                if len(ef) > 3:
-                    corr_metrics["efficiency_factor_change"] = float(ef.iloc[-1] - ef.iloc[0])
-
-        except Exception as e:
-            debug(context, f"[EXT] Correlation computation failed → {e}")
-
-    context["correlation_metrics"] = corr_metrics
-
-    # ---------------------------------------------------------
     # 🧠 Personalized Endurance (Z2) Calibration via Lactate Context
     # ---------------------------------------------------------
     try:

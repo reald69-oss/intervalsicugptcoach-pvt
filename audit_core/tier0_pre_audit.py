@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from audit_core.errors import AuditHalt
 import json
 import numpy as np
+from audit_core.utils import set_time_context
 
 INTERVALS_API = os.getenv("INTERVALS_API", "https://intervalsicugptcoach.clive-a5a.workers.dev")
 
@@ -26,8 +27,8 @@ def resolve_dataset(name: str, fetch_fn, context: dict):
         debug(context, f"[T0-RESOLVE] Fetching '{name}' dataset")
         return fetch_fn(from_cache=None, context=context)
 
-def resolve_report_trigger(user_cmd: str, tz: str):
-    today = datetime.now().astimezone().date()
+def resolve_report_trigger(user_cmd: str, context: dict):
+    today = context["athlete_today"].date()
     cmd = user_cmd.lower().strip()
 
     if any(k in cmd for k in ["rolling", "last 7", "past 7"]):
@@ -633,6 +634,8 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
     report_type = context["report_type"].lower()
     debug(context, f"[T0] report_type resolved → {report_type}")
     headers = {}
+    # 🔒 ALWAYS initialise athlete time context FIRST
+    set_time_context(context)
     # 🧩 Enforce CLI explicit date range (authoritative override)
     if (
         "range" in context
@@ -723,7 +726,7 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
 
         # 🚀 Only apply force_light if NO explicit CLI/custom range was given
         elif context.get("force_light", False):
-            newest_date = datetime.now().date()
+            newest_date = context["athlete_today"].date()
             oldest_date = newest_date - timedelta(days=range_cfg.get("lightDays", 90))
             oldest = oldest_date.strftime("%Y-%m-%d")
             newest = newest_date.strftime("%Y-%m-%d")
@@ -902,6 +905,8 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
             if from_cache is None else (from_cache, context),
         context,
     )
+    # 🔒 Re-apply time context now that athlete timezone is known
+    set_time_context(context)
     debug(context, f"[CHECK] athlete name = {context.get('athleteProfile', {}).get('name')}")
 
     # --- Step 2: Define canonical date window (metadata only) ---
@@ -926,12 +931,12 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
 
     elif context.get("report_type", "").lower() == "season":
         mode = "season"
-        oldest = pd.Timestamp.now() - pd.Timedelta(days=90)
-        newest = pd.Timestamp.now()
+        newest = context["athlete_today"]
+        oldest = newest - pd.Timedelta(days=90)
         debug(context, f"🧩 Tier-0: defining 90-day window context for season mode (no data reslice).")
 
     else:
-        mode, oldest, newest = resolve_report_trigger("weekly", context["timezone"])
+        mode, oldest, newest = resolve_report_trigger("weekly", context)
         debug(context, f"[T0-FIX] Defaulting to weekly/rolling window {fmt_date(oldest)} → {fmt_date(newest)}")
 
     context.update({"report_mode": mode, "window_start": oldest, "window_end": newest})
@@ -1114,7 +1119,7 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
 
     # --- Step 4: Fetch wellness with adaptive chunking + meta-retry ---
     wellness_days = context.get("range", {}).get("wellnessDays", 42)
-    today = pd.Timestamp.now().normalize()
+    today = context["athlete_today"]
     wellness_newest = today
     wellness_oldest = wellness_newest - pd.Timedelta(days=wellness_days)
 

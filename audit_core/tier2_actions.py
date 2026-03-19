@@ -96,11 +96,6 @@ def detect_phases(context, events):
     📚 Adds: calc_method + calc_context per phase for full traceability.
     """
 
-    import pandas as pd, numpy as np
-    from datetime import datetime
-    from audit_core.utils import debug
-    from coaching_cheat_sheet import CHEAT_SHEET
-
     debug(context, "[PHASES] ---- Phase detection start (v17.9) ----")
 
     # --- Validate input ----------------------------------------------------

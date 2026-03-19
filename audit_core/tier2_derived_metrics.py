@@ -485,7 +485,7 @@ def compute_derived_metrics(df_events, context):
         debug(context, f"[T2] df_ref padded to {len(df_ref)} days ({df_ref['date'].min().date()} → {df_ref['date'].max().date()})")
     else:
         df_ref = pd.DataFrame({
-            "date": pd.date_range(end=pd.Timestamp.today(), periods=28, freq="D"),
+            "date": pd.date_range(end=context["athlete_today"], periods=28, freq="D"),
             "icu_training_load": 0.0
         })
         debug(context, "[T2] df_ref fallback created (all zero loads).")

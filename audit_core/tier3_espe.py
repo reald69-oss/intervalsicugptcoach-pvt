@@ -301,18 +301,38 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
 
 def _compute_curve_dynamics(delta: Dict[str, float]) -> Dict[str, Any]:
 
-    short = delta.get("1m", 0)
-    vo2 = delta.get("5m", 0)
-    thr = delta.get("20m", 0)
-    long = delta.get("60m", 0)
+    vals = {
+        "short": delta.get("1m"),
+        "vo2": delta.get("5m"),
+        "thr": delta.get("20m"),
+        "long": delta.get("60m"),
+    }
 
-    # average shift of entire curve
-    vertical_shift = round((short + vo2 + thr + long) / 4, 2)
+    valid = [v for v in vals.values() if v is not None]
 
-    # rotation strength (difference between short vs long systems)
+    # --- no usable data ---
+    if not valid:
+        return {
+            "vertical_shift_pct": None,
+            "rotation_index": None,
+            "dominant_shift": "unknown"
+        }
+
+    # --- safe numeric fallback for partial data ---
+    short = vals["short"] if vals["short"] is not None else 0
+    vo2 = vals["vo2"] if vals["vo2"] is not None else 0
+    thr = vals["thr"] if vals["thr"] is not None else 0
+    long = vals["long"] if vals["long"] is not None else 0
+
+    count = len(valid)
+
+    # --- average shift using only valid signals ---
+    vertical_shift = round(sum(valid) / count, 2)
+
+    # --- rotation index (still comparable even with partial data) ---
     rotation_index = round(((short + vo2) / 2) - ((thr + long) / 2), 2)
 
-    # classification
+    # --- classification ---
     if abs(rotation_index) < 0.75:
         dominant = "uniform_shift"
     elif rotation_index > 0:
@@ -355,10 +375,8 @@ def _compute_delta_percent(
 
 
 def _safe_ratio(a: float, b: float) -> float:
-
-    if not a or not b or b == 0:
-        return 0.0
-
+    if a is None or b is None or b == 0:
+        return None
     return round(a / b, 2)
 
 
@@ -374,14 +392,17 @@ def _classify_system_status(
     thresholds = _sport_thresholds(sport)
 
     return {
-        "anaerobic": _band(delta.get("1m", 0), thresholds["anaerobic"]),
-        "vo2": _band(delta.get("5m", 0), thresholds["vo2"]),
-        "threshold": _band(delta.get("20m", 0), thresholds["threshold"]),
-        "aerobic_durability": _band(delta.get("60m", 0), thresholds["aerobic"])
+        "anaerobic": _band(delta.get("1m"), thresholds["anaerobic"]),
+        "vo2": _band(delta.get("5m"), thresholds["vo2"]),
+        "threshold": _band(delta.get("20m"), thresholds["threshold"]),
+        "aerobic_durability": _band(delta.get("60m"), thresholds["aerobic"])
     }
 
 
 def _band(value: float, bands: Dict[str, float]) -> str:
+
+    if value is None:
+        return "unknown"
 
     neutral_band = (
         CHEAT_SHEET
@@ -393,20 +414,26 @@ def _band(value: float, bands: Dict[str, float]) -> str:
     if abs(value) < neutral_band:
         return "stable"
 
-    if value >= bands["strong"]:
+    strong = bands.get("strong")
+    moderate = bands.get("moderate")
+    mild = bands.get("mild")
+    decline = bands.get("decline")
+
+    # --- gains (ordered safely) ---
+    if strong is not None and value >= strong:
         return "strong_gain"
 
-    if value >= bands["moderate"]:
+    if moderate is not None and value >= moderate:
         return "moderate_gain"
 
-    if value >= bands["mild"]:
+    if mild is not None and value >= mild:
         return "mild_gain"
 
-    if value <= bands["decline"]:
+    # --- decline ---
+    if decline is not None and value <= decline:
         return "decline"
 
     return "stable"
-
 
 def _sport_thresholds(sport: str) -> Dict[str, Dict[str, float]]:
 
@@ -432,14 +459,21 @@ def _detect_plateau(
     context: Dict[str, Any]
 ) -> bool:
 
-    threshold_gain = delta.get("20m", 0)
+    threshold_gain = delta.get("20m")
+    if threshold_gain is None:
+        return False
 
     debug(context, f"[ESPE] plateau check {sport} threshold_delta={threshold_gain}")
 
     if sport == "Run":
         return threshold_gain < 0.5
 
-    return threshold_gain < 1.0
+    vals = [delta.get(k) for k in ("1m", "5m", "20m", "60m") if delta.get(k) is not None]
+
+    if not vals:
+        return False
+
+    return all(abs(v) < 1.0 for v in vals)
 
 
 def _compute_balance_score(
@@ -448,6 +482,9 @@ def _compute_balance_score(
 ) -> float:
 
     ideal = 1.8
+
+    if glycolytic is None:
+        return None
 
     if glycolytic == 0:
         return 0.0
@@ -521,30 +558,31 @@ def _classify_curve_profile(sport: str, slope: float) -> str:
 
 def classify_adaptation_state(system_status, deltas):
 
-    thr = deltas.get("20m", 0)
-    dur = deltas.get("60m", 0)
-    vo2 = deltas.get("5m", 0)
-    neu = deltas.get("5s", 0)
+    thr = deltas.get("20m")
+    dur = deltas.get("60m")
+    vo2 = deltas.get("5m")
+    neu = deltas.get("5s")
 
-    # aerobic development
-    if thr > 1 and dur > 2:
-        return "aerobic_consolidation"
+    # fatigue
+    if thr is not None and vo2 is not None and thr < -3 and vo2 < -3:
+        return "fatigue_state"
 
-    # vo2 expansion
-    if vo2 > 3:
+    # vo2
+    if vo2 is not None and vo2 > 3:
         return "vo2_expansion"
 
-    # anaerobic build
-    if neu > 5:
+    # aerobic
+    if thr is not None and dur is not None and thr > 1 and dur > 2:
+        return "aerobic_consolidation"
+
+    # anaerobic
+    if neu is not None and neu > 5:
         return "anaerobic_build"
 
     # plateau
-    if all(abs(v) < 1 for v in deltas.values()):
+    vals = [v for v in deltas.values() if v is not None]
+    if vals and all(abs(v) < 1 for v in vals):
         return "plateau"
-
-    # systemic decline
-    if thr < -3 and vo2 < -3:
-        return "fatigue_state"
 
     return "mixed_adaptation"
 

@@ -12,6 +12,7 @@ from audit_core.utils import debug
 from audit_core.errors import AuditHalt
 from audit_core.utils import validate_dataset_integrity, validate_wellness_alignment
 from coaching_cheat_sheet import CHEAT_SHEET
+from audit_core.utils import set_time_context
 
 # ======================================================
 # 🧩 SPORT GROUP RESOLUTION (CHEAT_SHEET AUTHORITATIVE)
@@ -562,7 +563,7 @@ def run_tier1_controller(df_master, wellness, context):
     from audit_core.errors import AuditHalt
     df_well=None
     debug(context, "[T1] Running Tier-1 controller (weekly mode)")
-
+    context = set_time_context(context)
     # --- 🧩 Canonical Light+Full filter (use merged Tier-0 dataset if available)
     if "df_raw_activities" in context:
         df_raw = context["df_raw_activities"]
@@ -973,7 +974,7 @@ def run_tier1_controller(df_master, wellness, context):
             if "injury" in df_well.columns else np.nan
 
         # --- Objective + subjective rest-day logic ---
-        today = pd.Timestamp.now().normalize()
+        today = context["athlete_today"]
         mask_past = df_well["date"] < today
 
         load_col = None
@@ -982,32 +983,8 @@ def run_tier1_controller(df_master, wellness, context):
                 load_col = candidate
                 break
 
-       # --- Determine rest days based on *no training load* days before today ---
+        # --- Determine rest days based on *no training load* days before today ---
         debug(context, "[T1-REST] Starting rest day calculation from df_master.")
-
-        # ------------------------------------------------------------
-        # Rest-day base dataset (authoritative)
-        # Weekly  → df_master (7d full)
-        # Season  → df_light   (90d light)
-        # ------------------------------------------------------------
-        if context.get("report_type") == "season" and isinstance(context.get("df_light"), pd.DataFrame):
-            rest_df = context["df_light"].copy()
-            debug(context, "[T1-REST] Season mode → using df_light for rest-day calculation")
-        else:
-            rest_df = df_master.copy()
-            debug(context, "[T1-REST] Weekly mode → using df_master for rest-day calculation")
-
-        # Normalize dates
-        rest_df["date"] = (
-            pd.to_datetime(rest_df["start_date_local"], errors="coerce")
-            .dt.tz_localize(None)
-            .dt.normalize()
-        )
-
-        window_start = rest_df["date"].min()
-        today = pd.Timestamp.now().normalize()
-        date_range = pd.date_range(window_start, today, freq="D")
-
 
         # ------------------------------------------------------------
         # Aggregate daily load correctly (scope-aware)
@@ -1028,7 +1005,7 @@ def run_tier1_controller(df_master, wellness, context):
             .dt.tz_localize(None)
             .dt.normalize()
         )
-        today = pd.Timestamp.now().tz_localize(None).normalize()
+        today = context["athlete_today"]
         report_type = context.get("report_type")
 
         if report_type == "weekly":

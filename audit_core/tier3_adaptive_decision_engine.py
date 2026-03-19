@@ -15,9 +15,6 @@ def run_adaptive_decision_engine(context):
     fatigue_class = forecast.get("fatigue_class")
     load_trend = forecast.get("load_trend")
 
-    nutrition = context.get("nutrition_balance", {}) or {}
-    nutrition_status = nutrition.get("status")
-
     system_state = None
     sports = espe.get("sports") or {}
 

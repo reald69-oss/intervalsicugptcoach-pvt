@@ -79,7 +79,7 @@ def _compute_weekly(context, df_full):
     decoupling = decoupling_raw.abs()
     if_values = pd.to_numeric(df_full.get("icu_intensity"), errors="coerce")
     # normalize legacy intensity values (sometimes stored as %)
-    if if_values is not None and if_values.dropna().size > 0 and if_values.max() > 2:
+    if if_values is not None and not if_values.dropna().empty and if_values.max() > 2:
         if_values = if_values / 100
     moving_time = pd.to_numeric(df_full.get("moving_time"), errors="coerce")
 

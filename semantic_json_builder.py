@@ -41,6 +41,7 @@ import pytz
 from audit_core.tier2_derived_metrics import classify_marker
 from textwrap import dedent
 from questions_engine import detect_signals, select_question, generate_question, dominant_signal
+from audit_core.utils import set_time_context
 
 # ---------------------------------------------------------
 # Helpers
@@ -837,7 +838,11 @@ def build_semantic_json(context):
     verbose_events = bool(options.get("verbose_events", True))
     include_all_events = bool(options.get("include_all_events", True))
     return_format = options.get("return_format", "semantic")
-    render_mode = options.get("render_mode", "default")  # ✅ new line
+    render_mode = options.get("render_mode", "default")
+    context = set_time_context(context)
+    now = context["athlete_now"]
+    today = context["athlete_today"]
+    tz = context["timezone"]
 
     # Prefer the preserved full dataset for events
     if "_df_scope_full" in context and isinstance(context["_df_scope_full"], pd.DataFrame):
@@ -1232,8 +1237,8 @@ def build_semantic_json(context):
         debug(context, f"[SEMANTIC] Derived period from {report_type} dataset → {start_date} → {end_date}")
 
     else:
-        start_date = datetime.now() - timedelta(days=7)
-        end_date = datetime.now()
+        start_date = today - pd.Timedelta(days=7)
+        end_date = today
         context["period"] = {
             "start": start_date.strftime("%Y-%m-%d"),
             "end": end_date.strftime("%Y-%m-%d"),
@@ -2406,9 +2411,9 @@ def build_semantic_json(context):
         # 📊 PLANNED SUMMARY — ISO WEEK (Future Weeks Only)
         # ---------------------------------------------------------
 
-        today = datetime.now().date()
+        today = context["athlete_today"]
 
-        if report_end < (today - timedelta(days=6)):
+        if pd.Timestamp(report_end) < (today - pd.Timedelta(days=6)):
             semantic["planned_summary_by_iso_week"] = {}
         else:
 
@@ -2482,8 +2487,8 @@ def build_semantic_json(context):
             period = semantic.get("meta", {}).get("period", "")
             if "→" in period:
                 end_str = period.split("→")[1].strip()
-                report_end = pd.to_datetime(end_str).date()
-                today = datetime.now().date()
+                report_end = pd.Timestamp(pd.to_datetime(end_str))
+                today = context["athlete_today"]
 
                 if report_end >= (today - pd.Timedelta(days=6)):
 
@@ -3117,7 +3122,7 @@ def build_semantic_json(context):
         semantic["current_ISO_weekly_microcycle"] = None
 
         tz = context.get("timezone") or "UTC"
-        today = pd.Timestamp.now(tz=tz).date()
+        today = context["athlete_today"]
 
         period_meta = semantic.get("meta", {}).get("period")
 
@@ -3132,7 +3137,7 @@ def build_semantic_json(context):
             report_iso = report_end.isocalendar()
 
             # Allow microcycle if report is recent (within 6 days)
-            if report_end >= (today - timedelta(days=6)):
+            if pd.Timestamp(report_end) >= (today - pd.Timedelta(days=6)):
 
                 iso = today_iso
 
