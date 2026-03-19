@@ -22,6 +22,8 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audit_
 from audit_core.report_controller import run_report
 from audit_core.utils import debug
 from audit_core.tier0_pre_audit import expand_zones
+from audit_core.utils import set_time_context
+
 
 import logging
 
@@ -441,6 +443,13 @@ def normalize_prefetched_context(data):
         context["athlete_raw"] = athlete
         context["prefetch_done"] = True
         context["semantic_mode"] = True
+        context = set_time_context(context)
+        debug(
+            context,
+            f"[TIME] athlete_today={context.get('athlete_today')} "
+            f"athlete_now={context.get('athlete_now')} "
+            f"timezone={context.get('timezone')}"
+        )
 
         # --- Normalize Intervals zone arrays (for HR and Power) ---
         def normalize_zone_fields(df):
@@ -679,7 +688,7 @@ async def run_audit_with_data(
             # 🚫 Future Start-Date Safeguard
             # ---------------------------------------------------------
             try:
-                today = datetime.utcnow().date()
+                today = pd.Timestamp.utcnow().date()
 
                 if start:
                     dt_start = pd.to_datetime(start).date()
@@ -792,7 +801,7 @@ async def run_audit_with_data(
             # 🧭 FINAL DATE NORMALIZATION (must occur AFTER window resolution)
             # ---------------------------------------------------------
             try:
-                today = datetime.utcnow().date()
+                today = pd.Timestamp.utcnow().date()
 
                 if start:
                     dt_start = pd.to_datetime(start).date()
@@ -1122,7 +1131,7 @@ def data_quality_audit(ctx: dict) -> dict:
         "athlete_name": athlete.get("name"),
         "timezone": athlete.get("timezone"),
         "period": period,
-        "generated_at": datetime.utcnow().isoformat() + "Z"
+        "generated_at": ctx.get("athlete_now").isoformat() if ctx.get("athlete_now") else datetime.utcnow().isoformat() + "Z"
     }
 
     # --------------------------------------------------

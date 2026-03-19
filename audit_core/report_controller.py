@@ -14,7 +14,7 @@ import pandas as pd
 from datetime import timedelta, datetime, date
 from audit_core.errors import AuditHalt
 
-from audit_core.utils import debug
+from audit_core.utils import debug, set_time_context 
 
 from audit_core.tier0_pre_audit import run_tier0_pre_audit
 from audit_core.tier1_controller import run_tier1_controller
@@ -208,7 +208,8 @@ def run_report(
     debug(context, f"🧭 Running {reportType.title()} Report (auditFinal={auditFinal}, render_mode={render_mode})")
 
     # --- Tier-0 Range Configuration (aligned with worker) ---
-    today = datetime.now().date()
+    set_time_context(context)
+    today = context["athlete_today"].date()
     # ============================================================
     # 🧭 CLI explicit start/end override — must persist downstream
     # ============================================================

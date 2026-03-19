@@ -5,6 +5,9 @@ from audit_core.errors import AuditHalt
 import sys
 import datetime
 import os
+from zoneinfo import ZoneInfo
+from datetime import datetime
+
 # ------------------------------------------------------------
 # 🌍 Auto-detect Railway environment (staging vs production)
 # ------------------------------------------------------------
@@ -24,11 +27,32 @@ IS_DEBUG_ENV = True # this enabled both prod and staging but stderr is removed. 
 # Global state
 # ------------------------------------------------------------
 
-RUN_TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+RUN_TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
 GLOBAL_LOGFILE = None
 GLOBAL_FILE_HANDLE = None
 MAX_STDERR_LINES = 2000
 STDERR_COUNT = 0
+
+def set_time_context(context):
+    athlete_tz = context.get("timezone") or "UTC"
+
+    try:
+        tz = ZoneInfo(athlete_tz)
+    except Exception:
+        athlete_tz = "UTC"
+        tz = ZoneInfo("UTC")
+
+    athlete_now = datetime.now(tz)
+    athlete_today = pd.Timestamp(athlete_now).tz_localize(None).normalize()
+
+    context["timezone"] = athlete_tz
+    context["athlete_now"] = athlete_now
+    context["athlete_today"] = athlete_today
+
+    return context
+
+
+
 # ------------------------------------------------------------
 # 🔎 Debug Logger (Auto-suppressed in Production)
 # ------------------------------------------------------------
@@ -61,7 +85,7 @@ def debug(*args):
                 f"report_{report_type}_local_prod_debug.log"
             )
 
-        ts = datetime.datetime.now().strftime("%H:%M:%S")
+        ts = datetime.now().strftime("%H:%M:%S")
         msg = " ".join(str(m) for m in msgs)
         msg_out = f"[{ts}] {msg}"
 

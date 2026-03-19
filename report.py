@@ -240,6 +240,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 from audit_core.report_controller import run_report
 from audit_core.utils import debug
+from audit_core.utils import set_time_context
 
 sys.stdout.reconfigure(encoding="utf-8")
 
