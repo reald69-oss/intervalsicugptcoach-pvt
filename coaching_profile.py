@@ -312,8 +312,8 @@ RENDERER_PROFILES = {
 
         "planned_events_rule": [
             "The planned_events section MUST be rendered as a Markdown table.",
-            "EVERY planned event in the semantic JSON MUST appear as exactly one row.",
-            "The planned_events section MUST NOT be summarised, renamed, grouped, or rewritten.",
+            "EVERY planned event for the current ISO week in the semantic JSON MUST appear as exactly one row.",
+            "Planned events for future ISO weeks can be summarised",
             "Narrative descriptions of planned events are FORBIDDEN.",
             "Coaching sentences for planned_events, if enabled, MUST appear AFTER the table."
         ],
