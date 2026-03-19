@@ -35,6 +35,7 @@ from audit_core.tier3_espe import run_espe
 from audit_core.tier3_adaptive_decision_engine import run_adaptive_decision_engine
 from audit_core.tier3_future_forecast import run_future_forecast
 
+
 def run_report(
     reportType: str = "weekly",
     auditFinal: bool = True,
@@ -627,17 +628,6 @@ def run_report(
     context["auditFinal"] = True
     context["auditPartial"] = False
     context["fetch_status"] = "complete"
-
-    # 🔒 Ensure zone distributions exist (REQUIRED for Polarisation)
-    if not context.get("zone_dist_power") and not context.get("zone_dist_fused"):
-        debug(context, "[FIX] zone distributions missing → recomputing from df_scope")
-
-        if isinstance(df_scope, pd.DataFrame) and not df_scope.empty:
-            if "zone_dist_power" not in context:
-                context["zone_dist_power"] = compute_zone_distribution(df_scope, mode="power")
-
-            if "zone_dist_fused" not in context:
-                context["zone_dist_fused"] = compute_zone_distribution(df_scope, mode="fused")
 
     # --- Tier-2 core metrics ---
     debug(context, f"[CHECK] zone columns in df_events: {[c for c in context['df_events'].columns if 'z' in c.lower()]}")
