@@ -210,6 +210,12 @@ def normalize_prefetched_context(data):
         strava_stub_detected = False
         strava_note_text = "STRAVA activities are not available via the API"
 
+        context.setdefault("debug_counts", {})
+        context["debug_counts"].setdefault("prefilter", {})
+
+        context["debug_counts"]["prefilter"]["df_light"] = len(df_light)
+        context["debug_counts"]["prefilter"]["df_full"] = len(df_full)
+
         if not df_light.empty and "_note" in df_light.columns:
 
             # --- Detect stubs BEFORE removal ---
@@ -240,6 +246,8 @@ def normalize_prefetched_context(data):
                 removed_full = 0
 
             if removed_light > 0:
+                context["debug_counts"]["prefilter"]["removed_light"] = removed_light
+                context["debug_counts"]["prefilter"]["removed_full"] = removed_full
                 debug(
                     context,
                     f"[NORM] Removed {removed_light} STRAVA stub rows (light), "
@@ -730,6 +738,7 @@ async def run_audit_with_data(
                     "df_light": len(prefetch_context.get("df_light", [])),
                     "df_full": len(prefetch_context.get("df_master", [])),
                     "df_daily": len(prefetch_context.get("df_daily", [])),
+                    "df_wellness": len(prefetch_context.get("df_wellness", [])),
                 }
                 prefetch_context["debug_counts"] = debug_counts
 
