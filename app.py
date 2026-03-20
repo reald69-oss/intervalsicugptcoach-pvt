@@ -93,13 +93,13 @@ def sanitize(obj, seen=None):
 
     return str(obj)
 
-
 # ============================================================
 # 🧩 NORMALIZER — replicate Tier-0 Pre-Audit
 # ============================================================
 def normalize_prefetched_context(data):
     """Normalize prefetched payload from Cloudflare → local Python shape"""
     context = {}
+
     try:
         def safe_df(obj):
             if obj is None:
@@ -653,7 +653,10 @@ async def run_audit_with_data(
     demo: bool = Query(False),
     debug: bool = Query(False)
 ):
-
+    debug_counts = {
+        "payload": {},
+        "pipeline": {}
+    }
     buffer = io.StringIO() if debug else None
 
     if debug:
@@ -673,6 +676,11 @@ async def run_audit_with_data(
                 raise ValueError("Empty request body")
 
             data = json.loads(raw)
+            debug_counts["payload"] = {
+                "activities_light": len(data.get("activities_light", []) or []),
+                "activities_full": len(data.get("activities_full", []) or []),
+                "wellness": len(data.get("wellness", []) or []),
+            }
 
             # DEBUG TRIGGER
             if debug:
@@ -720,6 +728,12 @@ async def run_audit_with_data(
             # normalize prefetched JSON into pandas-friendly context
             try:
                 prefetch_context = normalize_prefetched_context(data)
+                debug_counts["pipeline"] = {
+                    "df_light": len(prefetch_context.get("df_light", [])),
+                    "df_full": len(prefetch_context.get("df_master", [])),
+                    "df_daily": len(prefetch_context.get("df_daily", [])),
+                }
+                prefetch_context["debug_counts"] = debug_counts
 
             except AuditHalt as e:
                 context = locals().get("prefetch_context")
@@ -746,6 +760,7 @@ async def run_audit_with_data(
                         "severity": "hard",
                         "message": e.detail,
                         "report_type": report_range,
+                        "debug_counts": debug_counts,
                         "semantic_graph": {},
                         "compliance": {},
                         "logs": ""
@@ -903,16 +918,17 @@ async def run_audit_with_data(
 
             # Abort only if NO activity data at all
             if light_empty and full_empty:
-                if demo:
-                    return load_demo_response(
-                        report_range,
-                        reason="MANUAL_DEMO"
-                    )
-                return load_demo_response(
+
+                resp = load_demo_response(
                     report_range,
                     reason="NO_ACTIVITIES_RANGE"
                 )
 
+                body = json.loads(resp.body)
+                body["debug_counts"] = debug_counts
+                resp.body = json.dumps(body).encode("utf-8")
+
+                return resp
             # now run the unified audit (SAFE WRAPPED)
             try:
                 report, compliance, *_ = run_report(
@@ -1004,14 +1020,13 @@ async def run_audit_with_data(
             sys.stderr.write(traceback.format_exc())
             sys.stderr.flush()
 
-            return error_response(e, buffer)
+            return error_response(e, buffer, debug_counts)
     finally:
         if debug:
             redirect_ctx.__exit__(None, None, None)
 
 
-def error_response(e: Exception, buffer=None, status_code:int=500):
-
+def error_response(e: Exception, buffer=None, debug_counts=None, status_code:int=500):
     trace = traceback.format_exc()
 
     # 🔥 FORCE log into Railway
@@ -1023,6 +1038,7 @@ def error_response(e: Exception, buffer=None, status_code:int=500):
         status_code=status_code,
         content={
             "status": "error",
+            "debug_counts": debug_counts,
             "message": str(e),
             "exception_type": type(e).__name__,
             "trace": trace,
@@ -1054,7 +1070,30 @@ async def get_debug_with_data(data: dict):
 
     report_range = data.get("range", "weekly")
 
-    prefetch_context = normalize_prefetched_context(data)
+    try:
+        prefetch_context = normalize_prefetched_context(data)
+    except Exception as e:
+        return error_response(e, debug_counts={
+            "payload": {
+                "activities_light": len(data.get("activities_light", []) or []),
+                "activities_full": len(data.get("activities_full", []) or []),
+                "wellness": len(data.get("wellness", []) or []),
+            }
+        })
+    debug_counts = {
+    "payload": {
+        "activities_light": len(data.get("activities_light", []) or []),
+        "activities_full": len(data.get("activities_full", []) or []),
+        "wellness": len(data.get("wellness", []) or []),
+    },
+    "pipeline": {
+        "df_light": len(prefetch_context.get("df_light", [])),
+        "df_full": len(prefetch_context.get("df_master", [])),
+        "df_daily": len(prefetch_context.get("df_daily", [])),
+    }
+    }
+
+    prefetch_context["debug_counts"] = debug_counts
 
     report, compliance, logs, context, sg, markdown = _run_full_audit(
         range=report_range,
@@ -1090,6 +1129,7 @@ async def get_debug_with_data(data: dict):
 
     payload = {
         "status": "ok",
+        "debug_counts": prefetch_context.get("debug_counts"),
         "debug": True,
         "report_type": report_range,
         "report_header": report_header,
@@ -1449,11 +1489,17 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
 
     # 🟡 Soft → demo
     if severity == "soft":
-        return load_demo_response(
+        resp = load_demo_response(
             report_range,
             reason=code,
             detail=str(e)
         )
+
+        body = json.loads(resp.body)
+        body["debug_counts"] = context.get("debug_counts") if context else None
+        resp.body = json.dumps(body).encode("utf-8")
+
+        return resp
 
     # 🔴 Hard but demo-allowed (auth cases)
     if code in ["OAUTH_NOT_CONFIGURED", "ATHLETE_PROFILE_INVALID"]:
@@ -1466,6 +1512,7 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
 
     return JSONResponse({
         **halt_payload,
+        "debug_counts": context.get("debug_counts") if context else None,
         "report_type": report_range,
         "report_header": header,
         "semantic_graph": {},
