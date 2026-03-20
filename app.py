@@ -187,7 +187,7 @@ def normalize_prefetched_context(data):
                     "[GUARD] All activities are STRAVA API stubs — aborting."
                 )
 
-                athlete = context.get("athleteProfile", {})
+                athlete_obj = athlete
 
                 raise HTTPException(
                     status_code=422,
@@ -201,8 +201,8 @@ def normalize_prefetched_context(data):
                             "Connect Garmin/Wahoo/Zwift etc directly or upload FIT files. "
                             "OR see https://forum.intervals.icu/t/import-all-data-from-strava/81068"
                         ),
-                        "athlete": athlete.get("name"),
-                        "timezone": athlete.get("timezone"),
+                        "athlete": athlete_obj.get("name"),
+                        "timezone": athlete_obj.get("timezone"),
                     }
                 )
 
@@ -262,10 +262,11 @@ def normalize_prefetched_context(data):
 
 
         context["activities_light"] = df_light.to_dict(orient="records")
-        context["activities_full"]  = df_full.to_dict(orient="records")
-        context["wellness"]         = df_well.to_dict(orient="records")
-        context["athlete"]          = athlete
-        context["calendar"]         = calendar
+        context["activities_full"] = df_full.to_dict(orient="records")
+        context["wellness"] = df_well.to_dict(orient="records")
+        context["athlete"] = athlete
+        context["athleteProfile"] = athlete
+        context["calendar"] = calendar
         
         # -------------------------------------------------
         # 🔋 POWER CURVE NORMALIZATION (Worker → ESPE)
@@ -523,9 +524,6 @@ def normalize_prefetched_context(data):
             f"[NORM] activities_light={len(df_light)} full={len(df_full)} wellness={len(df_well)} "
             f"athlete_keys={list(athlete.keys()) if athlete else 'none'}"
         )
-
-
-        debug(context, f"[NORM] activities_light={len(df_light)} full={len(df_full)} wellness={len(df_well)} athlete_keys={list(athlete.keys()) if athlete else 'none'}")
     except HTTPException as e:
         raise e
 
