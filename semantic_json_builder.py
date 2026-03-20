@@ -2412,7 +2412,7 @@ def build_semantic_json(context):
         # ---------------------------------------------------------
 
         today = context["athlete_today"]
-
+        planned_summary_by_iso_week = {}
         if pd.Timestamp(report_end) < (today - pd.Timedelta(days=6)):
             semantic["planned_summary_by_iso_week"] = {}
         else:
