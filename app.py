@@ -921,24 +921,11 @@ async def run_audit_with_data(
                         f"'run a weekly demo report' for an example"
                     )
 
-                logger.info("[EARLY EXIT] %s", msg)
-
-                if buffer:
-                    buffer.write(f"[EARLY EXIT] {msg}\n")
-
-                return JSONResponse({
-                "status": "ok",
-                "error_type": "Weekly detailed activity data could not be retrieved",
-                "severity": "hard",
-                "message": msg,
-                "report_type": report_range,
-                "output_format": "semantic_json",
-                "semantic_graph": {
-                    "meta": {}
-                },
-                "compliance": {},
-                "logs": ""
-            })
+                raise AuditHalt(
+                    msg,
+                    code="FULL_DATA_UNAVAILABLE",
+                    severity="info"   # ← NEW TYPE
+                )
 
             # Abort only if NO activity data at all
             if light_empty and full_empty:
@@ -1462,7 +1449,7 @@ DEMO MODE NOTICE:
     )
 
     return JSONResponse(safe_json)
-
+    
 def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
 
     severity = getattr(e, "severity", "hard")
@@ -1484,7 +1471,7 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
         if start and end:
             period_str = f"{start} → {end}"
 
-    # 🔥 Always log to Railway
+    # 🔥 ALWAYS LOG FIRST
     sys.stderr.write("\n🛑 AUDIT HALTED\n")
     sys.stderr.write(f"Code: {code}\n")
     sys.stderr.write(f"Severity: {severity}\n")
@@ -1498,6 +1485,7 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
 
     sys.stderr.write(str(e) + "\n")
     sys.stderr.flush()
+
     logger.info(
         "[HALT] report_type=%s athlete=%s code=%s message=%s",
         report_range,
@@ -1513,6 +1501,13 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
             context.get("debug_counts")
         )
 
+    # ✅ NOW HANDLE SEVERITY
+
+    if severity == "info":
+        return JSONResponse(
+            e.to_ok_dict(report_type=report_range)
+        )
+
     if severity == "soft":
         return load_demo_response(
             report_range,
@@ -1521,13 +1516,12 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
             debug_counts=context.get("debug_counts") if context else None
         )
 
-    # 🔴 Hard but demo-allowed (auth cases)
     if code in ["OAUTH_NOT_CONFIGURED", "ATHLETE_PROFILE_INVALID"]:
         demo = load_demo_response(report_range, reason=code)
         demo.status_code = 401
         return demo
 
-    # 🔴 Real hard halt
+    # hard
     halt_payload = e.to_dict()
 
     return JSONResponse({
