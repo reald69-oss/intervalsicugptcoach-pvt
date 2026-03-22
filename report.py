@@ -379,11 +379,11 @@ def fetch_remote_report(
             params.append("test=strava-stub")
         elif strava_test == "demo":
             params.append("test=demo")
-        elif strava_test in ["1", "2", "3", "4", "5"]:
+        elif strava_test in ["0","1", "2", "3", "4", "5"]:
             params.append(f"test=strava{strava_test}")
         else:
             raise ValueError(
-                "Invalid --strava-test value. Use: stub, demo, 1,2,3,4,5"
+                "Invalid --strava-test value. Use: stub, demo, 0,1,2,3,4,5"
             )
 
 
@@ -731,10 +731,11 @@ def main():
     parser.add_argument(
         "--strava-test",
         type=str,
-        choices=["stub", "demo", "1", "2", "3", "4", "5"],
+        choices=["stub", "demo", "0", "1", "2", "3", "4", "5"],
         help=(
             "Simulate Strava-only scenarios:\n"
             "  stub → all activities are STRAVA API stubs (hard stop)\n"
+            "  0    -> light and full empty - no data at all "
             "  1    → light-only dataset, no full activities\n"
             "  2    → full dataset empty after filtering\n"
             "  3    → activities present but missing key metrics\n"
