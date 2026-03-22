@@ -675,10 +675,12 @@ CHEAT_SHEET["context"] = {
         "⚙️ *Power-only metric — HR ignored.* Use primarily during power-measured cycling phases."
     ),
     "PolarisationIndex": (
-        "Treff Polarization-Index (2019). Calculated as log10(Z1 / (Z2 × Z3) × 100) "
-        "after collapsing to the 3-zone Seiler model. "
+        "Treff Polarization-Index (2019). Calculated as log10(z1 / (z2 × z3) × 100) "
+        "after collapsing 7-zone power data to the 3-zone Seiler model (z1=z1, z2=z2, z3=z3–z7) "
+        "and renormalising so z1+z2+z3=1. "
+        "Uses proportional (0–1) zone distribution, not raw time or displayed percentages. "
         ">2.0 = polarised distribution, 1.5–2.0 = pyramidal, <1.5 = threshold-heavy. "
-        "⚙️ Power-only metric using 3-zone collapsed distribution."
+        "⚙️ Power-only metric using normalised 3-zone distribution."
     ),
     "Polarisation_fused": (
         "Sport-specific Polarisation derived from fused HR+Power data. "
@@ -805,7 +807,8 @@ CHEAT_SHEET["coaching_links"] = {
     "PolarisationIndex": (
         "If PolarisationIndex <1.5, training is threshold-heavy. "
         "Between 1.5–2.0 reflects pyramidal distribution. "
-        "Target >2.0 for classical polarised structure during build or peak phases."
+        "Target >2.0 for classical polarised structure during build or peak phases. "
+        "Interpret relative to normalised 3-zone balance (z1 vs z2×z3), not absolute time in zones."
     ),
     "Polarisation_fused": (
         "If fused Polarisation Index <0.65, the dominant sport is intensity-heavy — "
@@ -1361,7 +1364,8 @@ CHEAT_SHEET["metric_confidence"] = {
             "min_sessions": 3
         },
         "notes": (
-            "Treff Polarization-Index reflects structural intensity contrast. "
+            "Treff Polarization-Index reflects structural intensity contrast using "
+            "normalised 3-zone power distribution (z1+z2+z3=1 after collapse). "
             "High confidence when at least 4 sessions and ≥2 high-intensity sessions exist."
         )
     },
