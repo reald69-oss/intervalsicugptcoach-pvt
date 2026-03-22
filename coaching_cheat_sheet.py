@@ -675,9 +675,10 @@ CHEAT_SHEET["context"] = {
         "⚙️ *Power-only metric — HR ignored.* Use primarily during power-measured cycling phases."
     ),
     "PolarisationIndex": (
-        "Treff Polarization-Index (2019). Calculated as log10(z1 / (z2 × z3) × 100) "
-        "after collapsing 7-zone power data to the 3-zone Seiler model (z1=z1, z2=z2, z3=z3–z7) "
-        "and renormalising so z1+z2+z3=1. "
+        "Treff Polarization-Index (2019). "
+        "Calculated as log10(z1 / (z2 × z3) × 100) after collapsing 7-zone power data "
+        "to the 3-zone Seiler model (z1=z1, z2=z2, z3=z3+z4+z5+z6+z7), "
+        "then renormalising the collapsed zones so z1+z2+z3=1 before applying the formula. "
         "Uses proportional (0–1) zone distribution, not raw time or displayed percentages. "
         ">2.0 = polarised distribution, 1.5–2.0 = pyramidal, <1.5 = threshold-heavy. "
         "⚙️ Power-only metric using normalised 3-zone distribution."
