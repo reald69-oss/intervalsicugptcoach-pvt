@@ -356,6 +356,7 @@ RENDERER_PROFILES = {
             "Append rpe_emoji + feel_emoji to TSS.",
             "If activity_link exists, render as [name](link) with icons before link.",
             "Render a single legend line directly below the table."
+            "If a section is marked full, render every entity and field exactly as present in the semantic data"
             ]
         },
 
