@@ -1337,17 +1337,17 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
             raise AuditHalt(
                 "No training activities found. please see https://www.montis.icu/setup.html",
                 code="NO_ACTIVITIES_RANGE",
-                severity="soft"
+                severity="in"
             )
 
         # ⚠ DO NOT halt if light exists but full is empty
         # This is valid for summary/wellness reports
 
-        raise AuditHalt(
-            "Activities were found but none matched the report criteria.",
-            code="ACTIVITIES_FILTERED_OUT",
-            severity="soft"
-        )
+#        raise AuditHalt(
+#            "Activities were found but none matched the report criteria.",
+#            code="ACTIVITIES_FILTERED_OUT",
+#            severity="info"
+#        )
 
     # 🔒 Canonical return — only reached if df_master is valid
     return (

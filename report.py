@@ -234,6 +234,21 @@ from datetime import datetime
 from contextlib import redirect_stdout
 from pathlib import Path
 
+# --- Token estimation ---
+try:
+    import tiktoken
+    _ENC = tiktoken.encoding_for_model("gpt-5")
+except Exception:
+    _ENC = None
+
+
+def estimate_tokens_from_json(data):
+    if _ENC is None:
+        return None
+
+    text = json.dumps(data, separators=(",", ":"))
+    return len(_ENC.encode(text))
+
 print("ARGV:", sys.argv)
 # Import project modules
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -431,6 +446,12 @@ def fetch_remote_report(
         data = resp.json()
         markdown = data.get("markdown")
         semantic = data.get("semantic_graph")
+        # --- Token estimate ---
+        if semantic:
+            token_count = estimate_tokens_from_json(semantic)
+            if token_count:
+                print(f"[TOKENS][REMOTE] semantic_graph = {token_count:,}")
+
 
         mode = "prefetch"
         env_tag = "staging" if staging else "prod"
@@ -603,14 +624,19 @@ def generate_full_report(
 
             if output_format == "semantic":
                 semantic_output = report.get("semantic_graph", {})
-
+                # --- Token estimate ---
+                token_count = estimate_tokens_from_json(semantic_output)
+                if token_count:
+                    print(f"[TOKENS][LOCAL] semantic_graph = {token_count:,}")
                 full_output = {
                     "status": "ok",
                     "message": f"{report_type.title()} report generated",
                     "semantic_graph": semantic_output,
                     "summary": summary,
+                    "_debug": {
+                        "tokens": token_count
+                    }
                 }
-
                 log_file_output = log_output
 
             else:
