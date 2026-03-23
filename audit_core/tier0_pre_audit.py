@@ -1337,7 +1337,7 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
             raise AuditHalt(
                 "No training activities found. please see https://www.montis.icu/setup.html",
                 code="NO_ACTIVITIES_RANGE",
-                severity="in"
+                severity="info"
             )
 
         # ⚠ DO NOT halt if light exists but full is empty
