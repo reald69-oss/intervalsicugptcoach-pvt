@@ -4235,7 +4235,6 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         - These commands MUST be shown after the closing reflection section.
         - The commands MUST be rendered as short, copyable user prompts.
         - Do NOT add explanation, narrative, or coaching around these commands.
-        - Do NOT modify or infer command text.
 
         Suggested follow up questions:
         {chr(10).join([f'- "{cmd}"' for cmd in commands])}
