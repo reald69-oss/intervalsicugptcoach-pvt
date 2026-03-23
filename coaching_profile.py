@@ -145,6 +145,9 @@ PRUNE_RULES = {
     },
 
     "summary": {
+        "wellness": [
+            "hrv_series"
+        ],
         "meta.athlete.context": [
             "platforms",
             "wellness_features",
@@ -153,6 +156,14 @@ PRUNE_RULES = {
             "training_environment",
         ],
     },
+
+    "wellness": {
+        "meta.athlete.context": [
+            "events",
+            "planned_events",
+        ],
+    },
+
 }
 
 
