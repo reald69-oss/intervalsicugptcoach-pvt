@@ -346,17 +346,17 @@ RENDERER_PROFILES = {
             ],
 
             "rules": [
-            "Render EVENTS as a Markdown table only.",
-            "1 event = 1 row; no omissions.",
-            "No summarising, grouping, renaming, or narrative text.",
-            "Coaching sentences (if any) appear AFTER the table.",
-            "Use fixed column order.",
-            "Icons: prefix in Activity column from semantic fields; multiple allowed; fixed order.",
-            "Icons are additive only (no replacement/suppression of values or rows).",
-            "Append rpe_emoji + feel_emoji to TSS.",
-            "If activity_link exists, render as [name](link) with icons before link.",
-            "Render a single legend line directly below the table."
-            "If a section is marked full, render every entity and field exactly as present in the semantic data"
+                "Render EVENTS as a Markdown table only.",
+                "1 event = 1 row; no omissions.",
+                "No summarising, grouping, renaming, or narrative text.",
+                "Coaching sentences (if any) appear AFTER the table.",
+                "Use fixed column order.",
+                "Icons: prefix in Activity column from semantic fields; multiple allowed; fixed order.",
+                "Icons are additive only (no replacement/suppression of values or rows).",
+                "Append rpe_emoji + feel_emoji to TSS.",
+                "If activity_link exists, render as [name](link) with icons before link.",
+                "Render a single legend line directly below the table.",
+                "If a section is marked full, render every entity and field exactly as present in the semantic data"
             ]
         },
 
