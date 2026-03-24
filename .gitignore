@@ -23,6 +23,7 @@ Thumbs.db
 /index.html
 /report_api.py
 /docs/security/
+/utils/
 
 # Python
 __pycache__/

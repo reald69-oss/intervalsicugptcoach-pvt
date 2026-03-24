@@ -2791,10 +2791,10 @@ def build_semantic_json(context):
             # 3️⃣ Inject Nutrition (Supplementary Only)
             # -----------------------------------------------------
 
-            nutrition = context.get("nutrition_balance") or {}
-            nutrition_demand = context.get("nutrition_demand") or {}
+            nutrition = context.get("nutrition_balance")
+            nutrition_demand = context.get("nutrition_demand")
             weight = (context.get("athlete") or {}).get("icu_weight")
-            if nutrition:
+            if nutrition and nutrition_demand:
 
                 classification = nutrition.get("status")
 
@@ -2846,7 +2846,7 @@ def build_semantic_json(context):
 
                     "signals": {
 
-                                                "carbs_actual_g": round(nutrition.get("carbs_gkg_actual", 0) * weight, 0) if weight else None,
+                        "carbs_actual_g": round(nutrition.get("carbs_gkg_actual", 0) * weight, 0) if weight else None,
                         "protein_actual_g": round(nutrition.get("protein_gkg_actual", 0) * weight, 0) if weight else None,
                         "fat_actual_g": round(nutrition.get("fat_gkg_actual", 0) * weight, 0) if weight else None,
 

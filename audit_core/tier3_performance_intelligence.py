@@ -359,6 +359,20 @@ def compute_nutrition_demand(context):
 
     model = COACH_PROFILE.get("nutrition_demand_model", {})
 
+    daily = context.get("wellness")
+
+    if daily is None or daily.empty:
+        return
+
+    valid_days = daily[
+        daily["carbohydrates"].notna() &
+        daily["protein"].notna() &
+        daily["fatTotal"].notna()
+    ]
+
+    if len(valid_days) < 3:
+        return
+
     carb_model = model.get("carbohydrates", {})
     protein_model = model.get("protein", {})
     fat_model = model.get("fat", {})
