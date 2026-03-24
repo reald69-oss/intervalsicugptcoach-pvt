@@ -909,6 +909,7 @@ RENDERER_PROFILES = {
             "insight_view": "forbid",
             "insights": "headline",
             "performance_summary": "full",
+            "performance_intelligence.chronic": "summary",
             "current_ISO_weekly_microcycle": "forbid",
         },
         
