@@ -71,6 +71,9 @@ Reports are only delivered when data is complete and verified.
 Type:  
 **Weekly report**
 
+## 5.1 Questions to ask
+load from Knowledge question_bank_what_next.md
+
 ---
 
 **No setup overhead. No guesswork. Just validated coaching from your data.**

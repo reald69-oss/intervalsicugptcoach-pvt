@@ -444,7 +444,11 @@ RENDERER_PROFILES = {
                     "show full performance_intelligence",
                     "show full adaptation",
                     "show full adaptive_decisions",
-                    "load planned events"
+                    "load planned events",
+                    "show power curves",
+                    "load athlete profiles",
+                    "load last acticity and analyse",
+                    "show me more command questions"
                 ]
             }
         }

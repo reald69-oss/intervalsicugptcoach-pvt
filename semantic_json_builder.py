@@ -4241,7 +4241,7 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
         POST-RENDER INTERACTION:
         - After the full report is rendered, present follow-up commands to allow deeper inspection.
         - These commands MUST be shown after the closing reflection section.
-        - The commands MUST be rendered as short, copyable user prompts.
+        - The commands MUST be rendered as short, copyable user prompts in raw markdown
         - Do NOT add explanation, narrative, or coaching around these commands.
 
         Suggested follow up questions:

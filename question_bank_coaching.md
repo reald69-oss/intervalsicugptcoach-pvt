@@ -1,9 +1,6 @@
-# Montis Coaching Intelligence Question Bank
+Montis Coaching Question Bank
 
-## Durability & Aerobic Stability (20)
-QUESTION_BANK = {
-
-"durability": [
+## durability":
 "Is my durability improving or am I still decoupling under sustained load?",
 "Did aerobic stability hold across longer sessions this week?",
 "Is decoupling suggesting durability strain or normal fatigue?",
@@ -29,9 +26,9 @@ QUESTION_BANK = {
 "Is fatigue resistance improving across extended sessions?",
 "Am I maintaining aerobic efficiency late in workouts?",
 "Is durability developing in line with training volume?"
-],
 
-"repeatability": [
+
+## "repeatability":
 "Is my anaerobic repeatability improving or declining?",
 "Are high-intensity efforts becoming more repeatable?",
 "Am I recovering W′ between efforts more effectively?",
@@ -57,9 +54,9 @@ QUESTION_BANK = {
 "Is repeatability limiting the quality of hard sessions?",
 "Are recovery periods restoring effort capacity effectively?",
 "Is repeatability supporting consistent intensity work?"
-],
 
-"neural_density": [
+
+## "neural_density":
 "Is my intensity distribution clustered or well distributed?",
 "Are high-intensity sessions accumulating effectively?",
 "Is neural load balanced across the week?",
@@ -85,9 +82,9 @@ QUESTION_BANK = {
 "Is intensity clustering influencing fatigue levels?",
 "Is neural load helping build repeatable performance?",
 "Is the pattern of intensity supporting adaptation?"
-],
 
-"training_load": [
+
+## "training_load":
 "Is my current training load sustainable?",
 "Is load progression aligned with recent adaptation?",
 "Am I accumulating productive stress or excessive load?",
@@ -113,9 +110,9 @@ QUESTION_BANK = {
 "Is training stress aligned with my development stage?",
 "Is weekly load stabilizing at a higher level?",
 "Is the load trajectory supporting long-term progression?"
-],
 
-"fatigue_balance": [
+
+## "fatigue_balance":
 "Is fatigue productive or accumulating excessively?",
 "Is the current fatigue level supporting adaptation?",
 "Is fatigue stabilizing or continuing to rise?",
@@ -141,9 +138,9 @@ QUESTION_BANK = {
 "Is fatigue signaling productive overload?",
 "Is fatigue building gradually or abruptly?",
 "Is recovery effectively offsetting accumulated fatigue?"
-],
 
-"progression": [
+
+## "progression":
 "Is my performance trajectory improving or plateauing?",
 "Is progression visible across recent training blocks?",
 "Am I building capacity or maintaining current fitness?",
@@ -169,9 +166,9 @@ QUESTION_BANK = {
 "Is adaptation visible in session quality?",
 "Is performance improving under fatigue?",
 "Is the current trajectory sustainable long-term?"
-],
 
-"system_balance": [
+
+## "system_balance":
 "Where is my current limiting factor — durability, repeatability, or neural load?",
 "Which system currently constrains performance most?",
 "Is aerobic durability limiting performance?",
@@ -197,9 +194,9 @@ QUESTION_BANK = {
 "Is training addressing the primary performance constraint?",
 "Is physiological balance improving over time?",
 "Is system balance supporting long-term development?"
-],
 
-"adaptation_stability": [
+
+## "adaptation_stability": 
 "Is the current adaptation stable or fragile?",
 "Is training producing durable improvements?",
 "Are gains stabilizing across repeated sessions?",
@@ -225,24 +222,3 @@ QUESTION_BANK = {
 "Is the current adaptation durable across weeks?",
 "Is the trajectory of development stable?",
 "Are gains persisting despite accumulated fatigue?"
-]
-
-}
-
-SIGNAL_MAP = {
-
-    "durability_decline": "durability",
-    "durability_pressure": "durability",
-
-    "anaerobic_depletion": "repeatability",
-    "anaerobic_load": "repeatability",
-
-    "intensity_clustering": "neural_density",
-    "high_intensity_density": "neural_density",
-
-    "fatigue_accumulation": "fatigue_balance",
-    "load_pressure": "training_load",
-
-    "system_decline": "system_balance",
-    "system_progression": "progression"
-}
