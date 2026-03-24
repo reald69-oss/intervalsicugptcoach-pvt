@@ -363,7 +363,7 @@ RENDERER_PROFILES = {
             "Render adaptive_decisions as compact dashboard tables (no narrative).",
             "adaptive_decisions MUST be rendered as TWO tables only: STATE and OPERATIONS.",
             "STATE table MUST be a single row combining directive, state, load_trend, risk_flag, adaptation_focus, key_constraint, next_action, and dominant_signal.",
-            "OPERATIONS table MUST contain week_delta, planned_load (current → next), and forecast summary (CTL / TSB / fatigue_class).",
+            "OPERATIONS table MUST contain week_delta, planned_load (current → next), and 14 day forecast summary (CTL / TSB / fatigue_class).",
             "Do NOT render state_action, system_guidance, or reflection as separate sections when STATE table is present.",
             "Do NOT render paragraph explanations for adaptive_decisions.",
             #ADAPTATION
