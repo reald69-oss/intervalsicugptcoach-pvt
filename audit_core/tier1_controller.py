@@ -716,11 +716,11 @@ def run_tier1_controller(df_master, wellness, context):
         raise AuditHalt(f"❌ Tier-1: unsupported type for snapshot_7d_json → {type(snapshot)}")
 
     # Validate schema before continuing
-    if not isinstance(visible_events, pd.DataFrame) or "type" not in visible_events.columns:
-        raise AuditHalt(
-            f"❌ Tier-1: snapshot_7d_json missing required 'type' column "
-            f"(columns={visible_events.columns.tolist() if hasattr(visible_events, 'columns') else 'N/A'})"
-        )
+    #if not isinstance(visible_events, pd.DataFrame) or "type" not in visible_events.columns:
+    #    raise AuditHalt(
+    #        f"❌ Tier-1: snapshot_7d_json missing required 'type' column "
+    #        f"(columns={visible_events.columns.tolist() if hasattr(visible_events, 'columns') else 'N/A'})"
+    #    )
 
     # Ensure numeric for mean computations
     for col in ["icu_intensity", "average_heartrate", "VO2MaxGarmin"]:

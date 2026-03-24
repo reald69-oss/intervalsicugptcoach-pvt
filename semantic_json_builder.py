@@ -3953,10 +3953,13 @@ def apply_report_type_contract(semantic: dict) -> dict:
     """
 
     report_type = semantic.get("meta", {}).get("report_type", "weekly")
-    render_mode = semantic.get("meta", {}).get("render_mode")
+    render_mode = semantic.get("meta", {}).get("render_mode", "full+metrics")
 
-    if render_mode == "lite":
-        report_type = f"{report_type}_lite"
+    contract_key = (
+        f"{report_type}_lite"
+        if render_mode == "lite"
+        else report_type
+    )
 
     # ── Enrich meta
     semantic["meta"]["report_header"] = REPORT_HEADERS.get(report_type, {})
@@ -3964,13 +3967,13 @@ def apply_report_type_contract(semantic: dict) -> dict:
     semantic["header"] = semantic["meta"]["report_header"]
 
     # ── Top-level filtering (contract)
-    allowed_keys = REPORT_CONTRACT.get(report_type, semantic.keys())
+    allowed_keys = REPORT_CONTRACT.get(contract_key, semantic.keys())
     filtered = {k: v for k, v in semantic.items() if k in allowed_keys}
 
     # ─────────────────────────────────────────────
     # 🔥 APPLY PRUNE RULES (inline, no helper)
     # ─────────────────────────────────────────────
-    prune_map = PRUNE_RULES.get(report_type, {})
+    prune_map = PRUNE_RULES.get(contract_key, {})
 
     for path, keys in prune_map.items():
         ref = filtered
