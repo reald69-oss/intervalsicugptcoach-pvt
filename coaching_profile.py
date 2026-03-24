@@ -91,6 +91,30 @@ REPORT_CONTRACT = {
         "future_actions",
     ],
 
+    "season_lite": [
+        "meta",
+
+        # 🧭 TRAINING LOAD
+        "training_volume",
+        "metrics",
+        "trend_metrics",
+
+        # 🫀 PHYSIOLOGY RESPONSE
+        "wellness",
+        "adaptation_metrics",
+
+        # ⚙️ PERFORMANCE INTELLIGENCE
+        "performance_intelligence",
+
+        # 📈 ADAPTATION
+        "energy_system_progression",
+        "phases_summary",
+
+        # 🎯 ADAPTIVE DECISIONS
+        "actions",
+        "future_forecast",
+        "future_actions",
+    ],
 
     "summary": [
         "meta",
@@ -169,6 +193,30 @@ PRUNE_RULES = {
     "season": {
         "wellness": [
             "hrv_series"
+        ],
+        "meta": [
+            "events",
+            "planned_events"
+        ],
+        "meta.athlete.context": [
+            "platforms",
+            "wellness_features",
+            "equipment_summary",
+            "activity_scope",
+            "training_environment",
+        ],
+    },
+
+    "season_lite": {
+        "wellness": [
+            "hrv_series"
+        ],
+        "meta": [
+            "events",
+            "planned_events"
+        ],
+        "meta.athlete": [
+            "profiles",
         ],
         "meta.athlete.context": [
             "platforms",
@@ -596,7 +644,12 @@ RENDERER_PROFILES = {
                     "show full physiology_response",
                     "show full performance_intelligence",
                     "show full adaptation",
-                    "show full adaptive_decisions"
+                    "show full adaptive_decisions",
+                    "load planned events",
+                    "show power curves",
+                    "load athlete profiles",
+                    "load last acticity and analyse",
+                    "show me more command questions"
                 ]
             }
         }
