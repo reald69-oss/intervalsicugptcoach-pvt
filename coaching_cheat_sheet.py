@@ -768,9 +768,9 @@ CHEAT_SHEET["context"] = {
         "aerobic efficiency, while values above ~5% suggest cardiovascular drift and reduced "
         "fatigue resistance during prolonged work."
     ),
-    "ProteinIntake": "Adequate protein intake supports recovery, muscle repair, and adaptation to training load.",
-    "CarbohydrateAvailability": "Carbohydrate availability determines glycogen replenishment and endurance capacity.",
-    "FatIntake": "Fat intake contributes to hormonal stability and long-term energy balance."
+    "ProteinIntake": "Adequate protein intake (≈1.6–2.2 g/kg; ACSM/ISSN consensus) supports recovery, muscle repair, and adaptation to training load.",
+    "CarbohydrateAvailability": "Carbohydrate availability (≈3–10 g/kg depending on training load; IOC/ACSM guidelines) determines glycogen replenishment and endurance capacity.",
+    "FatIntake": "Fat intake (≈0.8–1.2 g/kg; sports nutrition consensus) contributes to hormonal stability and long-term energy balance."
 }
 
 CHEAT_SHEET["coaching_links"] = {
@@ -924,9 +924,9 @@ CHEAT_SHEET["coaching_links"] = {
         "and reduce excessive intensity density. Improving aerobic durability reduces "
         "cardiovascular drift during long efforts."
     ),
-    "ProteinIntake": "Increase intake during high load or recovery phases to support adaptation.",
-    "CarbohydrateAvailability": "Align carbohydrate intake with training load to avoid low energy availability.",
-    "FatIntake": "Maintain sufficient intake to support hormonal health."
+    "ProteinIntake": "Increase intake during high load or recovery phases (ACSM/ISSN) to support adaptation and repair.",
+    "CarbohydrateAvailability": "Align carbohydrate intake with training demand (IOC/ACSM) to maintain glycogen availability and performance capacity.",
+    "FatIntake": "Maintain sufficient intake (sports nutrition consensus) to support hormonal health and energy balance."
 }
 
 CHEAT_SHEET["display_names"] = {

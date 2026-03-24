@@ -353,6 +353,105 @@ def _compute_season(context, df_light, df_full):
         "acute_overlay": acute_overlay
     }
 
+def compute_carb_demand_from_sessions(context, model):
+    """
+    Aligns with IOC/ACSM duration-based fueling
+    Uses DAILY demand (not multi-day accumulation)
+    """
+
+    df = context.get("_df_scope_full")
+    if df is None or df.empty:
+        return None
+
+    # --------------------------------------------------
+    # PREP
+    # --------------------------------------------------
+    df = df.sort_values("start_date_local").copy()
+
+    def normalize_intensity(x):
+        if x is None:
+            return 0
+        return x / 100 if x > 2 else x
+
+    df["intensity"] = df["icu_intensity"].apply(normalize_intensity)
+
+    # remove low-intensity non-glycogen work
+    df = df[df["intensity"] >= 0.5]
+
+    if df.empty:
+        return None
+
+    # --------------------------------------------------
+    # DAILY AGGREGATION
+    # --------------------------------------------------
+    df["date"] = df["start_date_local"].dt.date
+
+    daily = df.groupby("date").apply(
+        lambda d: pd.Series({
+            "moving_time": d["moving_time"].sum(),
+            "weighted_intensity": (d["moving_time"] * d["intensity"]).sum()
+        })
+    ).sort_index()
+
+    # --------------------------------------------------
+    # WINDOW SELECTION
+    # --------------------------------------------------
+    if len(daily) >= 5:
+        daily = daily.tail(7)
+    else:
+        daily = daily.tail(3)
+
+    if daily.empty:
+        return None
+
+    # --------------------------------------------------
+    # DAILY NORMALISATION (CRITICAL FIX)
+    # --------------------------------------------------
+    total_seconds = daily["moving_time"].sum()
+    num_days = len(daily)
+
+    if total_seconds == 0 or num_days == 0:
+        return None
+
+    avg_hours_per_day = (total_seconds / 3600) / num_days
+
+    weighted_intensity = daily["weighted_intensity"].sum()
+    avg_intensity = weighted_intensity / total_seconds
+
+    # --------------------------------------------------
+    # CARB MODEL (FROM CONFIG)
+    # --------------------------------------------------
+    carb_model = model.get("carbohydrates", {})
+    bands = carb_model.get("duration_bands", [])
+
+    carbs = None
+    for band in bands:
+        if avg_hours_per_day <= band["max_hours"]:
+            carbs = band["gkg"]
+            break
+
+    if carbs is None:
+        return None
+
+    # --------------------------------------------------
+    # INTENSITY ADJUSTMENT
+    # --------------------------------------------------
+    adj = carb_model.get("intensity_adjustment", {})
+
+    if avg_intensity > adj.get("high_if", {}).get("threshold", 0.85):
+        carbs += adj.get("high_if", {}).get("delta", 0.5)
+
+    elif avg_intensity < adj.get("low_if", {}).get("threshold", 0.65):
+        carbs += adj.get("low_if", {}).get("delta", -0.5)
+
+    # --------------------------------------------------
+    # CLAMP
+    # --------------------------------------------------
+    bounds = carb_model.get("bounds", {})
+    carbs = max(bounds.get("min", 3.0), min(carbs, bounds.get("max", 10.0)))
+
+    return round(carbs, 2)
+
 def compute_nutrition_demand(context):
 
     debug(context, "[T3][NUTRITION] Starting demand model")
@@ -385,26 +484,9 @@ def compute_nutrition_demand(context):
     atl = wellness.get("atl")
     fatigue_state = training_state.get("load_recovery_state")
 
-    # --------------------------------------------------
-    # Load classification (data-driven)
-    # --------------------------------------------------
-    load_class = "moderate"
-
-    if atl is not None and ctl is not None:
-        delta = atl - ctl
-
-        if "low" in load_model and delta <= load_model["low"].get("atl_ctl_delta_max", 0):
-            load_class = "low"
-
-        elif "high" in load_model and delta >= load_model["high"].get("atl_ctl_delta_min", 999):
-            load_class = "high"
-
-    # --------------------------------------------------
-    # Demand values (from profile)
-    # --------------------------------------------------
-    carbs_req = carb_model.get(load_class)
+    carbs_req = compute_carb_demand_from_sessions(context, model)
     protein_req = protein_model.get("baseline")
-    debug(context, f"[T3][NUTRITION] load_class={load_class} type={type(load_class)}")
+
     if fatigue_state in ("adaptation_pressure", "maladaptation_risk"):
         protein_req = protein_model.get("elevated_recovery", protein_req)
 
@@ -413,7 +495,7 @@ def compute_nutrition_demand(context):
     debug(context, f"[T3][NUTRITION] model_keys={list(COACH_PROFILE.keys())}")
     debug(context, f"[T3][NUTRITION] model_loaded={bool(model)}")
     debug(context, f"[T3][NUTRITION] carb_model={carb_model}")
-    debug(context, f"[T3][NUTRITION] lookup_key={load_class}")
+
 
     # --------------------------------------------------
     # Output
@@ -422,7 +504,6 @@ def compute_nutrition_demand(context):
         "carbs_gkg_required": carbs_req,
         "protein_gkg_required": protein_req,
         "fat_gkg_target": fat_req,
-        "load_class": load_class,
         "recovery_state": fatigue_state
     }
 
@@ -431,7 +512,6 @@ def compute_nutrition_demand(context):
     debug(
         context,
         "[T3][NUTRITION] Demand",
-        f"load={load_class}",
         f"carbs={carbs_req}",
         f"protein={protein_req}",
         f"fat={fat_req}"

@@ -1673,43 +1673,47 @@ COACH_PROFILE = {
         },
         #NUTRITION MARKERS (NOT THRESHOLDS)
         "ProteinIntake": {
-            "framework": "Recovery Nutrition",
+            "framework": "Recovery Nutrition (ISSN / IOC consensus)",
             "unit": "g/kg",
+            "formula": "Daily protein intake (g) ÷ body mass (kg)",
             "criteria": {
                 "low": "<1.6 — insufficient for recovery support",
                 "optimal": "1.6–2.2 — supports repair and adaptation",
                 "high": ">2.2 — no additional recovery benefit"
             },
-            "interpretation": "Protein intake relative to body mass and recovery demand.",
-            "coaching_implication": "Adequate intake supports muscle repair and adaptation.",
+            "interpretation": "Protein intake (≈1.6–2.2 g/kg; ISSN/IOC consensus) supports muscle repair and adaptation to training load.",
+            "coaching_implication": "Increase intake during high load or recovery phases to support adaptation (ISSN/IOC guidance).",
             "related_metrics": ["HRV", "SleepQuality", "FatigueTrend"]
         },
 
         "CarbohydrateAvailability": {
-            "framework": "Fuel Availability",
-            "unit": "g/kg",
+            "framework": "Fuel Availability (IOC / ACSM Sports Nutrition)",
+            "unit": "g/kg_relative_to_demand",
+            "formula": "Actual carbohydrate intake (g/kg) − required carbohydrate demand (g/kg), with requirement derived from recent daily training duration and intensity",
             "criteria": {
-                "low": "<3 — insufficient glycogen support",
-                "moderate": "3–5 — supports light to moderate load",
-                "high": ">5 — supports high training demand"
+                "severely_underfuelled": "<-3 g/kg vs demand — large glycogen deficit",
+                "underfuelled": "-3 to -1 g/kg vs demand — insufficient for load",
+                "balanced": "-1 to +1.5 g/kg vs demand — aligned with demand",
+                "overfuelled": ">+1.5 g/kg vs demand — intake exceeds requirement"
             },
-            "interpretation": "Carbohydrate intake relative to training load.",
-            "coaching_implication": "Low intake under high load impairs glycogen restoration and performance.",
+            "interpretation": "Carbohydrate availability (≈3–10 g/kg depending on training load; IOC/ACSM guidelines) determines glycogen replenishment and endurance capacity.",
+            "coaching_implication": "Align carbohydrate intake with training demand (IOC/ACSM) to maintain glycogen availability, recovery, and performance capacity.",
             "related_metrics": ["HRV", "SleepQuality", "TrainingLoad"]
-        },
+},
 
         "FatIntake": {
-            "framework": "Energy Balance",
+            "framework": "Energy Balance (Endocrine support)",
             "unit": "g/kg",
+            "formula": "Daily fat intake (g) ÷ body mass (kg)",
             "criteria": {
                 "low": "<0.8 — may impact hormonal function",
                 "optimal": "0.8–1.2 — supports endocrine stability",
                 "high": ">1.2 — elevated energy density"
             },
-            "interpretation": "Fat intake contributing to energy balance and hormonal function.",
-            "coaching_implication": "Supports long-term metabolic stability.",
+            "interpretation": "Fat intake supports hormonal function and long-term energy balance (general sports nutrition consensus).",
+            "coaching_implication": "Maintain sufficient intake to support endocrine health and overall energy availability.",
             "related_metrics": []
-        },
+        }
     },
     "metadata": {
         "framework_chain": [
@@ -1721,12 +1725,29 @@ COACH_PROFILE = {
         "variance": "<= 2%",
         "last_revision": "2026-03-19"
     },
+
     "nutrition_demand_model": {
 
         "carbohydrates": {
-            "low": 3.5,
-            "moderate": 4.5,
-            "high": 6.0
+            "method": "session_based",
+
+            "duration_bands": [
+                {"max_hours": 1.0, "gkg": 3.5},
+                {"max_hours": 2.0, "gkg": 5.0},
+                {"max_hours": 3.0, "gkg": 6.0},
+                {"max_hours": 4.0, "gkg": 7.0},
+                {"max_hours": 24.0, "gkg": 8.5}
+            ],
+
+            "intensity_adjustment": {
+                "high_if": {"threshold": 0.85, "delta": 0.5},
+                "low_if": {"threshold": 0.65, "delta": -0.5}
+            },
+
+            "bounds": {
+                "min": 3.0,
+                "max": 10.0
+            }
         },
 
         "protein": {
@@ -1737,12 +1758,6 @@ COACH_PROFILE = {
         "fat": {
             "baseline": 1.0
         },
-
-        "load_classification": {
-            "low": {"atl_ctl_delta_max": 0},
-            "moderate": {"atl_ctl_delta_min": 0, "atl_ctl_delta_max": 10},
-            "high": {"atl_ctl_delta_min": 10}
-        }
     }
 }
 # Alias for compatibility with derived metrics imports

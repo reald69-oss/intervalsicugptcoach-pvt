@@ -2788,60 +2788,54 @@ def build_semantic_json(context):
             )
             
             # -----------------------------------------------------
-            # 3️⃣ Inject Nutrition (Supplementary Only)
+            # 3️⃣ Inject Nutrition (carb-driven only)
             # -----------------------------------------------------
 
             nutrition = context.get("nutrition_balance")
             nutrition_demand = context.get("nutrition_demand")
             weight = (context.get("athlete") or {}).get("icu_weight")
+
             if nutrition and nutrition_demand:
 
                 classification = nutrition.get("status")
 
-                marker_key = None
+                # -------------------------------------------------
+                # FIXED MARKER (NO SWITCHING)
+                # -------------------------------------------------
+                marker = COACH_PROFILE.get("markers", {}).get("CarbohydrateAvailability", {})
 
-                if classification and "underfuelled" in classification:
-                    marker_key = "CarbohydrateAvailability"
-                elif classification == "overfuelled":
-                    marker_key = "CarbohydrateAvailability"
-                elif classification == "balanced":
-                    marker_key = "ProteinIntake"
-
-                interpretation = None
-                coaching = None
-
-                if marker_key:
-                    interpretation = CHEAT_SHEET["context"].get(marker_key)
-                    coaching = CHEAT_SHEET["coaching_links"].get(marker_key)
+                interpretation = marker.get("interpretation")
+                coaching = marker.get("coaching_implication")
+                formula = marker.get("formula")
+                framework = marker.get("framework")
 
                 semantic["performance_intelligence"]["nutrition"] = {
 
-                    "framework": "Energy Availability & Recovery Nutrition",
-
                     # -------------------------------------------------
-                    # Interpretation (marker-driven)
+                    # Marker-driven (ALWAYS CARBS)
                     # -------------------------------------------------
 
+                    "framework": framework,
                     "interpretation": interpretation,
                     "coaching_implication": coaching,
-
+                    "formula": formula,
                     "context_window": "rolling_3d",
 
                     # -------------------------------------------------
-                    # Classification (light)
+                    # Classification (label only)
                     # -------------------------------------------------
 
                     "classification": classification,
                     "classification_source": "nutrition_balance",
 
                     # -------------------------------------------------
-                    # Confidence gating
+                    # Confidence
                     # -------------------------------------------------
 
                     "confidence": nutrition.get("confidence"),
 
                     # -------------------------------------------------
-                    # Actual vs Demand (transparent, no judgement)
+                    # Signals (ALL MACROS — NO NARRATIVE SWITCH)
                     # -------------------------------------------------
 
                     "signals": {
@@ -2873,13 +2867,6 @@ def build_semantic_json(context):
                     f"[SEMANTIC] Injected nutrition → "
                     f"{classification} ({nutrition.get('confidence')})"
                 )
-
-        debug(
-            context,
-            f"[SEMANTIC] Injected performance_intelligence → "
-            f"acute={list(semantic['performance_intelligence'].get('acute', {}).keys())}, "
-            f"chronic={list(semantic['performance_intelligence'].get('chronic', {}).keys())}"
-        )
  
     # ---------------------------------------------------------
     # 🧭 Tier-3 State → Primary Action
