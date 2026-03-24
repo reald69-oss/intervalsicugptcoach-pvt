@@ -2401,9 +2401,9 @@ def build_semantic_json(context):
                 except Exception:
                     continue
 
-#              # Skip the current microcycle week - (leave in as render gets confused)
-#              if week_key == current_week_key:
-#                  continue
+                # Skip the current microcycle week
+                if week_key == current_week_key:
+                    continue
 
                 planned_by_week.setdefault(week_key, []).extend(events)
 
