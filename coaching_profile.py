@@ -39,6 +39,27 @@ REPORT_CONTRACT = {
         "future_actions",
     ],
 
+    "weekly_lite": [
+        "meta",
+
+        # 🧭 TRAINING LOAD
+        "training_volume",
+        "metrics",
+        "events",
+
+        # 🫀 PHYSIOLOGY RESPONSE
+        "wellness",
+        "insight_view",
+
+        # ⚙️ PERFORMANCE INTELLIGENCE
+        "performance_intelligence",
+
+        # 📈 ADAPTATION
+        "energy_system_progression",
+
+        # 🎯 ADAPTIVE DECISIONS
+        "actions",
+    ],
 
     "season": [
         "meta",
@@ -115,6 +136,23 @@ PRUNE_RULES = {
         ],
         "meta": [
             "phases_summary"
+        ],
+        "meta.athlete.context": [
+            "platforms",
+            "wellness_features",
+            "equipment_summary",
+            "activity_scope",
+            "training_environment",
+        ],
+    },
+
+    "weekly_lite": {
+        "wellness": [
+            "hrv_series"
+        ],
+        "meta": [
+            "phases_summary",
+            "planned_events"
         ],
         "meta.athlete.context": [
             "platforms",
@@ -403,7 +441,7 @@ RENDERER_PROFILES = {
                     "show full performance_intelligence",
                     "show full adaptation",
                     "show full adaptive_decisions",
-                    "show planned events"
+                    "load planned events"
                 ]
             }
         }

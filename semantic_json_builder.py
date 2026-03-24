@@ -813,7 +813,7 @@ def build_semantic_json(context):
     verbose_events = bool(options.get("verbose_events", True))
     include_all_events = bool(options.get("include_all_events", True))
     return_format = options.get("return_format", "semantic")
-    render_mode = options.get("render_mode", "default")
+    render_mode = context.get("render_mode") or options.get("render_mode", "default")
     context = set_time_context(context)
     now = context["athlete_now"]
     today = context["athlete_today"]
@@ -1228,6 +1228,7 @@ def build_semantic_json(context):
 
     header = REPORT_HEADERS.get(report_type, {})
     semantic["meta"]["report_type"] = report_type
+    semantic["meta"]["render_mode"] = render_mode
     semantic["meta"]["window_days"] = window_days
     semantic["meta"]["period"] = f"{context['period']['start']} → {context['period']['end']}"
     # ---------------------------------------------------------
@@ -3952,6 +3953,10 @@ def apply_report_type_contract(semantic: dict) -> dict:
     """
 
     report_type = semantic.get("meta", {}).get("report_type", "weekly")
+    render_mode = semantic.get("meta", {}).get("render_mode")
+
+    if render_mode == "lite":
+        report_type = f"{report_type}_lite"
 
     # ── Enrich meta
     semantic["meta"]["report_header"] = REPORT_HEADERS.get(report_type, {})

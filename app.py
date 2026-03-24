@@ -557,13 +557,15 @@ def _run_full_audit(range: str, output_format="markdown", prefetch_context=None,
                     reportType=range,
                     output_format=output_format,
                     include_coaching_metrics=True,
+                    render_mode=render_mode,
                     **prefetch_context
                 )
             else:
                 report, compliance, *_ = run_report(
                     reportType=range,
                     output_format=output_format,
-                    include_coaching_metrics=True
+                    include_coaching_metrics=True,
+                    render_mode=render_mode
                 )
     else:
         if prefetch_context:
@@ -571,13 +573,15 @@ def _run_full_audit(range: str, output_format="markdown", prefetch_context=None,
                 reportType=range,
                 output_format=output_format,
                 include_coaching_metrics=True,
+                render_mode=render_mode,
                 **prefetch_context
             )
         else:
             report, compliance, *_ = run_report(
                 reportType=range,
                 output_format=output_format,
-                include_coaching_metrics=True
+                include_coaching_metrics=True,
+                render_mode=render_mode
             )
 
     logs = buffer.getvalue() if buffer else ""
@@ -623,7 +627,11 @@ def run_audit(
     if demo:
         return load_demo_response(range, reason="MANUAL_DEMO")
     try:
-        report, compliance, logs, context, sg, markdown = _run_full_audit(range=range, output_format=format)
+        report, compliance, logs, context, sg, markdown = _run_full_audit(
+            range=range,
+            output_format=format,
+            render_mode="lite" if lite else "full+metrics"
+        )
         if format in ("json", "semantic"):
             payload = {
                 "status": "ok",
@@ -942,6 +950,7 @@ async def run_audit_with_data(
                     reportType=report_range,
                     output_format=fmt,
                     include_coaching_metrics=True,
+                    render_mode="lite" if lite else "full+metrics",
                     **prefetch_context
                 )
 

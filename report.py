@@ -365,7 +365,8 @@ def fetch_remote_report(
     model=None,
     start=None,
     end=None,
-    strava_test=False
+    strava_test=False,
+    lite=False
 ):
     """
     Fetch a URF report (semantic+markdown) from Cloudflare Worker.
@@ -400,7 +401,8 @@ def fetch_remote_report(
             raise ValueError(
                 "Invalid --strava-test value. Use: stub, demo, 0,1,2,3,4,5"
             )
-
+    if lite:
+        params.append("lite=true")
 
     query = "&".join(params)
     url = f"{base}?{query}" if query else base
@@ -525,7 +527,8 @@ def generate_full_report(
     provider=None,
     model=None,
     strava_test=False,
-    debug_mode=False
+    debug_mode=False,
+    lite=False
 ):
     """Run report and capture logs and output into one file."""
     buffer = io.StringIO()
@@ -596,6 +599,7 @@ def generate_full_report(
                     reportType=report_type,
                     include_coaching_metrics=True,
                     output_format=output_format,
+                    render_mode="lite" if lite else "full+metrics",
                     **context,
                 )
             logs = buffer.getvalue()
@@ -604,6 +608,7 @@ def generate_full_report(
                 reportType=report_type,
                 include_coaching_metrics=True,
                 output_format=output_format,
+                render_mode="lite" if lite else "full+metrics",
                 **context,
             )
             logs = ""
@@ -767,9 +772,14 @@ def main():
             "  4    → partial wellness or athlete metadata\n"
             "  5    → mixed valid + stub activities (degraded state)"
             "  demo → demo"
-        )
+        ),
     )
-
+    parser.add_argument(
+        "--lite",
+        action="store_true",
+        help="Run weekly report in lite mode (reduced semantic contract)"
+    )
+    
     args = parser.parse_args()
     # 🧠 Debug mode shortcut — directly fetch from /debug and exit
     if args.debug and args.prefetch:
@@ -795,7 +805,8 @@ def main():
         provider=args.provider,
         model=args.model,
         strava_test=args.strava_test,
-        debug_mode=args.debug
+        debug_mode=args.debug,
+        lite=args.lite
     )
 
 

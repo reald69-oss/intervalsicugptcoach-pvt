@@ -816,8 +816,8 @@ def run_report(
 
     # --- Finalization ---
     context["auditFinal"] = True
-    context["render_mode"] = "full+metrics"
-    debug(context, "🧩 Render mode forced to full+metrics for URF layout")
+    context["render_mode"] = render_mode
+    debug(context, f"🧩 Render mode → {render_mode}")
 
     # --- Hard-verify df_events for Tier-2 validator ---
     if "df_events" not in context or getattr(context["df_events"], "empty", True):
@@ -942,7 +942,6 @@ def run_report(
 
     # --- Force full unified render ---
     context["auditFinal"] = True                    # ✅ tell renderer audit is finalized
-    context["render_mode"] = "full+metrics"
     context["enforce_render_source"] = "tier2_enforced_totals"  # ✅ use canonical source
     context["allow_intent_inference"] = False
 
