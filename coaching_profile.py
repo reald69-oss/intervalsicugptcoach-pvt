@@ -358,7 +358,11 @@ RENDERER_PROFILES = {
             "Prioritise ESPE signals over repeating metric definitions.",
             "Render power anchors as [<power> W](link) when activity_link exists, else plain.",
             "Title current_ISO_weekly_microcycle as 'Current ISO Week ## (Mon-Sun)'.",
-            "If a section is marked full, render every entity and field exactly as present in the semantic data"
+            "If a section is marked full, render every entity and field exactly as present in the semantic data",
+            "Render adaptive_decisions.actions as a compact dashboard table (not narrative).",
+            "adaptive_summary MUST be rendered as a 1-row state table.",
+            "state_action, system_guidance, and reflection MUST be rendered as separate compact tables.",
+            "Do NOT render paragraph explanations for actions."
         ],
         "allowed_enrichment": [
             "Restate semantic interpretation fields.",
@@ -381,7 +385,7 @@ RENDERER_PROFILES = {
             #"planned_events": "full",
             #"planned_summary_by_date": "forbid",
             "planned_summary_by_iso_week": "full",
-            "actions": "full",
+            "actions": "table_summary",
             "actions.0.adaptive_summary": "full",
             "actions.1.state_action": "full",
             "actions.3.system_guidance": "full",
