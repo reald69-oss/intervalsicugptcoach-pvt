@@ -495,7 +495,7 @@ RENDERER_PROFILES = {
                     "load planned events",
                     "show power curves",
                     "load athlete profiles",
-                    "load last acticity and analyse",
+                    "load last activity and analyse",
                     "show me more command questions"
                 ]
             }
@@ -648,7 +648,7 @@ RENDERER_PROFILES = {
                     "load planned events",
                     "show power curves",
                     "load athlete profiles",
-                    "load last acticity and analyse",
+                    "load last activity and analyse",
                     "show me more command questions"
                 ]
             }
@@ -831,6 +831,18 @@ RENDERER_PROFILES = {
                 "5. Translate into plain language (how the body is coping).",
                 "6. Provide concrete guidance for the next 24–72 hours."
             ]
+        },
+        "post_render": {
+            "explore_deeper": {
+                "enabled": True,
+                "style": "command_suggestions",
+                "placement": "after_report",
+                "commands": [
+                    "show full physiology_response",
+                    "show full training stress",
+                    "show me more wellness command questions"
+                ]
+            }
         }
     },
 
@@ -854,6 +866,7 @@ RENDERER_PROFILES = {
             ],
 
             "performance_intelligence": [
+                "performance_intelligence",
                 "performance_summary"
             ],
 
@@ -931,6 +944,20 @@ RENDERER_PROFILES = {
             ],
             "intent_rule": "Assess overall system health and sustainability across the review period.",
             "max_sentences": 5
+        },
+        "post_render": {
+            "explore_deeper": {
+                "enabled": True,
+                "style": "command_suggestions",
+                "placement": "after_report",
+                "commands": [
+                    "summarize my training year",
+                    "what is my current training state",
+                    "is my system improving or plateauing",
+                    "how consistent is my training",
+                    "show me more command questions"
+                ]
+            }
         }
     }
 }
