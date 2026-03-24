@@ -3308,8 +3308,38 @@ def build_semantic_json(context):
                             else:
                                 planned_seconds += moving_time
 
+                    # -------------------------------------------------
+                    # 6b️⃣ Add remaining planned calendar sessions
+                    # -------------------------------------------------
+
+                    calendar_events = context.get("calendar", []) or []
+
+                    for ce in calendar_events:
+
+                        ce_date = pd.to_datetime(ce.get("start_date_local"), errors="coerce")
+                        if pd.isna(ce_date):
+                            continue
+
+                        ce_date = ce_date.date()
+
+                        if monday.date() <= ce_date <= sunday.date():
+
+                            ce_id = ce.get("id")
+
+                            # skip already executed planned sessions
+                            if ce_id in consumed_plan_ids:
+                                continue
+
+                            # -------------------------------------------------
+                            # PRIMARY: use moving_time if available
+                            # -------------------------------------------------
+                            mt = ce.get("moving_time")
+
+                            if mt:
+                                planned_seconds += float(mt)
+
                     completed_hours = round(completed_seconds / 3600.0, 2)
-                    projected_hours = round(planned_seconds / 3600.0, 2)
+                    projected_hours = round((completed_seconds + planned_seconds) / 3600.0, 2)
 
                     current_ISO_weekly_microcycle["completed_hours"] = completed_hours
                     current_ISO_weekly_microcycle["projected_hours"] = projected_hours
