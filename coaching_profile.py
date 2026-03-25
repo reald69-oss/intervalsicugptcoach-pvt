@@ -764,8 +764,13 @@ RENDERER_PROFILES = {
             "When HRV remains stable despite elevated ATL, describe this as maintenance-under-load adaptation.",
             "When autonomic signals disagree with load signals, prioritise autonomic interpretation.",
             "Performance intelligence metrics must only provide context explaining training stress exposure.",
-            "When rendered in a wellness report, performance intelligence MUST appear as a single condensed headline-style block (maximum 3–4 indicators).",
-            "Do NOT analyse training performance, workout structure, or detailed training metrics in this report."
+            "performance_intelligence MUST be rendered as a single LOAD CONTEXT table (max 3 columns).",
+            "Do NOT render narrative interpretation for performance_intelligence.",
+            "wellness MUST be rendered as STATE and SIGNALS tables before any interpretation.",
+            "STATE table MUST summarise HRV, resting HR, sleep, load context, and recovery_state.",
+            "SIGNALS table MUST list key metrics with value and qualitative signal (green/amber/red).",
+            "Interpretation MUST be ≤3 bullet points (no paragraphs).",
+            "insight_view MUST be merged into SIGNALS or INTERPRETATION (not separate section).",
         ],
 
         # ----------------------------------------------------------
@@ -793,7 +798,7 @@ RENDERER_PROFILES = {
             "hrv_daily": "forbid",
             "performance_intelligence": "headine",
             "performance_intelligence.nutrition": "full",
-            "insights": "full",
+            "insights": "forbid",
             "insight_view": "forbid",
             "events": "forbid",
             "daily_load": "forbid",

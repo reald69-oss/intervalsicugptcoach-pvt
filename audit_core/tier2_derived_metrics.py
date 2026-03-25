@@ -286,7 +286,7 @@ def classify_marker(value, marker, context=None):
     marker_aliases = {
         "FatOx": "FatOxEfficiency",
         "FatOxidation": "FatOxEfficiency",
-        "Recovery": "LoadVariabilityIndex",
+        #"Recovery": "LoadVariabilityIndex",
         "fatigue_trend": "FatigueTrend",
         "FatigueTrend": "FatigueTrend"
     }
@@ -1037,7 +1037,7 @@ def compute_derived_metrics(df_events, context):
         "FatOxEfficiency": fat_ox_eff,
         "Polarisation": polarisation,
         "PolarisationIndex": polarisation_index,
-        "LoadVariabilityIndex": lvi,
+        #"LoadVariabilityIndex": lvi,  #now internal only
         "StressTolerance": stress_tolerance,
         "FOxI": foxi,
         "CUR": cur,
@@ -1126,12 +1126,12 @@ def compute_derived_metrics(df_events, context):
             "icon": classified["MES"]["icon"],
             "desc": "Metabolic efficiency score",
         },
-        "LoadVariabilityIndex": {
-            "value": lvi,
-            "classification": classified["LoadVariabilityIndex"]["state"],
-            "icon": classified["LoadVariabilityIndex"]["icon"],
-            "desc": "Load variability score (1 − monotony/5)"
-        },
+        #"LoadVariabilityIndex": {   #moved to internal only now not a coaching metric 
+        #    "value": lvi,
+        #    "classification": classified["LoadVariabilityIndex"]["state"],
+        #    "icon": classified["LoadVariabilityIndex"]["icon"],
+        #    "desc": "Load variability score (1 − monotony/5)"
+        #},
         "StressTolerance": {
             "value": stress_tolerance,
             "classification": classified["StressTolerance"]["state"],

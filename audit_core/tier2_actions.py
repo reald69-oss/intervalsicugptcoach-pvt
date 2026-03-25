@@ -425,27 +425,27 @@ def evaluate_actions(context):
             })
 
 
-    # ---- Load Variability Index ----
-    if lvi < th["LoadVariabilityIndex"]["amber"][0]:
+    # ---- Load Variability Index ---- # not a coaching metric now = old 
+#    if lvi < th["LoadVariabilityIndex"]["amber"][0]:
 
-        metric_signals.append({
-            "metric": "LoadVariabilityIndex",
-            "state": "poor"
-        })
+#        metric_signals.append({
+#            "metric": "LoadVariabilityIndex",
+#            "state": "poor"
+#        })
 
-    elif lvi < th["LoadVariabilityIndex"]["green"][0]:
+#    elif lvi < th["LoadVariabilityIndex"]["green"][0]:
 
-        metric_signals.append({
-            "metric": "LoadVariabilityIndex",
-            "state": "moderate"
-        })
+#        metric_signals.append({
+#            "metric": "LoadVariabilityIndex",
+#            "state": "moderate"
+#        })
 
-    else:
+#    else:
 
-        metric_signals.append({
-            "metric": "LoadVariabilityIndex",
-            "state": "healthy"
-        })
+#        metric_signals.append({
+#            "metric": "LoadVariabilityIndex",
+#            "state": "healthy"
+#        })
 
     # ---------------- Append metric feedback ----------------
 

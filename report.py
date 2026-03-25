@@ -246,7 +246,7 @@ def estimate_tokens_from_json(data):
     if _ENC is None:
         return None
 
-    text = json.dumps(data, separators=(",", ":"))
+    text = json.dumps(data, default=str, separators=(",", ":"))
     return len(_ENC.encode(text))
 
 print("ARGV:", sys.argv)

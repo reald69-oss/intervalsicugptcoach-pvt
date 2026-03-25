@@ -795,6 +795,46 @@ def build_insights(semantic):
                     "coaching_implication": sleep_block.get("coaching_implication"),
                 }
 
+            # --------------------------------------------------
+            # NORMALISE WELLNESS SIGNALS (NEW)
+            # --------------------------------------------------
+
+            wellness_signals = {}
+
+            if "autonomic_status" in insights:
+                wellness_signals["autonomic_status"] = insights["autonomic_status"].get("classification")
+
+            if "hrv_stability_index" in insights:
+                wellness_signals["hrv_stability"] = insights["hrv_stability_index"].get("classification")
+
+            if "sleep_quality" in insights:
+                wellness_signals["sleep_quality"] = insights["sleep_quality"].get("classification")
+
+            if "resting_hr_delta" in insights:
+                wellness_signals["resting_hr"] = insights["resting_hr_delta"].get("classification")
+
+            semantic["wellness_signals"] = wellness_signals
+
+            # --------------------------------------------------
+            # RECOVERY STATE (NEW)
+            # --------------------------------------------------
+
+            training_state = (
+                semantic.get("performance_intelligence", {})
+                .get("training_state", {})
+            )
+
+            semantic["recovery_state"] = {
+                "state_label": training_state.get("state_label"),
+                "operational_state": training_state.get("operational_state"),
+                "autonomic_status": wellness_signals.get("autonomic_status"),
+                "hrv_stability": wellness_signals.get("hrv_stability"),
+                "sleep_quality": wellness_signals.get("sleep_quality"),
+                "resting_hr_status": wellness_signals.get("resting_hr"),
+                "load_context": training_state.get("signals", {}).get("load_recovery_state"),
+                "confidence": training_state.get("confidence")
+            }
+
 
     return insights
 
