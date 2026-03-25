@@ -767,6 +767,7 @@ RENDERER_PROFILES = {
             "performance_intelligence MUST be rendered as a single LOAD CONTEXT table (max 3 columns).",
             "Do NOT render narrative interpretation for performance_intelligence.",
             "wellness MUST be rendered as STATE and SIGNALS tables before any interpretation.",
+            "Include in SIGNALS table wellness.recovery_markers",
             "STATE table MUST summarise HRV, resting HR, sleep, load context, and recovery_state.",
             "SIGNALS table MUST list key metrics with value and qualitative signal (green/amber/red).",
             "Interpretation MUST be ≤3 bullet points (no paragraphs).",
@@ -795,7 +796,7 @@ RENDERER_PROFILES = {
         "section_handling": {
             "meta": "full",
             "wellness": "full",
-            "wellness.recovery_markers": "table_summary",
+            "wellness.recovery_markers": "full",
             "hrv_daily": "forbid",
             "performance_intelligence": "headine",
             "performance_intelligence.nutrition": "full",
