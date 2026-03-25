@@ -715,6 +715,24 @@ def run_tier1_controller(df_master, wellness, context):
     else:
         raise AuditHalt(f"❌ Tier-1: unsupported type for snapshot_7d_json → {type(snapshot)}")
 
+    # --- 🔧 SNAPSHOT SCHEMA FALLBACK (controlled degradation) ---
+    REQUIRED_EVENT_FIELDS = ["type", "moving_time", "icu_training_load"]
+
+    missing = [c for c in REQUIRED_EVENT_FIELDS if c not in visible_events.columns]
+
+    if missing:
+        debug(
+            context,
+            f"[T1-SNAPSHOT-FIX] Injecting missing fields → {missing} "
+            f"(cols={list(visible_events.columns)})"
+        )
+
+        for col in missing:
+            if col == "type":
+                visible_events[col] = "Unknown"
+            elif col in ("moving_time", "icu_training_load"):
+                visible_events[col] = 0.0
+                
     # Validate schema before continuing
     #if not isinstance(visible_events, pd.DataFrame) or "type" not in visible_events.columns:
     #    raise AuditHalt(
