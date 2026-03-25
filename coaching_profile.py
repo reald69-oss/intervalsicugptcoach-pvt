@@ -361,10 +361,14 @@ RENDERER_PROFILES = {
             "If a section is marked full, render every entity and field exactly as present in the semantic data",
             #ADAPTIVE DECISIONS
             "Render adaptive_decisions as compact dashboard tables (no narrative).",
-            "adaptive_decisions MUST be rendered as STATE and OPERATIONS tables (each may be split if too wide).",
-            "STATE table MUST include directive, state, load_trend, risk_flag, adaptation_focus, key_constraint, next_action, and dominant_signal (may be split across multiple tables if needed).",
+            "adaptive_decisions MUST be rendered as STATE and OPERATIONS tables.",
+            "STATE MUST NOT exceed 4 columns per table.",
+            "STATE MUST be split into multiple tables when more than 4 fields are present.",
+            "STATE tables MUST follow this fixed grouping:",
+            "STATE TABLE 1: directive, state, load_trend, risk_flag.",
+            "STATE TABLE 2: adaptation_focus, key_constraint, next_action, dominant_signal.",
             "OPERATIONS table MUST contain week_delta, planned_load (current → next), and 14 day forecast summary (CTL / TSB / fatigue_class).",
-            "Do NOT render state_action, system_guidance, or reflection as separate sections when STATE table is present.",
+            "Do NOT render state_action, system_guidance, or reflection as separate sections.",
             "Do NOT render paragraph explanations for adaptive_decisions.",
             #ADAPTATION
             "energy_system_progression MUST be rendered as compact adaptation table(s)",
@@ -372,7 +376,7 @@ RENDERER_PROFILES = {
             "lactate_calibration when available MUST be rendered as a single compact adaptation table before suppression.",
             "Do NOT render narrative or subsection breakdown when table is present.",
             #PERFORMANCE INTELLIGENCE
-            "performance_intelligence MUST be rendered as compact dashboard tables (may be split if too wide)."
+            "performance_intelligence MUST be rendered as compact dashboard tables (may be split if too wide).",
             "WDRM, ISDM, and NDLI MUST NOT be rendered as separate sections when sufficient data exists.",
             "They MUST be projected into a SYSTEM STATE table and a LOAD SIGNATURE table.",
             "performance_intelligence MUST include operational_state in the SYSTEM STATE table.",
