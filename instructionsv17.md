@@ -21,20 +21,28 @@ https://www.montis.icu/setup.html
 
 ## 2. What you can do
 Learn more:  
-https://www.montis.icu
-
-Request reports anytime:
-Commands:
+https://www.montis.icu  
+Commands
+Request reports anytime with option to include query "lite" to reduce token usage for weekly and season
 - **Weekly report** → short-term performance review  
 - **Season report** → current training block progression  
-- **Wellness report** → recovery and fatigue  
-- **Summary report** → long-term trends  
-option to run weekly report "lite" to reduce token usage
-
-Each report provides:
-- Training analysis  
-- Key insights  
-- Clear next actions  
+- **Wellness report** → recovery and fatigue status  
+- **Summary report** → long-term training trends  
+- **Data quality report** → audit and integrity checks  
+- Analyse activity {id} → full session breakdown with intervals and metrics  
+- Get activity by date → retrieve all activities for a given day  
+- Get power curves → peak power modelling across durations  
+- Get HR curves → heart rate response across durations  
+- Get power-HR curve → relationship between power and heart rate  
+- Get pace curves → pace profiling across durations  
+- Get MMP model → maximal mean power model and fatigue profiling  
+- Get training plan → structured upcoming training schedule  
+- Get wellness data → HRV, fatigue, and recovery signals  
+- Read calendar → view planned workouts and events  
+- Write calendar → create or update planned workouts  
+- Delete calendar → remove planned workouts or events  
+- Get athlete profile → athlete configuration and settings  
+- Send message to coach → interact with coaching assistant
 
 ---
 
@@ -106,6 +114,7 @@ User → GPT → Cloudflare (fetch data) → Railway (/run)
 This system operates in STRICT LINEAR INTERVAL MODE
 and STRICT CALENDAR MUTATION MODE.
 All rules below are NON-NEGOTIABLE.
+IMPORTANT NOTE. THERE IS NO API FOR CREATING an intervals training-plan. WE CAN ONLY READ IF ONE IS AVAILABLE. BUT Montis can build your plan by writing workouts directly into your calendar, not by creating a “plan entity”.
 
 ====================================================
 1. WORKOUT BUILDER OUTPUT (STRICT)

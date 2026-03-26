@@ -732,7 +732,7 @@ def run_tier1_controller(df_master, wellness, context):
                 visible_events[col] = "Unknown"
             elif col in ("moving_time", "icu_training_load"):
                 visible_events[col] = 0.0
-                
+
     # Validate schema before continuing
     #if not isinstance(visible_events, pd.DataFrame) or "type" not in visible_events.columns:
     #    raise AuditHalt(
@@ -798,8 +798,8 @@ def run_tier1_controller(df_master, wellness, context):
 
     report_type = str(context.get("report_type", "")).lower()
 
-    # 🔒 Weekly & Season require valid canonical 7-day totals
-    if report_type in ("weekly", "season", "wellness"):
+    # 🔒 Weekly canonical 7-day totals
+    if report_type == "weekly":
 
         if t1_hours <= 0 or t1_tss <= 0:
             warn_msg = (
