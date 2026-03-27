@@ -545,7 +545,13 @@ def normalize_prefetched_context(data):
 # ============================================================
 # 🧠 CORE RUN FUNCTION
 # ============================================================
-def _run_full_audit(range: str, output_format="markdown", prefetch_context=None, capture_logs=True):
+def _run_full_audit(
+    range: str,
+    output_format="markdown",
+    prefetch_context=None,
+    capture_logs=True,
+    render_mode="full+metrics"
+):
     os.environ["REPORT_TYPE"] = range.lower()
 
     buffer = io.StringIO() if capture_logs else None
