@@ -233,6 +233,7 @@ import webbrowser
 from datetime import datetime
 from contextlib import redirect_stdout
 from pathlib import Path
+from app import normalize_prefetched_context
 
 # --- Token estimation ---
 try:
@@ -278,80 +279,6 @@ def open_report(path):
             webbrowser.open(Path(path).resolve().as_uri())
         except Exception:
             pass
-
-# ─────────────────────────────────────────────
-# DEBUG REPORTS
-# ─────────────────────────────────────────────
-def fetch_debug_report(report_type, staging=False, prefetch=False):
-    """
-    Fetch debug report via Cloudflare Worker (prefetch + debug routing).
-    Splits semantic report and debug logs into separate files.
-    """
-
-    worker_base = get_worker_base(staging)
-    url = f"{worker_base}/run_{report_type}?debug=true&format=semantic"
-
-    headers = {
-        "Authorization": f"Bearer {os.getenv('ICU_OAUTH', '')}",
-        "X-Montis-Internal": os.getenv("MONTIS_INTERNAL_KEY"),
-        "User-Agent": "IntervalsGPTCoachLocal/1.0"
-    }
-
-    env = "staging" if staging else "prod"
-
-    print(f"[DEBUG] env={env} report={report_type}")
-    print(f"[DEBUG] → {url}")
-
-    resp = requests.get(url, headers=headers, timeout=120)
-    resp.raise_for_status()
-
-    data = resp.json()
-
-    Path("reports").mkdir(exist_ok=True)
-
-    # ------------------------------------------------
-    # Extract components
-    # ------------------------------------------------
-    logs = data.get("logs", "")
-    semantic = data.get("semantic_graph", {})
-
-    report_payload = {
-        "status": data.get("status"),
-        "report_type": data.get("report_type"),
-        "semantic_graph": semantic,
-        "compliance": data.get("compliance", {})
-    }
-
-  # ------------------------------------------------
-    # Save semantic report
-    # ------------------------------------------------
-    mode = "prefetch" if prefetch else "local"
-
-    json_name = f"report_{report_type}_{mode}_{env}_debug.json"
-    json_path = Path("reports") / json_name
-
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(report_payload, f, indent=2)
-
-    print(f"[DEBUG] ✅ Semantic report saved → {json_name}")
-    open_report(json_path)
-
-    # ------------------------------------------------
-    # Save logs separately
-    # ------------------------------------------------
-    log_name = f"report_{report_type}_{mode}_{env}_debug.log"
-    log_path = Path("reports") / log_name
-
-    with open(log_path, "w", encoding="utf-8") as f:
-        f.write(logs)
-
-    print(f"[DEBUG] 📜 Logs saved → {log_name}")
-    open_report(log_path)
-
-    if logs:
-        print(f"[DEBUG] 📜 Logs captured: {len(logs.splitlines())} lines")
-
-    return report_payload
 
 
 # ─────────────────────────────────────────────
@@ -514,7 +441,119 @@ def fetch_remote_report(
     return data
 
 
+# ─────────────────────────────────────────────
+# DEBUG REPORTS
+# ─────────────────────────────────────────────
+def fetch_debug_report(report_type, staging=False, prefetch=False):
+    """
+    Fetch debug report via Cloudflare Worker (prefetch + debug routing).
+    Splits semantic report and debug logs into separate files.
+    """
 
+    worker_base = get_worker_base(staging)
+    url = f"{worker_base}/run_{report_type}?debug=true&format=semantic"
+
+    headers = {
+        "Authorization": f"Bearer {os.getenv('ICU_OAUTH', '')}",
+        "X-Montis-Internal": os.getenv("MONTIS_INTERNAL_KEY"),
+        "User-Agent": "IntervalsGPTCoachLocal/1.0"
+    }
+
+    env = "staging" if staging else "prod"
+
+    print(f"[DEBUG] env={env} report={report_type}")
+    print(f"[DEBUG] → {url}")
+
+    resp = requests.get(url, headers=headers, timeout=120)
+    resp.raise_for_status()
+
+    data = resp.json()
+
+    Path("reports").mkdir(exist_ok=True)
+
+    # ------------------------------------------------
+    # Extract components
+    # ------------------------------------------------
+    logs = data.get("logs", "")
+    semantic = data.get("semantic_graph", {})
+
+    report_payload = {
+        "status": data.get("status"),
+        "report_type": data.get("report_type"),
+        "semantic_graph": semantic,
+        "compliance": data.get("compliance", {})
+    }
+
+  # ------------------------------------------------
+    # Save semantic report
+    # ------------------------------------------------
+    mode = "prefetch" if prefetch else "local"
+
+    json_name = f"report_{report_type}_{mode}_{env}_debug.json"
+    json_path = Path("reports") / json_name
+
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(report_payload, f, indent=2)
+
+    print(f"[DEBUG] ✅ Semantic report saved → {json_name}")
+    open_report(json_path)
+
+    # ------------------------------------------------
+    # Save logs separately
+    # ------------------------------------------------
+    log_name = f"report_{report_type}_{mode}_{env}_debug.log"
+    log_path = Path("reports") / log_name
+
+    with open(log_path, "w", encoding="utf-8") as f:
+        f.write(logs)
+
+    print(f"[DEBUG] 📜 Logs saved → {log_name}")
+    open_report(log_path)
+
+    if logs:
+        print(f"[DEBUG] 📜 Logs captured: {len(logs.splitlines())} lines")
+
+    return report_payload
+
+
+def fetch_worker_prefetch_dataset(report_type, staging=False, start=None, end=None):
+    """
+    Fetch RAW dataset from Worker (NOT report).
+    Worker must return prefetched payload.
+    """
+
+    worker_base = get_worker_base(staging)
+    url = f"{worker_base}/run_{report_type}?prefetch=true"
+
+    if start:
+        url += f"&start={start}"
+    if end:
+        url += f"&end={end}"
+
+    token = os.getenv("ICU_OAUTH")
+
+    if not token:
+        raise RuntimeError("ICU_OAUTH not set")
+
+    token = token.strip()
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "User-Agent": "IntervalsGPTCoachLocal/1.0"
+    }
+
+    print("[AUTH OK]", token[:12], "...")
+
+    print(f"[PREFETCH] → {url}")
+
+    resp = requests.get(url, headers=headers, timeout=120)
+    resp.raise_for_status()
+
+    return resp.json()
+
+# ─────────────────────────────────────────────
+# PREFETCH HELPER — Cloudflare Worker Schema
+# ─────────────────────────────────────────────
 def generate_full_report(
     report_type="weekly",
     output_path=None,
@@ -530,68 +569,206 @@ def generate_full_report(
     debug_mode=False,
     lite=False
 ):
-    """Run report and capture logs and output into one file."""
     buffer = io.StringIO()
     logs = ""
     os.environ["REPORT_TYPE"] = report_type.lower()
     Path("reports").mkdir(parents=True, exist_ok=True)
 
-    # ✅ Always respect custom date range flags (even if unused by remote)
-    if start and end:
-        print(f"[CLI] ⏱️ Custom date range override detected: {start} → {end}")
-    else:
-        print("[CLI] Using automatic window selection (based on report type).")
-
     # ============================================================
-    # 🌐 PREFETCH MODE — via Cloudflare Worker
+    # 🌐 PREFETCH MODE — dual mode
     # ============================================================
     if prefetch:
-        print(f"[PREFETCH] Using Worker prehydrated report (staging={staging}, gpt={gpt})")
-        data = fetch_remote_report(
-            report_type,
-            staging=staging,
-            gpt=gpt,
-            provider=provider,
-            model=model,
-            start=start,
-            end=end,
-            strava_test=strava_test
-        )
 
-        # ✅ GPT-handled — Worker already wrote markdown + semantic
-        if gpt:
-            print("[GPT] ✅ Worker already saved Markdown + Semantic JSON — exiting early.")
-            return None  # 🚫 This now safely exits generate_full_report()
+        use_local_prefetch = os.getenv("LOCAL_PREFETCH", "0") == "1"
 
-        # If Worker returned a block/error, preserve it exactly
-        if data.get("status") != "ok":
-            full_output = data
+        # --------------------------------------------------------
+        # ☁️ MODE 1 — EXISTING CLOUD (UNCHANGED)
+        # --------------------------------------------------------
+        if not use_local_prefetch:
+
+            print(f"[PREFETCH] Using Worker prehydrated report (staging={staging}, gpt={gpt})")
+
+            data = fetch_remote_report(
+                report_type,
+                staging=staging,
+                gpt=gpt,
+                provider=provider,
+                model=model,
+                start=start,
+                end=end,
+                strava_test=strava_test
+            )
+
+            if gpt:
+                print("[GPT] ✅ Worker already saved Markdown + Semantic JSON — exiting early.")
+                return None
+
+            if data.get("status") != "ok":
+                full_output = data
+            else:
+                log_output = data.get("logs", "")
+                semantic = data.get("semantic_graph", {})
+
+                full_output = {
+                    "status": data.get("status", "ok"),
+                    "message": data.get("message", f"{report_type.title()} report (prefetched)"),
+                    "error_type": data.get("error_type"),
+                    "severity": data.get("severity"),
+                    "semantic_graph": semantic,
+                    "logs": log_output,
+                }
+
+        # ============================================================
+        # 💻 LOCAL MODE — run_report using Worker prefetch dataset
+        # ============================================================
         else:
-            log_output = data.get("logs", "")
-            semantic = data.get("semantic_graph", {})
-            full_output = {
-                "status": data.get("status", "ok"),
-                "message": data.get("message", f"{report_type.title()} report (prefetched)"),
-                "error_type": data.get("error_type"),
-                "severity": data.get("severity"),
-                "semantic_graph": semantic,
-                "logs": log_output,
+
+            print(f"[LOCAL-PREFETCH] Using Worker dataset instead of internal fetch")
+
+            worker_base = get_worker_base(staging)
+            url = f"{worker_base}/run_{report_type}?prefetch=true"
+
+            if start:
+                url += f"&start={start}"
+            if end:
+                url += f"&end={end}"
+
+            headers = {
+                "Authorization": f"Bearer {os.getenv('ICU_OAUTH', '')}",
+                "User-Agent": "IntervalsGPTCoachLocal/1.0"
             }
 
-    # ============================================================
-    # 💻 LOCAL MODE — Run local
-    # ============================================================
-    else:
-        debug({}, f"🧭 Generating {report_type.title()} Report (local mode)")
+            print(f"[LOCAL-PREFETCH] → {url}")
 
-        # 🧩 Inject optional custom date range
+            resp = requests.get(url, headers=headers, timeout=120)
+            resp.raise_for_status()
+
+            dataset = resp.json()
+
+            # --------------------------------------------------------
+            # 🔧 NORMALISE (same as Railway)
+            # --------------------------------------------------------
+            prefetch_context = normalize_prefetched_context(dataset)
+
+            # --------------------------------------------------------
+            # 🔑 Inject required execution keys
+            # --------------------------------------------------------
+
+            if start:
+                prefetch_context["start"] = start
+            if end:
+                prefetch_context["end"] = end
+
+            prefetch_context = dict(prefetch_context)  # ensure it's a real mutable copy
+            prefetch_context["prefetch_done"] = True
+
+            # --------------------------------------------------------
+            # 🧠 RUN LOCAL PIPELINE WITH NORMALISED DATA
+            # --------------------------------------------------------
+            if debug_mode:
+                with redirect_stdout(buffer):
+                    result = run_report(
+                        reportType=report_type,
+                        include_coaching_metrics=True,
+                        output_format=output_format,
+                        render_mode="lite" if lite else "full+metrics",
+                        **prefetch_context
+                    )
+                logs = buffer.getvalue()
+            else:
+                result = run_report(
+                    reportType=report_type,
+                    include_coaching_metrics=True,
+                    output_format=output_format,
+                    render_mode="lite" if lite else "full+metrics",
+                    **prefetch_context
+                )
+                logs = ""
+
+            raw_logs = logs.splitlines()
+            skip_terms = ["snapshot", "trace", "json", "context", "activities_full", "DataFrame"]
+
+            log_output = "\n".join(
+                [line for line in raw_logs if not any(term in line.lower() for term in skip_terms)]
+            ).strip()
+
+            # --------------------------------------------------------
+            # 📦 OUTPUT HANDLING (UNCHANGED STRUCTURE)
+            # --------------------------------------------------------
+            if isinstance(result, tuple):
+                report, summary = result
+            else:
+                report = result
+
+            if isinstance(report, dict):
+
+                if output_format == "semantic":
+                    semantic_output = report.get("semantic_graph", {})
+
+                    token_count = estimate_tokens_from_json(semantic_output)
+                    if token_count:
+                        print(f"[TOKENS][LOCAL-PREFETCH] semantic_graph = {token_count:,}")
+
+                    full_output = {
+                        "status": "ok",
+                        "message": f"{report_type.title()} report generated (local-prefetch)",
+                        "semantic_graph": semantic_output,
+                        "_debug": {
+                            "tokens": token_count
+                        }
+                    }
+
+                else:
+                    md_output = report.get("markdown", "")
+
+                    full_output = (
+                        f"# 🧾 {report_type.title()} Audit Report\n\n"
+                        f"🗓️ Date Range: {start} → {end}\n\n" if start and end else ""
+                    ) + (
+                        "## Execution Logs\n\n"
+                        "```\n" + log_output + "\n```\n\n"
+                        "## Rendered Markdown Report\n\n"
+                        + md_output.strip()
+                    )
+
+            else:
+                full_output = {"markdown": str(report), "logs": log_output}
+
+    else:
+        print("[LOCAL] Running LOCAL compute with Worker dataset")
+
+        # ============================================
+        # 🧪 LOCAL CLI MODE FLAG
+        # ============================================
         context = {}
-        if start and end:
-            debug(context, f"[CLI] ⏱️ Custom date range provided: {start} → {end}")
-            context["start"] = start
-            context["end"] = end
-        else:
-            debug(context, "[CLI] Using default auto-window (today-365 for summary, etc.)")
+        context["_local_cli"] = True
+
+        # --------------------------------------------
+        # 🔥 ALWAYS FETCH FROM WORKER (NO LOCAL FETCH)
+        # --------------------------------------------
+        dataset = fetch_worker_prefetch_dataset(
+            report_type,
+            staging=staging,
+            start=start,
+            end=end
+        )
+
+        # --------------------------------------------
+        # 🔧 NORMALISE (same as Railway)
+        # --------------------------------------------
+        prefetch_context = normalize_prefetched_context(dataset)
+
+        # --------------------------------------------
+        # 🔑 Inject execution keys
+        # --------------------------------------------
+
+        if start:
+            prefetch_context["start"] = start
+        if end:
+            prefetch_context["end"] = end
+        # 🔒 FORCE prefetch contract for local CLI
+        prefetch_context = dict(prefetch_context)  # ensure it's a real mutable copy
+        prefetch_context["prefetch_done"] = True
 
         if debug_mode:
             with redirect_stdout(buffer):
@@ -600,7 +777,7 @@ def generate_full_report(
                     include_coaching_metrics=True,
                     output_format=output_format,
                     render_mode="lite" if lite else "full+metrics",
-                    **context,
+                    **prefetch_context
                 )
             logs = buffer.getvalue()
         else:
@@ -609,17 +786,17 @@ def generate_full_report(
                 include_coaching_metrics=True,
                 output_format=output_format,
                 render_mode="lite" if lite else "full+metrics",
-                **context,
+                **prefetch_context
             )
             logs = ""
+
         raw_logs = logs.splitlines()
         skip_terms = ["snapshot", "trace", "json", "context", "activities_full", "DataFrame"]
+
         log_output = "\n".join(
             [line for line in raw_logs if not any(term in line.lower() for term in skip_terms)]
         ).strip()
 
-        # Capture report + dataset summary
-        summary = None
         if isinstance(result, tuple):
             report, summary = result
         else:
@@ -629,19 +806,19 @@ def generate_full_report(
 
             if output_format == "semantic":
                 semantic_output = report.get("semantic_graph", {})
-                # --- Token estimate ---
+
                 token_count = estimate_tokens_from_json(semantic_output)
                 if token_count:
                     print(f"[TOKENS][LOCAL] semantic_graph = {token_count:,}")
+
                 full_output = {
                     "status": "ok",
-                    "message": f"{report_type.title()} report generated",
+                    "message": f"{report_type.title()} report generated (local)",
                     "semantic_graph": semantic_output,
                     "_debug": {
                         "tokens": token_count
                     }
                 }
-                log_file_output = log_output
 
             else:
                 md_output = report.get("markdown", "")
@@ -659,76 +836,47 @@ def generate_full_report(
         else:
             full_output = {"markdown": str(report), "logs": log_output}
 
+        # ============================================================
+        # 💾 FILE WRITING (UNCHANGED)
+        # ============================================================
+        if prefetch and gpt:
+            print("[SAFEGUARD] 🛑 Prefetch GPT detected — skipping local file writing entirely.")
+            return None
 
-    # ============================================================
-    # 💾 FILE WRITING (Distinct Names, No Collisions)
-    # ============================================================
-    if prefetch and gpt:
-        print("[SAFEGUARD] 🛑 Prefetch GPT detected — skipping local file writing entirely.")
-        return None  # 🧱 Hard stop, prevents duplicate writes
+        mode = "prefetch" if prefetch else "local"
+        env_tag = "staging" if staging else "prod"
+        gpt_tag = "_gpt" if gpt else ""
 
-    mode = "prefetch" if prefetch else "local"
-    env_tag = "staging" if staging else "prod"
-    gpt_tag = "_gpt" if gpt else ""
+        base_name = f"report_{report_type}_{mode}_{env_tag}{gpt_tag}_{output_format}"
 
-    base_name = f"report_{report_type}_{mode}_{env_tag}{gpt_tag}_{output_format}"
+        reports_dir = Path("reports")
+        reports_dir.mkdir(parents=True, exist_ok=True)
 
+        if output_format == "semantic":
+            out_path = reports_dir / f"{base_name}.json"
 
-    # ============================================================
-    # 💾 WRITE LOCAL OUTPUT (Semantic or Markdown)
-    # ============================================================
-    reports_dir = Path("reports")
-    reports_dir.mkdir(parents=True, exist_ok=True)
+            def json_default(obj):
+                import pandas as pd, datetime, numpy as np
+                if isinstance(obj, (pd.Timestamp, datetime.date, datetime.datetime)):
+                    return obj.isoformat()
+                if isinstance(obj, (np.int64, np.int32)):
+                    return int(obj)
+                if isinstance(obj, (np.float32, np.float64)):
+                    return float(obj)
+                return str(obj)
 
-    if output_format == "semantic":
-        out_path = reports_dir / f"{base_name}.json"
+            with open(out_path, "w", encoding="utf-8") as f:
+                json.dump(full_output, f, indent=2, default=json_default)
 
-        # --- Safe JSON encoder for Pandas, NumPy, and datetime objects ---
-        def json_default(obj):
-            import pandas as pd, datetime, numpy as np
-            if isinstance(obj, (pd.Timestamp, datetime.date, datetime.datetime)):
-                return obj.isoformat()
-            if isinstance(obj, (np.int64, np.int32)):
-                return int(obj)
-            if isinstance(obj, (np.float32, np.float64)):
-                return float(obj)
-            return str(obj)
+            print(f"[LOCAL] ✅ Saved semantic JSON → {out_path}")
 
-        with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(full_output, f, indent=2, default=json_default)
+        else:
+            out_path = reports_dir / f"{base_name}.md"
+            with open(out_path, "w", encoding="utf-8") as f:
+                f.write(full_output)
+            print(f"[LOCAL] ✅ Saved markdown report → {out_path}")
 
-        print(f"[LOCAL] ✅ Saved semantic JSON → {out_path}")
-
-        # Write debug logs (local debug mode)
-        if debug_mode and logs:
-
-            log_path = reports_dir / f"report_{report_type}_local_{env_tag}_debug.log"
-
-            with open(log_path, "w", encoding="utf-8") as f:
-                f.write(logs)
-
-            print(f"[DEBUG] 📜 Logs saved → {log_path.name}")
-            print(f"[DEBUG] 📜 Logs captured: {len(logs.splitlines())} lines")
-
-            open_report(log_path)
-
-        if debug and logs:
-            with open(log_path, "w", encoding="utf-8") as f:
-                f.write(logs)
-
-        if os.getenv("OPEN_REPORT", "1") == "1":
-            webbrowser.open(out_path.resolve().as_uri())
-
-    else:
-        out_path = reports_dir / f"{base_name}.md"
-        with open(out_path, "w", encoding="utf-8") as f:
-            f.write(full_output)
-        print(f"[LOCAL] ✅ Saved markdown report → {out_path}")
-
-        if os.getenv("OPEN_REPORT", "1") == "1":
-            webbrowser.open(out_path.resolve().as_uri())
-
-    return full_output
+        return full_output
 
 # ─────────────────────────────────────────────
 # CLI ENTRY POINT
@@ -808,8 +956,6 @@ def main():
         debug_mode=args.debug,
         lite=args.lite
     )
-
-
 
 if __name__ == "__main__":
     main()

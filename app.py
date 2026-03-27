@@ -35,7 +35,7 @@ logging.basicConfig(
 
 logger = logging.getLogger("app")
 
-print("[BOOT] 🚀 Starting Montis.icu GPT Coach Railway API")
+print("[BOOT] Starting Montis.icu GPT Coach Railway API")
 icuoauth = os.getenv("ICU_OAUTH")
 if icuoauth:
     print("[BOOT-WARN] Variable ICU_OAUTH detected:", icuoauth[:10], "...")
@@ -1546,3 +1546,4 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
         "compliance": {},
         "logs": buffer.getvalue()[-20000:] if buffer else ""
     })
+    
