@@ -1073,6 +1073,3 @@ def run_report(
     compliance = True
 
     return final_output, compliance
-
-if __name__ == "__main__":
-    run_report("weekly")
