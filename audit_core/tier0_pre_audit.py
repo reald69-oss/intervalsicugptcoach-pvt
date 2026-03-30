@@ -908,7 +908,6 @@ def run_tier0_pre_audit(start: str, end: str, context: dict):
     # 🔒 Re-apply time context now that athlete timezone is known
     set_time_context(context)
     debug(context, f"[CHECK] athlete name = {context.get('athleteProfile', {}).get('name')}")
-    debug(context, f"[CHECK] athlete id = {context.get('athleteProfile', {}).get('id')}")
 
     # --- Step 2: Define canonical date window (metadata only) ---
     def fmt_date(x):

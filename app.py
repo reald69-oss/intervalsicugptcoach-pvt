@@ -150,10 +150,35 @@ def normalize_prefetched_context(data):
         athlete = data.get("athlete") or {}
         calendar = data.get("calendar", {})
 
-        #debug(context, f"[RAW FULL SAMPLE] {str(data.get('activities_full', [{}])[0])[:5000]}")
+        # 🔥 FIX FIRST — normalize identity BEFORE using athlete anywhere
+        if not athlete.get("id"):
+            identity = data.get("identity") or athlete.get("identity")
+            if isinstance(identity, dict) and identity.get("id"):
+                athlete["id"] = str(identity.get("id"))
+                athlete["name"] = identity.get("name") or athlete.get("name")
+                athlete["timezone"] = identity.get("timezone") or athlete.get("timezone")
 
-        context["athlete_raw"] = athlete          # 🔒 raw ICU athlete (timezone lives here)
-        context["athlete"] = context["athlete_raw"]  # 🔑 canonical view for rest of pipeline
+        # 🔒 CONTRACT INVARIANT
+        if not isinstance(athlete, dict):
+            raise AuditHalt(
+                "Athlete profile missing or invalid.",
+                code="ATHLETE_PROFILE_INVALID",
+                severity="hard"
+            )
+
+        if "id" not in athlete:
+            raise AuditHalt(
+                "Your Intervals.icu account is not connected. "
+                "Please authorize the app to access your training data, then try again.\n\n"
+                "Setup guide:\n"
+                "https://www.montis.icu/setup.html",
+                code="OAUTH_NOT_CONFIGURED",
+                severity="hard"
+            )
+
+        # ✅ NOW safe to inject into context
+        context["athlete_raw"] = athlete
+        context["athlete"] = athlete
 
         context["athleteIdentity"] = {
             "id": athlete.get("id"),
@@ -173,33 +198,6 @@ def normalize_prefetched_context(data):
             context,
             f"[T0] Athlete profile ready — id={athlete['id']} name={athlete.get('name')}"
         )
-
-
-        # support identity-based payloads (Intervals format)
-        if not athlete.get("id"):
-            identity = data.get("identity") or athlete.get("identity")
-            if isinstance(identity, dict) and identity.get("id"):
-                athlete["id"] = identity.get("id")
-                athlete["name"] = identity.get("name", athlete.get("name"))
-                athlete["timezone"] = identity.get("timezone", athlete.get("timezone"))
-
-        # 🔒 CONTRACT INVARIANT — athlete must have an id
-        if not isinstance(athlete, dict):
-            raise AuditHalt(
-                "Athlete profile missing or invalid.",
-                code="ATHLETE_PROFILE_INVALID",
-                severity="hard"
-            )
-
-        if "id" not in athlete:
-            raise AuditHalt(
-                "Your Intervals.icu account is not connected. "
-                "Please authorize the app to access your training data, then try again.\n\n"
-                "Setup guide:\n"
-                "https://www.montis.icu/setup.html",
-                code="OAUTH_NOT_CONFIGURED",
-                severity="hard"
-            )
 
         # 🔒 GUARD: Abort if ALL rows are STRAVA API stubs (exact note match)
         if not df_light.empty and "_note" in df_light.columns:
@@ -1025,7 +1023,7 @@ async def run_audit_with_data(
 
             report_header = {
                 "athlete_name": context.get("athleteProfile", {}).get("name", "Unknown Athlete"),
-                "athlete_id": context.get("athleteProfile", {}).get("id"),
+                "athlete_id": prefetch_context.get("athleteProfile", {}).get("id"),
                 "report_type": report_range,
                 "timezone": context.get("timezone", "Europe/Zurich"),
                 "date_range": date_range,
@@ -1172,6 +1170,7 @@ async def get_debug_with_data(data: dict):
 
     report_header = {
         "athlete": ctx.get("athleteProfile", {}).get("name", "Unknown Athlete"),
+        "athlete_id": prefetch_context.get("athleteProfile", {}).get("id"),
         "report_type": report_range,
         "timezone": ctx.get("timezone", "Europe/Zurich"),
         "date_range": f"{start} → {end}" if start and end else "not_passed",
@@ -1181,7 +1180,7 @@ async def get_debug_with_data(data: dict):
         "[EXEC] report_header injected (debug-run) → %s | report_type=%s | athlete=%s",
         report_header,
         report_range,
-        report_header.get("athlete", "unknown")
+        report_header.get("athlete_id", "unknown")
     )
 
     MAX_LOG = 250000
