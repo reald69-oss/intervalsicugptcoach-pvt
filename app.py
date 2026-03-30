@@ -152,6 +152,29 @@ def normalize_prefetched_context(data):
 
         #debug(context, f"[RAW FULL SAMPLE] {str(data.get('activities_full', [{}])[0])[:5000]}")
 
+        context["athlete_raw"] = athlete          # 🔒 raw ICU athlete (timezone lives here)
+        context["athlete"] = context["athlete_raw"]  # 🔑 canonical view for rest of pipeline
+
+        context["athleteIdentity"] = {
+            "id": athlete.get("id"),
+            "name": athlete.get("name"),
+            "profile_medium": athlete.get("profile_medium"),
+            "city": athlete.get("city"),
+            "state": athlete.get("state"),
+            "country": athlete.get("country"),
+            "timezone": athlete.get("timezone"),
+            "sex": athlete.get("sex"),
+            "bio": athlete.get("bio"),
+            "website": athlete.get("website"),
+            "email": athlete.get("email"),
+        }
+
+        debug(
+            context,
+            f"[T0] Athlete profile ready — id={athlete['id']} name={athlete.get('name')}"
+        )
+
+
         # support identity-based payloads (Intervals format)
         if not athlete.get("id"):
             identity = data.get("identity") or athlete.get("identity")
