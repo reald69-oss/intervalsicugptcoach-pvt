@@ -3242,7 +3242,6 @@ def build_semantic_json(context):
                     # -------------------------------------------------
                     # remaining calendar sessions / future only from today
                     # -------------------------------------------------
-
                     planned_remaining = 0.0
 
                     for ce in calendar_events:
@@ -3253,18 +3252,21 @@ def build_semantic_json(context):
 
                         ce_date = ce_date.date()
 
-                        # ✅ ONLY FUTURE (or today if you want)
+                        # ✅ LIMIT TO THIS ISO WEEK
+                        if ce_date < monday.date() or ce_date > sunday.date():
+                            continue
+
+                        # ✅ FUTURE ONLY
                         if ce_date < today.date():
                             continue
 
-                        # skip if executed (paired)
+                        # ✅ STRICT pairing rule
                         ce_id = ce.get("id")
                         if ce_id in consumed_plan_ids:
                             continue
 
                         load = float(ce.get("icu_training_load", 0) or 0)
                         planned_remaining += load
-
 
                     # -------------------------------------------------
                     # executed planned sessions (reconstruct original plan)
