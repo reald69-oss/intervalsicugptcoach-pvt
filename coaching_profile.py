@@ -634,7 +634,7 @@ RENDERER_PROFILES = {
             "Precedence: required_phase > ADE.directive > performance_intelligence.training_state > metrics.",
             # ADAPTIVE DECISIONS
             "Render adaptive_decisions as compact dashboard tables (no narrative).",
-            "adaptive_decisions MUST be rendered as STATE and OPERATIONS tables.",
+            "adaptive_decisions MUST be rendered as STATE, OPERATIONS, TRAINING_GUIDANCE, PHASE ALIGNMENT, DECISION CONTEXT, FUTURE ACTIONS, PHASES SUMMARY tables.",
             "STATE MUST NOT exceed 4 columns per table.",
             "STATE MUST be split into multiple tables when more than 4 fields are present.",
             "STATE tables MUST follow this fixed grouping:",
