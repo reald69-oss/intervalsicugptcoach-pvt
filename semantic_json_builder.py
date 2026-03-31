@@ -3375,8 +3375,10 @@ def build_semantic_json(context):
                     current_ISO_weekly_microcycle["projected_total_tss"] = round(projected_total, 1)
                     current_ISO_weekly_microcycle["delta_to_target"] = round(delta, 1)
 
-                    current_ISO_weekly_microcycle["weekly_target_tss"] = weekly_target
-                    current_ISO_weekly_microcycle["planned_remaining_tss"] = planned_remaining
+                    full_week_target = weekly_target + planned_remaining
+
+                    current_ISO_weekly_microcycle["weekly_target_tss"] = round(full_week_target, 1)
+                    current_ISO_weekly_microcycle["planned_remaining_tss"] = round(planned_remaining, 1)
 
                     # -------------------------------------------------
                     # 6️⃣ Projected Hours (reconstructed from compliance)
