@@ -4126,26 +4126,32 @@ def build_semantic_json(context):
         future_action = semantic.get("future_actions", [{}])[0]
         future_title = future_action.get("title", "").lower()
 
-        final_guidance = ade_directive
+        base_guidance = ade_directive
         phase_override = False
 
         # -------------------------
         # HARD RULE (PHASE)
         # -------------------------
         if phase == "recovery":
-            final_guidance = "Reduce load and prioritise recovery"
+            decision = "Reduce load and prioritise recovery"
             phase_override = True
 
         # -------------------------
         # SOFT RULE (FORECAST via ACTION)
         # -------------------------
         else:
+            decision = base_guidance
             if "neutral" in future_title:
-                final_guidance += " — maintain balanced load"
+                decision += " — maintain balanced load"
             elif "increase" in future_title or "build" in future_title:
-                final_guidance += " — progress load carefully"
+                decision += " — progress load carefully"
             elif "recovery" in future_title:
-                final_guidance += " — allow for recovery adaptation"
+                decision += " — allow for recovery adaptation"
+
+        # -------------------------
+        # FINAL (CAN vs SHOULD)
+        # -------------------------
+        final_guidance = f"Can: {ade_directive} | Should: {phase.capitalize()} → {decision}"
 
         semantic["training_guidance"] = final_guidance
 
