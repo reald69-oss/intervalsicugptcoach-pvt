@@ -4014,7 +4014,7 @@ def build_semantic_json(context):
         # -----------------------------
         real_blocks = [b for b in summaries if not b.get("is_projected")]
 
-        recent_blocks = real_blocks[-2:] if real_blocks else []
+        recent_blocks = real_blocks[-4:] if real_blocks else []
         last_block = recent_blocks[-1] if recent_blocks else {}
 
         last_block_phase = last_block.get("phase")
