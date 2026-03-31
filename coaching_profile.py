@@ -392,7 +392,8 @@ RENDERER_PROFILES = {
             "decision_context MUST be rendered as a single-row table with columns: ADE Directive, Phase Requirement, Alignment, Conflict.",
             "If actions[0].resolution == 'overridden_by_phase', Conflict MUST be 'Yes', else 'No'.",
             "future_actions MUST be rendered as a table with columns: Priority, Action, Reason.",
-            "phases_summary MUST be rendered as a compact table (max 4 rows) with columns: Phase, Duration, Trend in time order",
+            "phases_summary MUST be rendered as a compact table (max 4 rows) with columns: Phase, Duration, Trend",
+            "Phases should always be sequential dated phases",
             "Do NOT render state_action, system_guidance, or reflection as separate sections.",
             "Do NOT render paragraph explanations for adaptive_decisions."
             #ADAPTATION
@@ -644,7 +645,8 @@ RENDERER_PROFILES = {
             "decision_context MUST be rendered as a single-row table with columns: ADE Directive, Phase Requirement, Alignment, Conflict.",
             "If actions[0].resolution == 'overridden_by_phase', Conflict MUST be 'Yes', else 'No'.",
             "future_actions MUST be rendered as a table with columns: Priority, Action, Reason.",
-            "phases_summary MUST be rendered as a compact table (max 6 rows) with columns: Phase, Duration, Trend in Time order",
+            "phases_summary MUST be rendered as a compact table (max 6 rows) with columns: Phase, Duration, Trend",
+            "phases_summary should always be sequential dated phases",
             "Do NOT insert blank lines between adaptive_decisions tables.",
             "Do NOT insert blank lines between subheadings and tables.",
             "Subheadings MUST be plain text (no ## or ###).",
@@ -1005,6 +1007,8 @@ RENDERER_PROFILES = {
             "If semantic.training_volume exists, render it under the header 'Training Volume' with three stacked metrics: Hours, Training Load (TSS), Distance.",
             "High-level descriptive interpretation only.",
             "Avoid granular metrics or micro-coaching."
+            "phases_summary MUST be rendered as a compact table (max 10 rows) with columns: Phase, Duration, Trend",
+            "phases_summary should always be sequential dated phases"
         ],
         "allowed_enrichment": [
             "Restate high-level trends explicitly present in semantic data.",
