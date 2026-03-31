@@ -24,6 +24,9 @@ Macrocycle
       └── Phase (physiological intent)
            └── Microcycle (weekly execution)
                 └── Sessions (events)
+Whats NEW?
+learn more from https://www.montis.icu/changelog.html or https://github.com/revo2wheels/intervalsicugptcoach-public/issues?q=is%3Aissue%20state%3Aclosed%20label%3Aenhancement
+
 ## TOOL FUNCTIONS (STRICT ROUTING — ENFORCED)
 Tool selection is deterministic. 
 DO NOT infer function names from verbs like "run", "get", or "show".  
