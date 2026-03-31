@@ -11,7 +11,7 @@ def run_adaptive_decision_engine(context):
 
     directive = training_state.get("recommendation")
     operational_state = training_state.get("operational_state")
-
+    
     fatigue_class = forecast.get("fatigue_class")
     load_trend = forecast.get("load_trend")
 

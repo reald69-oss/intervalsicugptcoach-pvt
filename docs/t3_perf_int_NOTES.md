@@ -716,3 +716,28 @@ current (recent)
 
 All other curves returned by Intervals should be ignored for ESPE analysis.
 
+ADE v2 FLOW
+
+METRICS / SIGNALS
+    ↓
+PERFORMANCE INTELLIGENCE (PI)
+    ↓
+TRAINING STATE (Tier-3)
+    ↓
+TEMPORAL STRUCTURE
+    - past (phases)
+    - future (training_context)
+    - required (from state)
+    - alignment
+    ↓
+ADAPTIVE DECISION ENGINE (ADE)
+    ↓
+SEMANTIC OUTPUT
+    - actions (directive)
+    - phase_context (structure)
+    - training_guidance (summary)
+    ↓
+LLM
+    - renders
+    - compares
+    - adjusts plan (within constraints)

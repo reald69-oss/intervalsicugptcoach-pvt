@@ -2384,7 +2384,6 @@ def build_semantic_json(context):
             if start:
                 planned_by_date.setdefault(start, []).append(event)
 
-
         planned_summary_by_date = {
             day: {
                 "total_events": len(events),
@@ -2393,6 +2392,68 @@ def build_semantic_json(context):
                 "categories": sorted({e.get("category") for e in events if e.get("category")}),
             }
             for day, events in planned_by_date.items()
+        }
+
+        # ---------------------------------------------------------
+        # 🧠 TRAINING CONTEXT (LLM CONTROL SIGNAL — NOT CONTRACT DATA)
+        # ---------------------------------------------------------
+
+        next_3d = []
+        next_7d = []
+
+        today = pd.Timestamp.now().date()
+
+        for e in planned_events:
+            try:
+                d = pd.to_datetime(e.get("start_date_local")).date()
+            except Exception:
+                continue
+
+            delta = (d - today).days
+
+            if 0 <= delta <= 3:
+                next_3d.append(e)
+
+            if 0 <= delta <= 7:
+                next_7d.append(e)
+
+        next_3d_load = sum(e.get("icu_training_load", 0) for e in next_3d)
+        next_7d_load = sum(e.get("icu_training_load", 0) for e in next_7d)
+
+        debug(
+            context,
+            "[SEMANTIC][CTX_MID_LOOP]",
+            f"next_3d_load={next_3d_load}",
+            f"next_7d_load={next_7d_load}",
+            f"events_so_far={len(planned_events)}"
+        )
+
+        context["training_context"] = {
+            "short_term": {
+                "window": "3d",
+                "load": next_3d_load,
+                "sessions": len(next_3d),
+                "status": (
+                    "high" if next_3d_load > 180
+                    else "moderate" if next_3d_load > 100
+                    else "low"
+                ),
+                "instruction": (
+                    "absorb_load"
+                    if next_3d_load > 180
+                    else "normal"
+                )
+            },
+            "weekly_shape": {
+                "window": "7d",
+                "load": next_7d_load,
+                "sessions": len(next_7d),
+                "density": (
+                    "dense" if len(next_7d) >= 5
+                    else "balanced" if len(next_7d) >= 3
+                    else "sparse"
+                )
+            }
         }
 
         # ---------------------------------------------------------
@@ -2538,6 +2599,7 @@ def build_semantic_json(context):
             "planned_events_block_count": 0,
             "notes": "No planned events found or calendar source unavailable."
         }
+        semantic["training_guidance"] = []
         debug(context, "[SEMANTIC] ⚠️ No valid planned events found")
 
     # ---------------------------------------------------------
@@ -3894,13 +3956,12 @@ def build_semantic_json(context):
             insight_view["positive"].append(entry)
 
     # ---------------------------------------------------------
-    # ADE
+    # ADE → SEMANTIC ACTION
     # ---------------------------------------------------------
 
     ade = context.get("adaptive_decision")
 
     if ade:
-
         semantic.setdefault("actions", [])
 
         semantic["actions"].insert(0, {
@@ -3912,6 +3973,139 @@ def build_semantic_json(context):
 
             **ade
         })
+
+    # ---------------------------------------------------------
+    # 🧭 PHASE CONTEXT (PAST → CURRENT → FUTURE ALIGNMENT)
+    # ---------------------------------------------------------
+
+    try:
+
+        phases = semantic.get("phases", [])
+        summaries = semantic.get("phases_summary", [])
+        ts = context.get("training_state", {})
+        micro = semantic.get("current_ISO_weekly_microcycle", {})
+
+        # -----------------------------
+        # Past pattern (sequence + streak)
+        # -----------------------------
+        recent = phases[-6:]
+        recent_labels = [p.get("classification") for p in recent if p.get("classification")]
+
+        fatigue_labels = {"Productive_fatigue", "Overreached"}
+
+        fatigue_streak = 0
+        for label in reversed(recent_labels):
+            if label in fatigue_labels:
+                fatigue_streak += 1
+            else:
+                break
+
+        if fatigue_streak >= 4:
+            past_pattern = "fatigue_streak"
+        elif "Recovery" in recent_labels:
+            past_pattern = "recovery_present"
+        else:
+            past_pattern = "mixed"
+
+        # -----------------------------
+        # Block context (REMOVE projected)
+        # -----------------------------
+        real_blocks = [b for b in summaries if not b.get("is_projected")]
+
+        recent_blocks = real_blocks[-2:] if real_blocks else []
+        last_block = recent_blocks[-1] if recent_blocks else {}
+
+        last_block_phase = last_block.get("phase")
+        last_block_days = last_block.get("duration_days", 0)
+
+        # -----------------------------
+        # Current
+        # -----------------------------
+        operational_state = ts.get("operational_state")
+        current_state = ts.get("state_label")
+
+        # -----------------------------
+        # Future (planned)
+        # -----------------------------
+        planned_pattern = "unknown"
+
+        if micro.get("projected_total_tss") and micro.get("planned_remaining_tss"):
+            planned_pattern = "increasing"
+
+        # -----------------------------
+        # Required phase (SAFE + PRIORITY)
+        # -----------------------------
+        required_phase = "build"  # default (never remove)
+
+        if fatigue_streak >= 4:
+            required_phase = "recovery"
+
+        elif last_block_phase == "Overreached" and last_block_days >= 7:
+            required_phase = "recovery"
+
+        elif operational_state == "recovery_priority":
+            required_phase = "recovery"
+
+        # -----------------------------
+        # Alignment
+        # -----------------------------
+        alignment = "aligned"
+
+        if required_phase == "recovery" and planned_pattern == "increasing":
+            alignment = "misaligned"
+
+        # -----------------------------
+        # Output FIRST (important)
+        # -----------------------------
+        semantic["phase_alignment"] = {
+            "past_pattern": past_pattern,
+            "current_state": current_state,
+            "operational_state": operational_state,
+            "planned_pattern": planned_pattern,
+            "required_phase": required_phase,
+            "alignment": alignment,
+            "phase_streak": {
+                "type": "fatigue" if fatigue_streak else "none",
+                "length": fatigue_streak
+            },
+            "last_block": {
+                "phase": last_block_phase,
+                "duration_days": last_block_days
+            }
+        }
+
+        # ---------------------------------------------------------
+        # 🧭 ALIGN TRAINING GUIDANCE WITH PHASE CONTEXT (ADE PURE)
+        # ---------------------------------------------------------
+
+        ade_directive = ade.get("directive") if ade else "Maintain training structure"
+
+        # ADE is ALWAYS the directive
+        semantic["training_guidance"] = ade_directive
+
+        # Context only — no overrides, no hidden logic
+        semantic["decision_context"] = {
+            "ade_directive": ade_directive,
+            "phase_requirement": required_phase,
+            "alignment": alignment,
+            "conflict": (
+                alignment == "misaligned"
+            )
+        }
+        debug(context, f"[PHASE_ALIGNMENT] required={required_phase} alignment={alignment}")
+
+    except Exception as e:
+        debug(context, f"[PHASE_ALIGNMENT] ⚠️ failed: {e}")
+
+    # ---------------------------------------------------------
+    # 🧠 LLM CONTROL SIGNALS (FINAL PROMOTION)
+    # MUST BE LAST STEP BEFORE RETURN
+    # ---------------------------------------------------------
+
+    # Training context (correct as-is)
+    if context.get("training_context"):
+        semantic["training_context"] = context["training_context"]
+
 
     # ---------------------------------------------------------
     # ✅ Contract Enforcement

@@ -32,11 +32,16 @@ REPORT_CONTRACT = {
 
         # 🎯 ADAPTIVE DECISIONS
         "actions",
+        "training_guidance",
+        "phase_alignment",
+        "decision_context",
         #"planned_events",
         "current_ISO_weekly_microcycle",
         "planned_summary_by_iso_week",
         "future_forecast",
         "future_actions",
+        #"phases",
+        "phases_summary",
     ],
 
     "weekly_lite": [
@@ -56,6 +61,7 @@ REPORT_CONTRACT = {
 
         # 📈 ADAPTATION
         "energy_system_progression",
+        "training_guidance",
 
         # 🎯 ADAPTIVE DECISIONS
         "actions",
@@ -320,12 +326,17 @@ RENDERER_PROFILES = {
 
             "adaptive_decisions": [
                 "actions",
+                "training_guidance",
+                "phase_alignment",
+                "phases_summary",
+                "decision_context",
                 #"planned_events",
                 #"planned_summary_by_date",
                 "current_ISO_weekly_microcycle",
                 "planned_summary_by_iso_week",
                 "future_forecast",
                 "future_actions",
+                #"phases"
             ]
         },
         "stack_labels": {
@@ -403,6 +414,9 @@ RENDERER_PROFILES = {
             "physiology": "full",
             "wellness": "summary",
             "phases": "forbid",
+            "phase_alignment": "headline",
+            "decision_context": "headline",
+            "phases_summary": "summary",
             #"planned_events": "forbid",
             #"planned_summary_by_date": "forbid",
             "planned_summary_by_iso_week": "forbid",
@@ -411,6 +425,7 @@ RENDERER_PROFILES = {
             "actions.1.state_action": "full",
             "actions.3.system_guidance": "full",
             "actions.4.reflection": "full",
+            "training_guidance": "headline",
             "future_forecast": "forbid",
             "future_actions": "full",
             "insights": "forbid",
@@ -423,6 +438,7 @@ RENDERER_PROFILES = {
             "events": "medium",
             "wellness": "medium",
             "adaptation": "high",
+            "phases_summary": "low"
         },
 
         "events_rule": {
