@@ -392,7 +392,7 @@ RENDERER_PROFILES = {
             "decision_context MUST be rendered as a single-row table with columns: ADE Directive, Phase Requirement, Alignment, Conflict.",
             "If actions[0].resolution == 'overridden_by_phase', Conflict MUST be 'Yes', else 'No'.",
             "future_actions MUST be rendered as a table with columns: Priority, Action, Reason.",
-            "phases_summary MUST be rendered as a compact table (max 3 rows) with columns: Phase, Duration, Trend.",
+            "phases_summary MUST be rendered as a compact table (max 4 rows) with columns: Phase, Duration, Trend in time order",
             "Do NOT render state_action, system_guidance, or reflection as separate sections.",
             "Do NOT render paragraph explanations for adaptive_decisions."
             #ADAPTATION
@@ -644,7 +644,7 @@ RENDERER_PROFILES = {
             "decision_context MUST be rendered as a single-row table with columns: ADE Directive, Phase Requirement, Alignment, Conflict.",
             "If actions[0].resolution == 'overridden_by_phase', Conflict MUST be 'Yes', else 'No'.",
             "future_actions MUST be rendered as a table with columns: Priority, Action, Reason.",
-            "phases_summary MUST be rendered as a compact table (max 3 rows) with columns: Phase, Duration, Trend.",
+            "phases_summary MUST be rendered as a compact table (max 6 rows) with columns: Phase, Duration, Trend in Time order",
             "Do NOT insert blank lines between adaptive_decisions tables.",
             "Do NOT insert blank lines between subheadings and tables.",
             "Subheadings MUST be plain text (no ## or ###).",
