@@ -3979,7 +3979,7 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     # 🧭 PHASE CONTEXT (PAST → CURRENT → FUTURE ALIGNMENT)
     # ---------------------------------------------------------
-
+    phase_override = False
     try:
 
         phases = semantic.get("phases", [])
