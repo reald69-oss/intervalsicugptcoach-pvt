@@ -4075,27 +4075,70 @@ def build_semantic_json(context):
         }
 
         # ---------------------------------------------------------
-        # 🧭 ALIGN TRAINING GUIDANCE WITH PHASE CONTEXT (ADE PURE)
+        # 🧭 TRAINING GUIDANCE (FINAL — GOVERNED + MODULATED)
         # ---------------------------------------------------------
 
-        ade_directive = ade.get("directive") if ade else "Maintain training structure"
+        ade_directive = ade["directive"]
+        phase = semantic["phase_alignment"]["required_phase"]
 
-        # ADE is ALWAYS the directive
-        semantic["training_guidance"] = ade_directive
+        future_action = semantic.get("future_actions", [{}])[0]
+        future_title = future_action.get("title", "").lower()
 
-        # Context only — no overrides, no hidden logic
+        final_guidance = ade_directive
+        phase_override = False
+
+        # -------------------------
+        # HARD RULE (PHASE)
+        # -------------------------
+        if phase == "recovery":
+            final_guidance = "Reduce load and prioritise recovery"
+            phase_override = True
+
+        # -------------------------
+        # SOFT RULE (FORECAST via ACTION)
+        # -------------------------
+        else:
+            if "neutral" in future_title:
+                final_guidance += " — maintain balanced load"
+            elif "increase" in future_title or "build" in future_title:
+                final_guidance += " — progress load carefully"
+            elif "recovery" in future_title:
+                final_guidance += " — allow for recovery adaptation"
+
+        semantic["training_guidance"] = final_guidance
+
         semantic["decision_context"] = {
             "ade_directive": ade_directive,
-            "phase_requirement": required_phase,
+            "required_phase": phase,
             "alignment": alignment,
-            "conflict": (
-                alignment == "misaligned"
-            )
+            "phase_override": phase_override,
+            "forecast_trend": forecast.get("load_trend")
         }
         debug(context, f"[PHASE_ALIGNMENT] required={required_phase} alignment={alignment}")
 
     except Exception as e:
         debug(context, f"[PHASE_ALIGNMENT] ⚠️ failed: {e}")
+
+    # ---------------------------------------------------------
+    # ALIGN ADE ACTION WITH PHASE GOVERNANCE (CRITICAL)
+    # ---------------------------------------------------------
+
+    if semantic.get("actions"):
+        ade_action = semantic["actions"][0]  # first is always ADE
+
+        ade_action["phase_constraint"] = phase
+        ade_action["phase_alignment"] = alignment
+
+        if phase_override:
+            ade_action["resolution"] = "overridden_by_phase"
+
+            semantic["conflict"] = {
+                "metrics_state": ade.get("operational_state"),
+                "phase_requirement": phase,
+                "resolution": "override"
+            }
+        else:
+            ade_action["resolution"] = "honoured"
 
     # ---------------------------------------------------------
     # 🧠 LLM CONTROL SIGNALS (FINAL PROMOTION)

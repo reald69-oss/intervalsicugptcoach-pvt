@@ -370,6 +370,11 @@ RENDERER_PROFILES = {
             "Render power anchors as [<power> W](link) when activity_link exists, else plain.",
             "Title current_ISO_weekly_microcycle as 'Current ISO Week ## (Mon-Sun)'.",
             "If a section is marked full, render every entity and field exactly as present in the semantic data",
+            "If phase_alignment.alignment == 'misaligned':",
+            "- required_phase overrides ADE directive in interpretation.",
+            "- Any positive load statement MUST be qualified by fatigue/phase context.",
+            "- Do NOT present training as fully acceptable without qualification.",
+            "Precedence: required_phase > training_state > metrics.",
             #ADAPTIVE DECISIONS
             "Render adaptive_decisions as compact dashboard tables (no narrative).",
             "adaptive_decisions MUST be rendered as STATE and OPERATIONS tables.",
@@ -379,6 +384,11 @@ RENDERER_PROFILES = {
             "STATE SNAPSHOT: directive, state, load_trend, risk_flag.",
             "ADAPTATION RESPONSE: adaptation_focus, key_constraint, next_action, dominant_signal.",
             "OPERATIONS table MUST contain week_delta, planned_load (current → next), and 14 day forecast summary (CTL / TSB / fatigue_class).",
+            "training_guidance MUST be rendered as a single-row table with column: Directive.",
+            "phase_alignment MUST be rendered as a single-row table with columns: Required Phase, Alignment, Past Pattern, Phase Streak.",
+            "decision_context MUST be rendered as a single-row table with columns: ADE Directive, Phase Requirement, Alignment, Conflict.",
+            "future_actions MUST be rendered as a table with columns: Priority, Action, Reason.",
+            "phases_summary MUST be rendered as a compact table (max 3 rows) with columns: Phase, Duration, Trend.",
             "Do NOT render state_action, system_guidance, or reflection as separate sections.",
             "Do NOT render paragraph explanations for adaptive_decisions.",
             #ADAPTATION
