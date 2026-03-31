@@ -29,6 +29,7 @@ REPORT_CONTRACT = {
         "energy_system_progression",
         "physiology",
         "zones",
+        "phases_summary",
 
         # 🎯 ADAPTIVE DECISIONS
         "actions",
@@ -41,7 +42,6 @@ REPORT_CONTRACT = {
         "future_forecast",
         "future_actions",
         #"phases",
-        "phases_summary",
     ],
 
     "weekly_lite": [
@@ -169,9 +169,6 @@ PRUNE_RULES = {
     "weekly": {
         "wellness": [
             "hrv_series"
-        ],
-        "meta": [
-            "phases_summary"
         ],
         "meta.athlete.context": [
             "platforms",
@@ -314,12 +311,12 @@ RENDERER_PROFILES = {
 
             "physiology_response": [
                 "wellness",
-                "insight_view",
+                "insight_view"
             ],
 
             "performance_intelligence": [
                 "performance_intelligence",
-                "wbal_summary",
+                "wbal_summary"
             ],
 
             "adaptation": [
