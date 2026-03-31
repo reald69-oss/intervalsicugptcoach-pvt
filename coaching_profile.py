@@ -327,13 +327,13 @@ RENDERER_PROFILES = {
                 # physiological calibration
                 "physiology",
                 "zones",
+                "phases_summary"
             ],
 
             "adaptive_decisions": [
                 "actions",
                 "training_guidance",
                 "phase_alignment",
-                "phases_summary",
                 "decision_context",
                 #"planned_events",
                 "planned_summary_by_date",
