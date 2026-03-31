@@ -4025,12 +4025,43 @@ def build_semantic_json(context):
         current_state = ts.get("state_label")
 
         # -----------------------------
-        # Future (planned)
+        # Future (planned) — source of truth = projected phase + forecast
         # -----------------------------
         planned_pattern = "unknown"
 
-        if micro.get("projected_total_tss") and micro.get("planned_remaining_tss"):
+        forecast_block = semantic.get("future_forecast", {})
+        summaries = semantic.get("phases_summary", [])
+
+        forecast_load_trend = forecast_block.get("load_trend")
+        forecast_fatigue_class = forecast_block.get("fatigue_class")
+
+        projected_block = next((b for b in summaries if b.get("is_projected")), None)
+        projected_phase = (projected_block.get("phase", "") if projected_block else "").lower()
+
+        # Structural intent first
+        if projected_phase in {"recovery", "deload", "taper"}:
+            planned_pattern = "reduced"
+        elif projected_phase in {"build", "peak"}:
             planned_pattern = "increasing"
+
+        # Forecast direction fallback
+        elif forecast_load_trend == "declining":
+            planned_pattern = "reduced"
+        elif forecast_load_trend == "increasing":
+            planned_pattern = "increasing"
+        elif forecast_load_trend == "stable":
+            planned_pattern = "stable"
+
+        # Fatigue-class fallback only if still unknown
+        # NOTE: fatigue_class is form-state, not load direction
+        elif forecast_fatigue_class in {"transition", "fresh"}:
+            planned_pattern = "reduced"
+        elif forecast_fatigue_class == "neutral":
+            planned_pattern = "stable"
+        elif forecast_fatigue_class == "productive_fatigue":
+            planned_pattern = "increasing"
+        elif forecast_fatigue_class == "overreached":
+            planned_pattern = "reduced"
 
         # -----------------------------
         # Required phase (SAFE + PRIORITY)
@@ -4051,8 +4082,17 @@ def build_semantic_json(context):
         # -----------------------------
         alignment = "aligned"
 
-        if required_phase == "recovery" and planned_pattern == "increasing":
-            alignment = "misaligned"
+        RECOVERY_COMPATIBLE = {"recovery", "deload", "taper"}
+
+        current_phase = projected_phase or (summaries[-1].get("phase", "").lower() if summaries else "")
+
+        if required_phase == "recovery":
+            if current_phase in RECOVERY_COMPATIBLE and planned_pattern != "increasing":
+                alignment = "aligned"
+            elif planned_pattern == "increasing":
+                alignment = "misaligned"
+            else:
+                alignment = "aligned"
 
         # -----------------------------
         # Output FIRST (important)
