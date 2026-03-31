@@ -62,6 +62,8 @@ REPORT_CONTRACT = {
         # 📈 ADAPTATION
         "energy_system_progression",
         "training_guidance",
+        "phase_alignment",
+        "decision_context",
 
         # 🎯 ADAPTIVE DECISIONS
         "actions",
@@ -94,7 +96,10 @@ REPORT_CONTRACT = {
         "current_ISO_weekly_microcycle",
         "planned_summary_by_iso_week",
         "future_forecast",
-        "future_actions",
+        "future_actions"
+        "training_guidance",
+        "phase_alignment",
+        "decision_context"
     ],
 
     "season_lite": [
@@ -331,7 +336,7 @@ RENDERER_PROFILES = {
                 "phases_summary",
                 "decision_context",
                 #"planned_events",
-                #"planned_summary_by_date",
+                "planned_summary_by_date",
                 "current_ISO_weekly_microcycle",
                 "planned_summary_by_iso_week",
                 "future_forecast",
@@ -370,7 +375,7 @@ RENDERER_PROFILES = {
             "Render power anchors as [<power> W](link) when activity_link exists, else plain.",
             "Title current_ISO_weekly_microcycle as 'Current ISO Week ## (Mon-Sun)'.",
             "If a section is marked full, render every entity and field exactly as present in the semantic data",
-           "If actions[0].resolution == 'overridden_by_phase':",
+            "If actions[0].resolution == 'overridden_by_phase':",
             "- required_phase overrides ADE directive in interpretation.",
             "- Any positive load statement MUST be qualified by fatigue/phase context.",
             "- Do NOT present training as fully acceptable without qualification.",
@@ -386,7 +391,7 @@ RENDERER_PROFILES = {
             "OPERATIONS table MUST contain week_delta, planned_load (current → next), and 14 day forecast summary (CTL / TSB / fatigue_class).",
             "training_guidance MUST be rendered as a single-row table with column: Directive.",
             "If actions[0].resolution == 'overridden_by_phase', training_guidance MUST reflect required_phase and MUST NOT repeat ADE directive.",
-            "phase_alignment MUST be rendered as a single-row table with columns: Required Phase, Alignment, Past Pattern, Phase Streak.",
+            "phase_alignment MUST be rendered as a single-row table with columns: Required Phase, Recent Load Alignment, Past Pattern, Phase Streak.",
             "decision_context MUST be rendered as a single-row table with columns: ADE Directive, Phase Requirement, Alignment, Conflict.",
             "If actions[0].resolution == 'overridden_by_phase', Conflict MUST be 'Yes', else 'No'.",
             "future_actions MUST be rendered as a table with columns: Priority, Action, Reason.",
@@ -594,6 +599,8 @@ RENDERER_PROFILES = {
                 "planned_summary_by_iso_week",
                 "future_forecast",
                 "future_actions"
+                "phase_alignment",
+                "decision_context"
             ]
         },
 
@@ -620,17 +627,29 @@ RENDERER_PROFILES = {
             "When energy_system_progression exists, generate at least one sentence summarising the current adaptation direction using system_status and adaptation_state.",
             "Insights SHOULD prioritise adaptation signals (ESPE) before repeating metric definitions.",
             "Ensure current_ISO_weekly_microcycle is totled as 'Current ISO Week ## (Mon-Sun)'",
-            #ADAPTIVE DECISIONS
+            "If actions[0].resolution == 'overridden_by_phase':",
+            "- required_phase overrides ADE directive in interpretation.",
+            "- Any positive load statement MUST be qualified by fatigue/phase context.",
+            "- Do NOT present training as fully acceptable without qualification.",
+            "Precedence: required_phase > ADE.directive > performance_intelligence.training_state > metrics.",
+            # ADAPTIVE DECISIONS
             "Render adaptive_decisions as compact dashboard tables (no narrative).",
             "adaptive_decisions MUST be rendered as STATE and OPERATIONS tables.",
             "STATE MUST NOT exceed 4 columns per table.",
             "STATE MUST be split into multiple tables when more than 4 fields are present.",
             "STATE tables MUST follow this fixed grouping:",
-            "STATE SNAPSHOT: directive, state, load_trend, risk_flag.",
+            "STATE SNAPSHOT: directive, state, resolution, load_trend.",
             "ADAPTATION RESPONSE: adaptation_focus, key_constraint, next_action, dominant_signal.",
             "OPERATIONS table MUST contain week_delta, planned_load (current → next), and 14 day forecast summary (CTL / TSB / fatigue_class).",
+            "training_guidance MUST be rendered as a single-row table with column: Directive.",
+            "If actions[0].resolution == 'overridden_by_phase', training_guidance MUST reflect required_phase and MUST NOT repeat ADE directive.",
+            "phase_alignment MUST be rendered as a single-row table with columns: Required Phase, Alignment, Past Pattern, Phase Streak.",
+            "decision_context MUST be rendered as a single-row table with columns: ADE Directive, Phase Requirement, Alignment, Conflict.",
+            "If actions[0].resolution == 'overridden_by_phase', Conflict MUST be 'Yes', else 'No'.",
+            "future_actions MUST be rendered as a table with columns: Priority, Action, Reason.",
+            "phases_summary MUST be rendered as a compact table (max 3 rows) with columns: Phase, Duration, Trend.",
             "Do NOT render state_action, system_guidance, or reflection as separate sections.",
-            "Do NOT render paragraph explanations for adaptive_decisions.",
+            "Do NOT render paragraph explanations for adaptive_decisions."
             #ADAPTATION
             "energy_system_progression MUST be rendered as compact adaptation table(s)",
             "Table MUST include key systems (aerobic, threshold, vo2, anaerobic) and overall phase/adaptation_state.",
@@ -655,8 +674,10 @@ RENDERER_PROFILES = {
             "events": "forbid",
             "daily_load": "forbid",
             "weekly_phases": "forbid",
-            "phases": "headline",
-            "phases_summary": "full",
+            "phases": "forbid",
+            "phase_alignment": "headline",
+            "decision_context": "headline",
+            "phases_summary": "summary",
             "metrics": "table_summary",
             "performance_intelligence": "full",
             "current_ISO_weekly_microcycle": "forbid",
@@ -674,11 +695,13 @@ RENDERER_PROFILES = {
         },
 
         "emphasis": {
-            "phases_summary": "high",
-            "trend_metrics": "high",
-            "metrics": "medium",
+            "metrics": "high",
+            "actions": "high",
+            "events": "medium",
+            "wellness": "medium",
             "adaptation": "high",
-            "actions": "high"
+            "phases_summary": "high",
+            "trend_metrics": "high"
         },
 
         "framing": {

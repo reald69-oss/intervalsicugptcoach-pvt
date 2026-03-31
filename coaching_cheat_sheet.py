@@ -239,33 +239,17 @@ CHEAT_SHEET["thresholds"] = {
     #     high_risk: [-999, -30]  → overreached
     # ================================================================
 
-    "PhaseBoundaries": {
+   "PhaseBoundaries": {
 
-        # 🧱 BASE → Stable or gently rising CTL; small week-to-week variance
-        "Base": {
-            "trend_min": -0.05,
-            "trend_max": 0.10,
-            "acwr_max": 1.2,
-            "lvi_min": 0.75
+        # 💤 RECOVERY → extreme unload / detraining
+        "Recovery": {
+            "trend_min": -1.00,
+            "trend_max": -0.50,
+            "acwr_max": 1.0,
+            "lvi_min": 0.6
         },
 
-        # 📈 BUILD → Progressive overload; productive fatigue zone
-        "Build": {
-            "trend_min": 0.10,
-            "trend_max": 0.40,
-            "acwr_max": 1.3,
-            "lvi_min": 0.65
-        },
-
-        # 🏁 PEAK → Stabilised high CTL, ATL dropping, freshness improving
-        "Peak": {
-            "trend_min": -0.10,
-            "trend_max": 0.05,
-            "acwr_max": 1.15,
-            "lvi_min": 0.8
-        },
-
-        # 📉 TAPER → Rapid ATL drop, load reduced 30–50%
+        # 📉 TAPER → strong unload (race prep)
         "Taper": {
             "trend_min": -0.50,
             "trend_max": -0.15,
@@ -273,26 +257,36 @@ CHEAT_SHEET["thresholds"] = {
             "lvi_min": 0.8
         },
 
-        # 💤 RECOVERY → Heavy unload / detraining period
-        "Recovery": {
-            "trend_min": -1.0,
-            "trend_max": -0.50,
-            "acwr_max": 1.0,
-            "lvi_min": 0.6
-        },
-
-        # 🧘 DELOAD → Short mid-block unloads; prevents overreach
+        # 🧘 DELOAD → controlled unload inside block
         "Deload": {
-            "trend_min": -0.25,
-            "trend_max": -0.10,
+            "trend_min": -0.15,
+            "trend_max": -0.05,
             "acwr_max": 1.2,
             "lvi_min": 0.7
         },
 
-        # 🔁 CONTINUOUS LOAD → fallback when variation minimal (<5%)
-        "Continuous Load": {
+        # 🧱 BASE → stable / slight variation
+        "Base": {
             "trend_min": -0.05,
-            "trend_max": 0.05
+            "trend_max": 0.05,
+            "acwr_max": 1.2,
+            "lvi_min": 0.75
+        },
+
+        # 🏁 PEAK → stable but fresh (slight drop or flat)
+        "Peak": {
+            "trend_min": 0.05,
+            "trend_max": 0.10,
+            "acwr_max": 1.15,
+            "lvi_min": 0.8
+        },
+
+        # 📈 BUILD → progressive overload
+        "Build": {
+            "trend_min": 0.10,
+            "trend_max": 0.40,
+            "acwr_max": 1.3,
+            "lvi_min": 0.65
         }
     },
     "ESPE": {
@@ -1065,13 +1059,17 @@ CHEAT_SHEET["advice"] = {
     },
     # --- Phase Detection --- (Seasonal Phase Advice)
     "PhaseAdvice": {
-        "Base": "🧱 **Base phase detected** — focus on aerobic volume (Z1–Z2 ≥ 70%), maintain ACWR ≤ 1.0.",
-        "Build": "📈 **Build phase detected** — progressive overload active; maintain ACWR ≤ 1.3.",
-        "Peak": "🏁 **Peak phase detected** — high-intensity emphasis; monitor fatigue (RI ≥ 0.6).",
-        "Taper": "📉 **Taper phase detected** — reduce ATL by 30–50%, maintain intensity; expected RI ↑.",
-        "Recovery": "💤 **Recovery phase detected** — active regeneration; target RI ≥ 0.8 and low monotony.",
-        "Deload": "🧘 **Deload phase detected** — reduced load, maintain frequency; transition readiness improving.",
-        "Continuous Load": "🔁 **Continuous Load** — steady training; insert variation if fatigue rises."
+        "Base": "🧱 **Base phase detected** — prioritise aerobic volume (Z1–Z2 ≥ 70%) and stable load progression (ACWR ≤ 1.0).",
+
+        "Build": "📈 **Build phase detected** — progressive overload active; maintain ACWR ≤ 1.3 and manage intensity density.",
+
+        "Peak": "🏁 **Peak phase detected** — high-intensity emphasis; monitor fatigue signals (NDLI, durability, FatigueTrend).",
+
+        "Taper": "📉 **Taper phase detected** — reduce ATL by ~30–50% while maintaining intensity; expect freshness to rise (TSB ↑, fatigue ↓).",
+
+        "Recovery": "💤 **Recovery phase detected** — reduce load and prioritise recovery; target low monotony and declining load trend.",
+
+        "Deload": "🧘 **Deload phase detected** — controlled reduction in load while maintaining frequency; prepare for next progression block."
     },
     #Lactate-based training advice and reasoning
     "Lactate": {

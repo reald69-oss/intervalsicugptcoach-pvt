@@ -3785,10 +3785,10 @@ def build_semantic_json(context):
                         if micro.get("projected_hours") is not None:
                             block["hours_total"] = round(micro["projected_hours"], 1)
 
-                        # invalidate phase classification for projected weeks
-                        block["phase"] = "Projected"
-                        block["descriptor"] = "🔮 **Projected training week** — classification deferred until execution."
-                        block["calc_method"] = "projection_override"
+                        # invalidate phase classification for projected weeks # WE KEEP THI SNOW FOR ADE v2
+                        #block["phase"] = "Projected"
+                        #block["descriptor"] = "🔮 **Projected training week** — classification deferred until execution."
+                        block["calc_method"] = "projection_forecast"
                         block["calc_context"] = None
 
                         break

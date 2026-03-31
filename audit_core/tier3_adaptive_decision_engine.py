@@ -1,4 +1,4 @@
-#ADE V1.0
+#ADE V2.0
 
 ADE_VERSION = "ade_v2.0"
 

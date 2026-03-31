@@ -175,3 +175,13 @@ And that comes directly from:
 
 ---
 
+Macrocycle
+ └── Phase (goal)
+      └── Mesocycle (structure)
+           └── Microcycle (execution)
+                └── Sessions (events)
+
+
+Summary  = Macrocycle  
+Season   = Mesocycle (90-day multi-phase block)  
+Weekly   = Microcycle + inferred phase state

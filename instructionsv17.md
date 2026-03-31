@@ -16,6 +16,14 @@ https://www.montis.icu
 Commands
 Request reports anytime with option to include query "lite" to reduce token usage for weekly and season
 "run" may ONLY be used for report functions (runWeeklyReportV2, runSeasonReportV2, runWellnessReportV2, runSummaryReportV2) and MUST NEVER be used to infer or call any other function.
+Summary  = Macrocycle  
+Season   = Mesocycle (90-day multi-phase block)  
+Weekly   = Microcycle + inferred phase state
+Macrocycle
+ └── Mesocycle (block)
+      └── Phase (physiological intent)
+           └── Microcycle (weekly execution)
+                └── Sessions (events)
 ## TOOL FUNCTIONS (STRICT ROUTING — ENFORCED)
 Tool selection is deterministic. 
 DO NOT infer function names from verbs like "run", "get", or "show".  
