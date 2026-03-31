@@ -648,8 +648,10 @@ RENDERER_PROFILES = {
             "If actions[0].resolution == 'overridden_by_phase', Conflict MUST be 'Yes', else 'No'.",
             "future_actions MUST be rendered as a table with columns: Priority, Action, Reason.",
             "phases_summary MUST be rendered as a compact table (max 3 rows) with columns: Phase, Duration, Trend.",
-            "Do NOT render state_action, system_guidance, or reflection as separate sections.",
-            "Do NOT render paragraph explanations for adaptive_decisions."
+            "Do NOT insert blank lines between adaptive_decisions tables.",
+            "Do NOT insert blank lines between subheadings and tables.",
+            "Subheadings MUST be plain text (no ## or ###).",
+            "Do NOT render horizontal rules or dividers in adaptive_decisions.",
             #ADAPTATION
             "energy_system_progression MUST be rendered as compact adaptation table(s)",
             "Table MUST include key systems (aerobic, threshold, vo2, anaerobic) and overall phase/adaptation_state.",

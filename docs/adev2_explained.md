@@ -185,3 +185,120 @@ Macrocycle
 Summary  = Macrocycle  
 Season   = Mesocycle (90-day multi-phase block)  
 Weekly   = Microcycle + inferred phase state
+
+
+**What changed (plain English):**
+
+You now have **two layers making decisions**, and one clearly wins when needed.
+
+---
+
+## 1) Phase = the plan (what you *should* be doing)
+
+This comes from your training pattern over time:
+
+* Build → Deload → Taper
+* Or fatigue streak → recovery needed
+
+👉 This is the **strategic direction**
+
+---
+
+## 2) Metrics (ADE v2) = what your body *can handle right now*
+
+This looks at:
+
+* ACWR
+* Fatigue trend
+* HRV / recovery
+* Load balance
+
+👉 This is the **operational state**
+
+---
+
+## 3) The key change
+
+Previously:
+
+* Metrics could dominate → “you look fine, keep going”
+
+Now:
+
+* **Phase can override metrics**
+
+👉 Example from your week:
+
+* Metrics: **“Load is fine (ACWR 1.08)”**
+* Phase logic: **“You’ve been in fatigue for multiple days”**
+
+✅ Result:
+
+* System says: **recover anyway**
+
+---
+
+## 4) Why this is better
+
+Because real training isn’t just “can you handle more?”
+
+It’s:
+
+* **Have you earned recovery?**
+* **Are you consolidating adaptation?**
+
+Without this:
+
+* You keep stacking load
+* You delay adaptation
+* Durability drifts (which you actually saw)
+
+---
+
+## 5) Why taper = recovery (in your system)
+
+You treat these as the same bucket:
+
+* Recovery
+* Deload
+* Taper
+
+👉 All mean:
+**reduce load to absorb training**
+
+Not:
+
+* stop training
+* lose fitness
+
+---
+
+## 6) What it means for you this week
+
+* You handled a **big load (710 TSS)** fine
+* But:
+
+  * Fatigue is rising
+  * Durability is drifting
+* So:
+
+👉 **System forces recovery/taper behaviour**
+
+Even though:
+
+* Nothing is “broken”
+* You feel okay
+
+---
+
+## Bottom line
+
+* **Metrics say:** you *can* keep pushing
+* **Phase says:** you *shouldn’t*
+
+👉 And now:
+**Phase wins — deliberately**
+
+---
+
+If you want, next step is tightening the wording so this never *feels* like a contradiction in the report.
