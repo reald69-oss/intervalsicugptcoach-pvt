@@ -1758,11 +1758,16 @@ def build_semantic_json(context):
                 ev["activity_link"] = f"https://intervals.icu/activities/{activity_id}"
 
             # ---------------------------------------------------------
-            # 3️⃣ Core render fields
+            # 3️⃣ Core render fields (SAFE)
             # ---------------------------------------------------------
-            ev["duration"] = int(row.get("moving_time", 0))  # seconds
-            ev["distance"] = round(float(row.get("distance", 0)) / 1000, 1)  # km
-            ev["tss"] = int(row.get("icu_training_load", 0))
+            val = row.get("moving_time")
+            ev["duration"] = int(val) if pd.notna(val) else 0
+
+            val = row.get("distance")
+            ev["distance"] = round(float(val) / 1000, 1) if pd.notna(val) else 0
+
+            val = row.get("icu_training_load")
+            ev["tss"] = int(val) if pd.notna(val) else 0
 
             # ---------------------------------------------------------
             # 4️⃣ IF (icu_intensity ONLY — canonical)
@@ -1778,12 +1783,15 @@ def build_semantic_json(context):
                 except Exception:
                     pass
 
-            # NP
-            if pd.notna(row.get("icu_weighted_avg_watts")):
-                ev["NP"] = int(row["icu_weighted_avg_watts"])
+            # ---------------------------------------------------------
+            # NP (SAFE)
+            # ---------------------------------------------------------
+            val = row.get("icu_weighted_avg_watts")
+            if pd.notna(val):
+                ev["NP"] = int(val)
 
             # ---------------------------------------------------------
-            # 5️⃣ HRR
+            # 5️⃣ HRR (SAFE)
             # ---------------------------------------------------------
             hrr = row.get("icu_hrr.hrr")
             if pd.notna(hrr):
