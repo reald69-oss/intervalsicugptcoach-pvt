@@ -334,9 +334,21 @@ def fetch_remote_report(
     query = "&".join(params)
     url = f"{base}?{query}" if query else base
 
+    # ------------------------------------------------
+    # 🔒 EARLY HALT — GPT requires internal auth
+    # ------------------------------------------------
+    if gpt:
+        internal_key = os.getenv("MONTIS_INTERNAL_KEY")
+
+        if not internal_key:
+            raise RuntimeError(
+                "[CONFIG ERROR] --gpt requested but MONTIS_INTERNAL_KEY is not set.\n"
+                "Set it via:\n"
+                "bash: export MONTIS_INTERNAL_KEY=\"your_key\""
+            )
     headers = {
         "Authorization": f"Bearer {os.getenv('ICU_OAUTH', '')}",
-        "X-Montis-Internal": os.getenv("MONTIS_INTERNAL_KEY"),
+        "x-montis-internal": os.getenv("MONTIS_INTERNAL_KEY"),
         "User-Agent": "IntervalsGPTCoachLocal/1.0"
     }
 
