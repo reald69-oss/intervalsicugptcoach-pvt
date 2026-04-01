@@ -1715,7 +1715,7 @@ def build_semantic_json(context):
 
 
     # ---------------------------------------------------------
-    # EVENTS (canonical)
+    # EVENTS (canonical → render-optimised)
     # ---------------------------------------------------------
     df_events = context["_df_scope_full"]
 
@@ -1723,26 +1723,8 @@ def build_semantic_json(context):
 
         debug(
             context,
-            f"[DEBUG-EVENTS] sample type={type(df_events)} rows={len(df_events)} "
-            f"cols_sample={str(list(df_events.columns))[:100]}"
+            f"[DEBUG-EVENTS] rows={len(df_events)} cols_sample={str(list(df_events.columns))[:100]}"
         )
-
-        core_fields = [
-            "id","start_date_local", "name", "type", "paired_event_id", "compliance",
-            "distance", "moving_time", "icu_training_load",
-            "average_heartrate", "average_cadence",
-            "icu_average_watts", "icu_variability_index", "icu_weighted_avg_watts",
-            "strain_score", "trimp", "hr_load",
-            "ss", "ss_cp", "ss_w", "ss_pmax",
-            "icu_efficiency_factor", "icu_intensity", "IF", "icu_power_hr",
-            "decoupling", "icu_pm_w_prime", "icu_w_prime",
-            "icu_max_wbal_depletion", "icu_joules_above_ftp",
-            "total_elevation_gain", "calories", "VO2MaxGarmin",
-            "source", "core_temp_mean", "core_temp_max",
-            "core_temp_drift_per_hour", "device_name", "compliance", "icu_rpe", "feel"
-        ]
-
-        available_fields = [f for f in core_fields if f in df_events.columns]
 
         semantic["events"] = []
 
@@ -1750,129 +1732,121 @@ def build_semantic_json(context):
 
             ev = {}
 
-            # 1️⃣ Identity fields
-            for key in ["id", "start_date_local", "name", "type"]:
-                if key in row and pd.notna(row[key]):
-                    ev[key] = row[key]
+            # ---------------------------------------------------------
+            # 1️⃣ Identity
+            # ---------------------------------------------------------
+            name = row.get("name")
+            if not name:
+                continue
 
-            # build activity link
+            ev["name"] = name
+            ev["type"] = row.get("type")
+
+            if pd.notna(row.get("start_date_local")):
+                ev["start_date_local"] = convert_to_str(row["start_date_local"])
+
+            # ---------------------------------------------------------
+            # 2️⃣ Activity link
+            # ---------------------------------------------------------
             activity_id = row.get("id") or row.get("activity_id")
 
             if pd.notna(activity_id):
                 activity_id = str(activity_id)
-
                 if not activity_id.startswith("i"):
                     activity_id = f"i{activity_id}"
 
-                ev["activity_id"] = activity_id
-                ev["activity_link"] = f'https://intervals.icu/activities/{activity_id}'
-
-            # 2️⃣ Scalar fields
-            for k in available_fields:
-
-                val = row.get(k)
-
-                # skip empty / NaN
-                if val is None:
-                    continue
-                if isinstance(val, float) and pd.isna(val):
-                    continue
-
-                # convert numpy → python scalar
-                if hasattr(val, "item"):
-                    try:
-                        val = val.item()
-                    except Exception:
-                        pass
-
-                ev[k] = val
-
-            # Intensity Factor (canonicalised)
-                val = row.get("icu_intensity")
-
-                if val is not None and pd.notna(val):
-                    try:
-                        val = float(val)
-
-                        # normalize legacy % values
-                        if val > 2:
-                            val = val / 100
-
-                        ev["IF"] = round(val, 3)
-
-                    except Exception:
-                        pass
+                ev["activity_link"] = f"https://intervals.icu/activities/{activity_id}"
 
             # ---------------------------------------------------------
-            # Subjective perception (RPE emoji + Feel emoji)
+            # 3️⃣ Core render fields
             # ---------------------------------------------------------
+            ev["duration"] = int(row.get("moving_time", 0))  # seconds
+            ev["distance"] = round(float(row.get("distance", 0)) / 1000, 1)  # km
+            ev["tss"] = int(row.get("icu_training_load", 0))
 
+            # ---------------------------------------------------------
+            # 4️⃣ IF (icu_intensity ONLY — canonical)
+            # ---------------------------------------------------------
+            val = row.get("icu_intensity")
+
+            if pd.notna(val):
+                try:
+                    val = float(val)
+                    if val > 2:
+                        val = val / 100
+                    ev["IF"] = round(val, 2)
+                except Exception:
+                    pass
+
+            # NP
+            if pd.notna(row.get("icu_weighted_avg_watts")):
+                ev["NP"] = int(row["icu_weighted_avg_watts"])
+
+            # ---------------------------------------------------------
+            # 5️⃣ HRR
+            # ---------------------------------------------------------
+            hrr = row.get("icu_hrr.hrr")
+            if pd.notna(hrr):
+                ev["HRR60"] = int(hrr)
+
+            # ---------------------------------------------------------
+            # 6️⃣ Subjective (emoji only)
+            # ---------------------------------------------------------
             rpe = row.get("icu_rpe")
             feel = row.get("feel")
 
-            # ---- RPE emoji (read-only, do not overwrite icu_rpe) ----
-            if rpe is not None and pd.notna(rpe):
+            if pd.notna(rpe):
                 try:
-                    rpe = int(rpe)
-                    rpe_emoji = CHEAT_SHEET["subjective_scales"]["rpe_emoji"].get(rpe)
-
-                    if rpe_emoji:
-                        ev["rpe_emoji"] = rpe_emoji
-
+                    ev["rpe_emoji"] = CHEAT_SHEET["subjective_scales"]["rpe_emoji"].get(int(rpe))
                 except Exception:
                     pass
 
-
-            # ---- Feel emoji ----
-            if feel is not None and pd.notna(feel):
+            if pd.notna(feel):
                 try:
-                    feel = int(feel)
-                    feel_emoji = CHEAT_SHEET["subjective_scales"]["feel_emoji"].get(feel)
-
-                    if feel_emoji:
-                        ev["feel_emoji"] = feel_emoji
-
+                    ev["feel_emoji"] = CHEAT_SHEET["subjective_scales"]["feel_emoji"].get(int(feel))
                 except Exception:
                     pass
 
-            # 3️⃣ Convert date
-            if "start_date_local" in ev:
-                ev["start_date_local"] = convert_to_str(ev["start_date_local"])
+            # ---------------------------------------------------------
+            # 7️⃣ Flags (for icons only)
+            # ---------------------------------------------------------
+            flags = []
 
-            # 4️⃣ Only append valid events
-            if "name" in ev:
+            wbal = classify_wbal_pattern(row)
+            if wbal.get("wbal_pattern") == "repeated":
+                flags.append("repeated")
 
-                ev.update(classify_wbal_pattern(ev))
-                ev.update(classify_event_efficiency(ev))
+            eff = classify_event_efficiency(row)
+            if eff.get("event_efficiency") == "efficient":
+                flags.append("efficient")
 
-                # 5️⃣ HRR (flattened columns)
-                hrr_60 = row.get("icu_hrr.hrr")
-                hrr_start = row.get("icu_hrr.start_bpm")
-                hrr_end = row.get("icu_hrr.end_bpm")
+            if pd.notna(hrr):
+                flags.append("hrr")
 
-                if pd.notna(hrr_60):
-                    ev["heart_rate_recovery_60s"] = float(hrr_60)
-                    ev["heart_rate_recovery_start_bpm"] = hrr_start
-                    ev["heart_rate_recovery_end_bpm"] = hrr_end
+            if flags:
+                ev["flags"] = flags
 
-                semantic["events"].append(ev)
+            # ---------------------------------------------------------
+            # 8️⃣ Append
+            # ---------------------------------------------------------
+            semantic["events"].append(ev)
 
-        # ✅ Add meta AFTER loop
+        # ---------------------------------------------------------
+        # META
+        # ---------------------------------------------------------
         semantic["meta"]["events"] = {
             "is_event_block": True,
             "event_block_count": len(semantic["events"]),
-            "render": True,
-            "notes": "Canonical activity/event block (URF v5.2) — intended for ChatGPT / structured UI rendering."
+            "render": True
         }
 
         debug(
             context,
-            f"[SEMANTIC] EVENTS: populated semantic.events with {len(semantic['events'])} entries"
+            f"[SEMANTIC] EVENTS: {len(semantic['events'])} events (optimised)"
         )
 
     else:
-        debug(context, "[SEMANTIC] EVENTS: no df_events available or empty DataFrame")
-
+        debug(context, "[SEMANTIC] EVENTS: no data")
 
     # --- Prevent override by short df_scope_full for season/summary ---
     if semantic["meta"]["report_type"] in ("season", "summary"):

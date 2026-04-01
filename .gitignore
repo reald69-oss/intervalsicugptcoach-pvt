@@ -4,6 +4,7 @@
 *.pem
 *.key
 *.crt
+*._
 
 # Local/editor junk
 .vscode/

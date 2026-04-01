@@ -167,6 +167,10 @@ REPORT_CONTRACT = {
 
 PRUNE_RULES = {
     "weekly": {
+        "meta": [
+            "methodology",
+            "planned_events"
+        ],
         "wellness": [
             "hrv_series"
         ],
