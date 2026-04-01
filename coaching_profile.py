@@ -596,7 +596,8 @@ RENDERER_PROFILES = {
                 "future_forecast",
                 "future_actions"
                 "phase_alignment",
-                "decision_context"
+                "training_guidance",
+                #"decision_context"
             ]
         },
 
