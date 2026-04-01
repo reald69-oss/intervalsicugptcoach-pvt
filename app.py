@@ -1514,7 +1514,7 @@ DEMO MODE NOTICE:
     }
 
     clean = sanitize(safe_payload)
-    clean = json.loads(json.dumps(clean, ensure_ascii=False))
+    clean = json.loads(json.dumps(clean, ensure_ascii=False).encode("utf-8", "ignore").decode("utf-8"))
 
     return JSONResponse(clean)
 
