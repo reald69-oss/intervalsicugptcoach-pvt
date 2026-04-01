@@ -665,8 +665,8 @@ def run_audit(
     demo: bool = Query(False),
     lite: bool = Query(False)
 ):
-    if demo:
-        return load_demo_response(range, reason="MANUAL_DEMO")
+    if demo or request.query_params.get("test") == "demo":
+        return load_demo_response("weekly", reason="MANUAL_DEMO")
     try:
         report, compliance, logs, context, sg, markdown = _run_full_audit(
             range=range,
@@ -721,7 +721,7 @@ async def run_audit_with_data(
 
     try:
 
-        if demo:
+        if demo or request.query_params.get("test") == "demo":
             return load_demo_response("weekly", reason="MANUAL_DEMO")
 
         try:
