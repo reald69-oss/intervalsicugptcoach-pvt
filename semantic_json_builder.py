@@ -2635,6 +2635,37 @@ def build_semantic_json(context):
         metric["context_window"] = metric_windows.get(name, "unknown")
 
     # ---------------------------------------------------------
+    # NON-BREAKING METRIC GROUPING (FINAL STEP)
+    # ---------------------------------------------------------
+
+    semantic["metrics_groups"] = {
+        "load": {
+            "ACWR": semantic["metrics"].get("ACWR"),
+            "Strain": semantic["metrics"].get("Strain"),
+            "FatigueTrend": semantic["metrics"].get("FatigueTrend"),
+        },
+        "intensity": {
+            "ZQI": semantic["metrics"].get("ZQI"),
+            "Polarisation": semantic["metrics"].get("Polarisation"),
+            "PolarisationIndex": semantic["metrics"].get("PolarisationIndex"),
+            "Polarisation_variants": semantic["metrics"].get("Polarisation_variants"),
+        },
+        "variability": {
+            "Monotony": semantic["metrics"].get("Monotony"),
+        },
+        "metabolic": {
+            "FOxI": semantic["metrics"].get("FOxI"),
+            "CUR": semantic["metrics"].get("CUR"),
+            "GR": semantic["metrics"].get("GR"),
+            "MES": semantic["metrics"].get("MES"),
+            "FatOxEfficiency": semantic["metrics"].get("FatOxEfficiency"),
+        },
+        "capacity": {
+            "StressTolerance": semantic["metrics"].get("StressTolerance"),
+        }
+    }
+
+    # ---------------------------------------------------------
     # 🧮 CTL / ATL / TSB RESOLUTION (AUTHORITATIVE + FALLBACK)
     # ---------------------------------------------------------
     semantic.setdefault("wellness", {})

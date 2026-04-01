@@ -1132,7 +1132,7 @@ def compute_derived_metrics(df_events, context):
             "icon": classified["StressTolerance"]["icon"],
             "desc": "Sustainable training tolerance",
         },
-    }   
+    }
     # ======================================================
     # 🩵 HR-only Fallback Annotations (metadata for reports)
     # ======================================================

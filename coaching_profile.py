@@ -13,7 +13,7 @@ REPORT_CONTRACT = {
 
         # 🧭 TRAINING LOAD
         "training_volume",
-        "metrics",
+        "metrics_groups",
         "daily_load",
         "events",
 
@@ -49,7 +49,7 @@ REPORT_CONTRACT = {
 
         # 🧭 TRAINING LOAD
         "training_volume",
-        "metrics",
+        "metrics_groups",
         "events",
 
         # 🫀 PHYSIOLOGY RESPONSE
@@ -74,7 +74,7 @@ REPORT_CONTRACT = {
 
         # 🧭 TRAINING LOAD
         "training_volume",
-        "metrics",
+        "metrics_groups",
         "trend_metrics",
 
         # 🫀 PHYSIOLOGY RESPONSE
@@ -107,7 +107,7 @@ REPORT_CONTRACT = {
 
         # 🧭 TRAINING LOAD
         "training_volume",
-        "metrics",
+        "metrics_groups",
         "trend_metrics",
 
         # 🫀 PHYSIOLOGY RESPONSE
@@ -308,7 +308,11 @@ RENDERER_PROFILES = {
             ],
             "training_load": [
                 "training_volume",
-                "metrics",
+                "metrics_groups.load",
+                "metrics_groups.intensity",
+                "metrics_groups.variability",
+                "metrics_groups.metabolic",
+                "metrics_groups.capacity",
                 "daily_load",
                 "events"
             ],
@@ -424,7 +428,7 @@ RENDERER_PROFILES = {
             "events": "full",
             "current_ISO_weekly_microcycle": "forbid",
             "daily_load": "full",
-            "metrics": "summary",
+            "metrics_groups": "table_summary",
             "performance_intelligence": "full",
             "energy_system_progression": "full",
             "zones": "forbid",
@@ -450,7 +454,7 @@ RENDERER_PROFILES = {
         },
 
         "emphasis": {
-            "metrics": "high",
+            "metrics_groups": "high",
             "actions": "high",
             "events": "medium",
             "wellness": "medium",
@@ -678,7 +682,7 @@ RENDERER_PROFILES = {
             "phase_alignment": "headline",
             "decision_context": "headline",
             "phases_summary": "summary",
-            "metrics": "table_summary",
+            "metrics_groups": "table_summary",
             "performance_intelligence": "full",
             "current_ISO_weekly_microcycle": "forbid",
             "planned_summary_by_iso_week": "forbid",
