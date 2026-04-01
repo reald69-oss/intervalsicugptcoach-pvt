@@ -1570,11 +1570,6 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
             debug_counts=context.get("debug_counts") if context else None
         )
 
-    if code in ["OAUTH_NOT_CONFIGURED", "ATHLETE_PROFILE_INVALID"]:
-        demo = load_demo_response(report_range, reason=code)
-        demo.status_code = 401
-        return demo
-
     # hard
     halt_payload = e.to_dict()
 
