@@ -987,6 +987,23 @@ async def run_audit_with_data(
                 }, status_code=200)
                 
             # now run the unified audit (SAFE WRAPPED)
+            # ---------------------------------------------------------
+            # 🔹 PRE-RUN LOGGER (POST ONLY)
+            # ---------------------------------------------------------
+            try:
+                athlete = prefetch_context.get("athleteProfile") or prefetch_context.get("athlete") or {}
+
+                logger.info(
+                    "[EXEC-PRE] report_type=%s athlete_id=%s",
+                    report_range,
+                    athlete.get("id", "unknown")
+                )
+
+            except Exception:
+                logger.info(
+                    "[EXEC-PRE] report_type=%s athlete_id=unknown",
+                    report_range
+                )
             try:
                 report, compliance, *_ = run_report(
                     reportType=report_range,
