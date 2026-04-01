@@ -61,12 +61,12 @@ REPORT_CONTRACT = {
 
         # 📈 ADAPTATION
         "energy_system_progression",
-        "training_guidance",
-        "phase_alignment",
-        "decision_context",
 
         # 🎯 ADAPTIVE DECISIONS
         "actions",
+        "training_guidance",
+        "phase_alignment",
+        "decision_context",
     ],
 
     "season": [

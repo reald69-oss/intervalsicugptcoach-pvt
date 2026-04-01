@@ -4076,7 +4076,7 @@ def build_semantic_json(context):
         elif last_block_phase == "Overreached" and last_block_days >= 7:
             required_phase = "recovery"
 
-        elif operational_state == "recovery_priority":
+        elif operational_state == "recovery_priority" and fatigue_streak >= 2:
             required_phase = "recovery"
 
         # -----------------------------
@@ -4130,11 +4130,18 @@ def build_semantic_json(context):
         phase_override = False
 
         # -------------------------
-        # HARD RULE (PHASE)
+        # HARD RULE (PHASE) BUT NOT IF ITS THE SAME ALREADY
         # -------------------------
         if phase == "recovery":
-            decision = "Reduce load and prioritise recovery"
-            phase_override = True
+
+            if ade.get("operational_state") == "recovery_priority":
+                # ✅ ALIGNED → DO NOT OVERRIDE
+                decision = base_guidance
+                phase_override = False
+            else:
+                # ❌ CONFLICT → OVERRIDE
+                decision = "Reduce load and prioritise recovery"
+                phase_override = True
 
         # -------------------------
         # SOFT RULE (FORECAST via ACTION)
