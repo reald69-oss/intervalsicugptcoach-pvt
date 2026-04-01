@@ -175,12 +175,12 @@ DEMO_WEEKLY = {
           "intended_use": "Day-to-day coaching decisions, intensity balance, short-term fatigue and recovery management"
         },
         "events": {
-          "is_event_block": true,
+          "is_event_block": True,
           "event_block_count": 8,
-          "render": true
+          "render": True
         },
         "phases_summary": {
-          "is_phase_block": true,
+          "is_phase_block": True,
           "phase_block_count": 10,
           "notes": "Macro-level sequential phase summary, intended for ChatGPT / structured UI rendering."
         },
@@ -980,7 +980,7 @@ DEMO_WEEKLY = {
         "hrv_latest": 55,
         "hrv_trend_7d": 1.7,
         "hrv_source": "garmin",
-        "hrv_available": true,
+        "hrv_available": True,
         "hrv_samples": 43,
         "subjective": {
           "fatigue": {
@@ -1024,7 +1024,7 @@ DEMO_WEEKLY = {
       "physiology": {
         "lactate_calibration": {
           "lactate": {
-            "available": true,
+            "available": True,
             "samples": 38,
             "mean_mmol": 1.92,
             "latest_mmol": 1.8,
@@ -1032,7 +1032,7 @@ DEMO_WEEKLY = {
               1.8,
               2.0
             ],
-            "paired_with_power": true,
+            "paired_with_power": True,
             "power_field": "HrtLndLt1p",
             "power_spread_w": [
               170.0,
@@ -1102,7 +1102,7 @@ DEMO_WEEKLY = {
           "categories": [
             "WORKOUT"
           ],
-          "is_current_week": false
+          "is_current_week": False
         }
       },
       "future_forecast": {
@@ -1727,7 +1727,7 @@ DEMO_WEEKLY = {
         "version": "espe_v1.1",
         "sports": {
           "Ride": {
-            "supported": true,
+            "supported": True,
             "curve_window": {
               "current_days": 85,
               "previous_days": 85,
@@ -1862,7 +1862,7 @@ DEMO_WEEKLY = {
               "pmax": 835,
               "ftp": 300
             },
-            "plateau_detected": false,
+            "plateau_detected": False,
             "adaptation_bias": "threshold_dominant",
             "adaptation_state": "aerobic_consolidation",
             "curve_profile": "all_rounder",
@@ -1880,7 +1880,7 @@ DEMO_WEEKLY = {
         "basis": "The microcycle is based on the current ISO week (Monday to Sunday) and includes planned and completed with compliance,",
         "completed_hours": 1.95,
         "projected_hours": 11.12,
-        "is_projected": true
+        "is_projected": True
       },
       "phases_summary": [
         {
@@ -2075,7 +2075,7 @@ DEMO_WEEKLY = {
           "descriptor": "\ud83d\udcc9 **Taper phase detected** \u2014 reduce ATL by ~30\u201350% while maintaining intensity; expect freshness to rise (TSB \u2191, fatigue \u2193).",
           "calc_method": "projection_forecast",
           "calc_context": None,
-          "is_projected": true,
+          "is_projected": True,
           "projection_basis": "planned_remaining",
           "completed_tss": 90.0,
           "planned_remaining_tss": 330.0,
