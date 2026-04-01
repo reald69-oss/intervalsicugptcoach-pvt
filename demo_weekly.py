@@ -1,4 +1,10 @@
 
+# WHEN UPDATING THIS YOU MUST CHANGE ALL Null TO None, true to TRUE, false to False
+# Ensure than you have only this
+# DEMO_WEEKLY = {
+#     "semantic_graph": {
+# and closing bracket }
+
 DEMO_WEEKLY = {
     "semantic_graph": {
       "meta": {
