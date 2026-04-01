@@ -1513,14 +1513,9 @@ DEMO MODE NOTICE:
         "logs": ""
     }
 
-    safe_json = json.loads(
-        json.dumps(safe_payload, ensure_ascii=False)
-        .encode("utf-8", "ignore")
-        .decode("utf-8")
-    )
+    return JSONResponse(safe_payload)
 
-    return JSONResponse(safe_json)
-    
+   
 def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
 
     severity = getattr(e, "severity", "hard")
