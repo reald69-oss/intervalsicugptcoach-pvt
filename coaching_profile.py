@@ -33,8 +33,8 @@ REPORT_CONTRACT = {
 
         # 🎯 ADAPTIVE DECISIONS
         "actions",
-        "training_guidance",
         "phase_alignment",
+        "training_guidance",
         "decision_context",
         #"planned_events",
         "current_ISO_weekly_microcycle",
@@ -64,8 +64,8 @@ REPORT_CONTRACT = {
 
         # 🎯 ADAPTIVE DECISIONS
         "actions",
-        "training_guidance",
         "phase_alignment",
+        "training_guidance",
         "decision_context",
     ],
 
@@ -96,9 +96,9 @@ REPORT_CONTRACT = {
         "current_ISO_weekly_microcycle",
         "planned_summary_by_iso_week",
         "future_forecast",
-        "future_actions"
-        "training_guidance",
+        "future_actions",
         "phase_alignment",
+        "training_guidance",
         "decision_context"
     ],
 
@@ -125,6 +125,9 @@ REPORT_CONTRACT = {
         "actions",
         "future_forecast",
         "future_actions",
+        "phase_alignment",
+        "training_guidance",
+        "decision_context"
     ],
 
     "summary": [
