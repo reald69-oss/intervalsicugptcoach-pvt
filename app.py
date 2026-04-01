@@ -1513,7 +1513,10 @@ DEMO MODE NOTICE:
         "logs": ""
     }
 
-    return JSONResponse(safe_payload)
+    clean = sanitize(safe_payload)
+    clean = json.loads(json.dumps(clean, ensure_ascii=False))
+
+    return JSONResponse(clean)
 
    
 def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
