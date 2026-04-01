@@ -4,6 +4,28 @@ Runtime Model v4.0 — Cloudflare + Railway Architecture
 # Welcome to Montis
 Montis is an automated training coach built on your Intervals.icu data.  
 It transforms your training and wellness data into validated insights and clear actions.
+COACH_SCIENCE = {
+    "version": "v17.0",
+    "models": [
+        "Banister Load Model (CTL / ATL / TSB, EWMA)",
+        "ACWR (Acute:Chronic Workload Ratio)",
+        "Foster Monotony & Strain",
+        "Seiler 3-Zone Intensity Distribution",
+        "Treff Polarisation Index (2019)",
+        "Critical Power Model (Skiba CP / W′)"
+    ],
+    "tier3_models": [
+        "WDRM (Anaerobic Repeatability — W′ depletion behaviour)",
+        "ISDM (Durability — HR/Power decoupling)",
+        "NDLI (Neural Load Density — intensity clustering)",
+        "ESPE (Energy System Progression — power curve adaptation)"
+    ],
+    "nutrition_model": [
+        "IOC / ACSM Carbohydrate Availability (g/kg vs demand)",
+        "Fuel Availability vs Training Load Matching"
+    ],
+    "decision_model": "Adaptive Decision Engine (rule-based load × recovery × performance interaction)"
+}
 ## 1. Setup
 Follow the setup guide:
 https://www.montis.icu/setup.html

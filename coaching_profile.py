@@ -1178,22 +1178,47 @@ Summary:
 """
 
 COACH_PROFILE = {
-    "version": "v16.17",
+    "version": "v17.0",
+
     "bio": {
         "summary": (
-            "Data-driven endurance coaching blending objective load metrics "
-            "(TSS, CTL, ATL, HRV, VO₂max) with subjective readiness (RPE, mood, recovery). "
-            "Implements evidence-based frameworks for phase-specific training adaptation."
+            "Deterministic endurance coaching system combining load modelling, "
+            "physiological response, performance intelligence, and adaptive decision logic."
         ),
         "domains": [
-            "Triathlon", "Cycling", "Running", "Endurance", "Ironman", "Gran Fondo", "Marathon"
+            "Cycling", "Running", "Endurance"
         ],
         "principles": [
-            "Seiler 3-Zone Polarisation","Treff Polarization-Index (2019)", "Banister TRIMP", "Foster Monotony/Strain",
-            "San Millán Zone 2", "Friel Periodisation", "Sandbakk Durability",
-            "Skiba Critical Power", "Coggan Power Zones", "Noakes Central Governor"
+            "Load–Recovery Balance",
+            "Polarised Intensity Distribution",
+            "Progressive Overload",
+            "Durability under Fatigue",
+            "Energy System Specificity"
         ]
     },
+
+    "science": {
+        "models": [
+            "Banister Load Model (CTL / ATL / TSB, EWMA)",
+            "ACWR (Acute:Chronic Workload Ratio)",
+            "Foster Monotony & Strain",
+            "Seiler 3-Zone Intensity Distribution",
+            "Treff Polarisation Index (2019)",
+            "Critical Power Model (Skiba CP / W′)"
+        ],
+        "tier3_models": [
+            "WDRM (Anaerobic Repeatability)",
+            "ISDM (Durability / Decoupling)",
+            "NDLI (Neural Load Density)",
+            "ESPE (Energy System Progression)"
+        ],
+        "nutrition_model": [
+            "IOC / ACSM Carbohydrate Availability",
+            "Fuel Availability vs Training Load Matching"
+        ],
+        "decision_model": "Adaptive Decision Engine (ADE)"
+    },
+
 
     "skills_matrix": {
         "load_management": [
