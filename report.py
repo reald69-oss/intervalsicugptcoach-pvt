@@ -369,6 +369,10 @@ def fetch_remote_report(
     # Try to parse JSON if possible
     try:
         data = resp.json()
+        data["_trace"] = {
+            "worker_url": url,
+            "type": "REMOTE"
+        }
     except Exception:
         # Surface Worker error text instead of crashing
         text = resp.text
@@ -384,7 +388,6 @@ def fetch_remote_report(
     # 🔥 Handle unified JSON payload (markdown + semantic)
     if "application/json" in content_type:
 
-        data = resp.json()
         markdown = data.get("markdown")
         semantic = data.get("semantic_graph")
         # --- Token estimate ---
@@ -446,7 +449,7 @@ def fetch_remote_report(
         return {"markdown": text, "status": resp.status_code}
 
     # Default JSON flow (no GPT)
-    data = resp.json()
+
     json_out = f"report_{report_type}_prefetch_{env_tag}_semantic.json"
     Path(f"reports/{json_out}").write_text(json.dumps(data, indent=2), encoding="utf-8")
     print(f"[REMOTE] ✅ Semantic JSON saved → {json_out}")
@@ -480,6 +483,10 @@ def fetch_debug_report(report_type, staging=False, prefetch=False):
     resp.raise_for_status()
 
     data = resp.json()
+    data["_trace"] = {
+        "worker_url": url,
+        "type": "DEBUG"
+    }
 
     Path("reports").mkdir(exist_ok=True)
 
@@ -493,7 +500,8 @@ def fetch_debug_report(report_type, staging=False, prefetch=False):
         "status": data.get("status"),
         "report_type": data.get("report_type"),
         "semantic_graph": semantic,
-        "compliance": data.get("compliance", {})
+        "compliance": data.get("compliance", {}),
+        "_trace": data.get("_trace")
     }
 
   # ------------------------------------------------
@@ -561,7 +569,14 @@ def fetch_worker_prefetch_dataset(report_type, staging=False, start=None, end=No
     resp = requests.get(url, headers=headers, timeout=120)
     resp.raise_for_status()
 
-    return resp.json()
+    data = resp.json()
+
+    data["_trace"] = {
+        "worker_url": url,
+        "type": "PREFETCH"
+    }
+
+    return data
 
 # ─────────────────────────────────────────────
 # PREFETCH HELPER — Cloudflare Worker Schema
@@ -605,8 +620,14 @@ def generate_full_report(
         )
 
         if gpt:
-            print("[GPT] ✅ Worker already saved Markdown + Semantic JSON — exiting early.")
-            return None
+            print("[GPT] ✅ Worker already saved Markdown + Semantic JSON")
+
+            # still return trace for UI/debug visibility
+            return {
+                "status": "ok",
+                "_trace": data.get("_trace"),
+                "mode": "gpt_prefetch"
+            }
 
         if data.get("status") != "ok":
             full_output = data
@@ -621,6 +642,7 @@ def generate_full_report(
                 "severity": data.get("severity"),
                 "semantic_graph": semantic,
                 "logs": log_output,
+                "_trace": data.get("_trace")
             }
 
     # ============================================================
@@ -635,7 +657,7 @@ def generate_full_report(
             start=start,
             end=end
         )
-
+        trace = dataset.get("_trace")
         # --------------------------------------------------------
         # 🔧 NORMALISE (same as Railway)
         # --------------------------------------------------------
@@ -701,7 +723,8 @@ def generate_full_report(
                     "message": f"{report_type.title()} report generated (local)",
                     "semantic_graph": semantic_output,
                     "_debug": {
-                        "tokens": token_count
+                        "tokens": token_count,
+                    "_trace": trace
                     }
                 }
 
