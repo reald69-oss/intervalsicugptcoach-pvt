@@ -839,18 +839,42 @@ def main():
     )
     
     args = parser.parse_args()
-    # 🧠 Debug mode shortcut — directly fetch from /debug and exit
+
+    # 🧠 Debug + Prefetch → run BOTH (semantic + debug)
     if args.debug and args.prefetch:
 
         os.environ["PREFETCH_MODE"] = "1"
 
         print(f"[CLI] 🧠 Prefetch debug mode for '{args.range}' (staging={args.staging})")
 
-        fetch_debug_report(args.range, staging=args.staging, prefetch=args.prefetch)
+        # 1️⃣ ALWAYS create semantic report
+        generate_full_report(
+            report_type=args.range,
+            output_path=args.output,
+            output_format=args.format,
+            prefetch=args.prefetch,
+            staging=args.staging,
+            start=args.start,
+            end=args.end,
+            gpt=args.gpt,
+            provider=args.provider,
+            model=args.model,
+            strava_test=args.strava_test,
+            debug_mode=False,   # 🔑 IMPORTANT
+            lite=args.lite
+        )
+
+        # 2️⃣ THEN fetch debug logs
+        fetch_debug_report(
+            args.range,
+            staging=args.staging,
+            prefetch=args.prefetch
+        )
 
         return
 
-    # 🧩 Otherwise, run the normal flow
+
+    # 🧩 Normal flow
     generate_full_report(
         report_type=args.range,
         output_path=args.output,
