@@ -422,6 +422,7 @@ def normalize_prefetched_context(data):
         # -------------------------------------------------------------------------------------
         # Derived Tier-0 equivalents
         context["df_light"]  = df_light
+        context["_df_light_90d"] = df_light.copy()
         context["df_master"] = df_full
         context["_df_scope_full"] = df_full.copy()
         context["df_wellness"] = df_well
