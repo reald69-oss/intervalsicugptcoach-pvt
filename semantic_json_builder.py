@@ -2891,7 +2891,7 @@ def build_semantic_json(context):
             nutrition_demand = context.get("nutrition_demand")
             weight = (context.get("athlete") or {}).get("icu_weight")
 
-            if nutrition and nutrition_demand and nutrition.get("confidence") != "none":
+            if nutrition and nutrition_demand:
 
                 classification = nutrition.get("status")
 
