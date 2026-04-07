@@ -435,6 +435,7 @@ RENDERER_PROFILES = {
             "daily_load": "full",
             "metrics_groups": "table_summary",
             "performance_intelligence": "full",
+            "performance_intelligence.run_terrain_execution": "table_summary",
             "energy_system_progression": "full",
             "zones": "forbid",
             "physiology": "full",
