@@ -421,7 +421,7 @@ RENDERER_PROFILES = {
             "All original semantic values MUST still be represented (no omission).",
             "Do NOT summarise or drop metrics — only change layout.",
             "If a table has more than 4 columns, split it into multiple tables (max 4 columns each).",
-            "If run_terrain_execution exists then must only state applies to RUN only in table summary"
+            "If run_terrain_execution exists then state applies to RUN only in title"
         ],
         "allowed_enrichment": [
             "Restate semantic interpretation fields.",
