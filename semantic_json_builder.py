@@ -1858,7 +1858,7 @@ def build_semantic_json(context):
 
                 grade = metrics.get("grade")
 
-                if grade is None or grade < 5:
+                if grade is None or grade < 3:
                     pass
                 else:
                     signals, tflags = evaluate_rules(metrics)
