@@ -27,7 +27,7 @@ from audit_core.tier3_trail_execution import (
     evaluate_rules,
     classify_execution
 )
-from audit_core.coach_trail_rules import TRAIL_DEFAULTS
+from coach_trail_rules import TRAIL_DEFAULTS
 
 # ---------------------------------------------------------
 # Helpers
