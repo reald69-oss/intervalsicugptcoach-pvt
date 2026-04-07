@@ -16,8 +16,9 @@ from audit_core.utils import debug
 import pandas as pd
 import numpy as np
 from coaching_profile import COACH_PROFILE
+from tier3_trail_execution import run_trail_execution
 
-PI_VERSION = "PI_v1.5"
+PI_VERSION = "PI_v1.6"
 # ===========================================================
 # Public Entry
 # ===========================================================
@@ -53,6 +54,9 @@ def compute_performance_intelligence(context, contract_type="weekly"):
         context,
         df_full
     )
+
+    # --- Terrain Execution (conditional) ---
+    run_trail_execution(context)
 
     # ✅ Now interpret using actual data
     interpretation = interpret_training_state(context)

@@ -666,10 +666,6 @@ def generate_full_report(
         # --------------------------------------------------------
         # 🔑 Inject required execution keys
         # --------------------------------------------------------
-        if start:
-            prefetch_context["start"] = start
-        if end:
-            prefetch_context["end"] = end
 
         prefetch_context = dict(prefetch_context)
         prefetch_context["prefetch_done"] = True
