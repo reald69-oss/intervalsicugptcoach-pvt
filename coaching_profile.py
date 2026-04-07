@@ -328,7 +328,7 @@ RENDERER_PROFILES = {
 
             "performance_intelligence": [
                 "performance_intelligence",
-                "performance_intelligence.terrain_execution",
+                "performance_intelligence.run_terrain_execution",
                 "wbal_summary"
             ],
 

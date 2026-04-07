@@ -9,7 +9,7 @@ Purpose:
 - Inject into performance_intelligence (URF v5.1 compliant)
 
 Output (minimal, compliant):
-    performance_intelligence["terrain_execution"] = {
+    performance_intelligence["run_terrain_execution"] = {
         "efficiency_state": "...",
         "limiter": "...",
         "confidence": "..."
@@ -289,7 +289,7 @@ def run_trail_execution(context: dict):
 
     pi = context.get("performance_intelligence", {})
 
-    pi["terrain_execution"] = terrain_execution
+    pi["run_terrain_execution"] = terrain_execution
 
     context["performance_intelligence"] = pi
 

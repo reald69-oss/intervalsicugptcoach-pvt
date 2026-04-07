@@ -2931,11 +2931,11 @@ def build_semantic_json(context):
             # Terrain Execution (Trail-specific, compact signal)
             # -----------------------------------------------------
 
-            terrain = pi.get("terrain_execution")
+            terrain = pi.get("run_terrain_execution")
 
             if terrain:
 
-                semantic["performance_intelligence"]["terrain_execution"] = {
+                semantic["performance_intelligence"]["run_terrain_execution"] = {
 
                     # -------------------------------------------------
                     # Framework
@@ -2962,7 +2962,7 @@ def build_semantic_json(context):
                     # -------------------------------------------------
 
                     "classification": terrain.get("efficiency_state"),
-                    "classification_source": "terrain_execution",
+                    "classification_source": "run_terrain_execution",
 
                     # -------------------------------------------------
                     # Signals
@@ -2976,7 +2976,7 @@ def build_semantic_json(context):
 
                 debug(
                     context,
-                    f"[SEMANTIC] Injected terrain_execution → "
+                    f"[SEMANTIC] Injected run_terrain_execution → "
                     f"{terrain.get('efficiency_state')} ({terrain.get('limiter')})"
                 )
 
