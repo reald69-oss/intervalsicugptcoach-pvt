@@ -1859,36 +1859,23 @@ def build_semantic_json(context):
                 grade = metrics.get("grade")
 
                 if grade is None or grade < 5:
-                    # Not terrain-critical → skip execution
-                    continue
+                    pass
+                else:
+                    signals, tflags = evaluate_rules(metrics)
 
-                # -------------------------------------------------
-                # APPLY ENGINE
-                # -------------------------------------------------
+                    for k, v in TRAIL_DEFAULTS.items():
+                        signals.setdefault(k, v)
 
-                signals, tflags = evaluate_rules(metrics)
+                    classification = classify_execution(signals, tflags)
 
-                for k, v in TRAIL_DEFAULTS.items():
-                    signals.setdefault(k, v)
+                    ev["execution"] = {
+                        "state": classification.get("efficiency_state"),
+                        "limiter": classification.get("limiter")
+                    }
 
-                classification = classify_execution(signals, tflags)
-
-                # -------------------------------------------------
-                # ATTACH (minimal, correct)
-                # -------------------------------------------------
-
-                ev["execution"] = {
-                    "state": classification.get("efficiency_state"),
-                    "limiter": classification.get("limiter")
-                }
-
-                # -------------------------------------------------
-                # FLAGS (only meaningful ones)
-                # -------------------------------------------------
-
-                if tflags:
-                    ev.setdefault("flags", [])
-                    ev["flags"].extend([f"trail_{f}" for f in tflags])
+                    if tflags:
+                        ev.setdefault("flags", [])
+                        ev["flags"].extend([f"trail_{f}" for f in tflags])
 
 
             # ---------------------------------------------------------
