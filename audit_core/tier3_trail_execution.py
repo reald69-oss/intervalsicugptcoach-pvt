@@ -39,10 +39,17 @@ def _has_meaningful_trail_runs(df):
         if runs["moving_time"].sum() < 1800:
             return False
 
-    # --- terrain relevance (must have some gradient) ---
-    if "grade" in runs.columns:
-        if runs["grade"].mean() < 3:
-            return False
+    # --- terrain relevance (derive grade properly) ---
+    if "total_elevation_gain" in runs.columns and "distance" in runs.columns:
+
+        gain = runs["total_elevation_gain"].sum()
+        dist = runs["distance"].sum()
+
+        if dist and dist > 0:
+            grade = (gain / dist) * 100
+
+            if grade < 3:
+                return False
 
     return True
 
