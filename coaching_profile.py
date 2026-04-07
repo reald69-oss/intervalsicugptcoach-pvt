@@ -322,7 +322,8 @@ RENDERER_PROFILES = {
 
             "physiology_response": [
                 "wellness",
-                "insight_view"
+                "insight_view",
+                "performance_intelligence.external_load_context"
             ],
 
             "performance_intelligence": [
@@ -585,7 +586,8 @@ RENDERER_PROFILES = {
             "physiology_response": [
                 "wellness",
                 "adaptation_metrics",
-                "insights_view"
+                "insights_view",
+                "performance_intelligence.external_load_context"
             ],
 
             "performance_intelligence": [
