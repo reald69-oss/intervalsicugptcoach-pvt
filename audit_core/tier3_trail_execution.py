@@ -220,39 +220,64 @@ def run_trail_execution(context: dict):
         return
 
     # --------------------------------------------------
-    # METRIC EXTRACTION (minimal + robust)
+    # METRIC EXTRACTION (aligned to Intervals data)
     # --------------------------------------------------
 
     metrics = {}
 
-    # grade (%)
-    if "grade" in df.columns:
-        metrics["grade"] = float(df["grade"].mean())
+    # -----------------------------
+    # GRADE (% from elevation)
+    # -----------------------------
+    if "total_elevation_gain" in df.columns and "distance" in df.columns:
+        gain = df["total_elevation_gain"].sum()
+        dist = df["distance"].sum()
 
-    # cadence
-    if "cadence" in df.columns:
-        metrics["cadence"] = float(df["cadence"].mean())
-        metrics["cadence_var"] = float(df["cadence"].std())
+        if dist and dist > 0:
+            metrics["grade"] = (gain / dist) * 100
 
-    # HR ratio (vs threshold if available)
-    if "heartrate" in df.columns:
-        hr = float(df["heartrate"].mean())
+
+    # -----------------------------
+    # CADENCE
+    # -----------------------------
+    if "average_cadence" in df.columns:
+        metrics["cadence"] = float(df["average_cadence"].mean())
+        metrics["cadence_var"] = float(df["average_cadence"].std())
+
+
+    # -----------------------------
+    # HR ratio (vs LTHR)
+    # -----------------------------
+    if "average_heartrate" in df.columns:
+        hr = float(df["average_heartrate"].mean())
         lthr = context.get("athlete", {}).get("lthr", 160)
-        metrics["hr_ratio"] = hr / lthr if lthr else 0
 
-    # decoupling
+        if lthr:
+            metrics["hr_ratio"] = hr / lthr
+
+
+    # -----------------------------
+    # DECOUPLING
+    # -----------------------------
     if "decoupling" in df.columns:
         metrics["decoupling"] = float(df["decoupling"].mean())
 
-    # speed drop (proxy)
-    if "speed" in df.columns:
-        s = df["speed"]
-        if len(s) > 0:
-            metrics["speed_drop"] = float((s.max() - s.min()) / max(s.max(), 1))
 
-    # temperature
-    if "temperature" in df.columns:
-        metrics["temp"] = float(df["temperature"].mean())
+    # -----------------------------
+    # SPEED DROP (proxy)
+    # -----------------------------
+    if "average_speed" in df.columns and "max_speed" in df.columns:
+        avg = df["average_speed"].mean()
+        maxs = df["max_speed"].max()
+
+        if maxs and maxs > 0:
+            metrics["speed_drop"] = (maxs - avg) / maxs
+
+
+    # -----------------------------
+    # TEMPERATURE
+    # -----------------------------
+    if "average_weather_temp" in df.columns:
+        metrics["temp"] = float(df["average_weather_temp"].mean())
 
     # --------------------------------------------------
     # APPLY RULES
