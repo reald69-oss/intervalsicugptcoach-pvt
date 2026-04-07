@@ -19,7 +19,8 @@ Output (minimal, compliant):
 from coach_trail_rules import (
     TRAIL_EXECUTION_RULES,
     TRAIL_FLAGS,
-    TRAIL_DEFAULTS
+    TRAIL_DEFAULTS,
+    TRAIL_INTERPRETATION
 )
 
 
@@ -142,6 +143,67 @@ def classify_execution(signals: dict, flags: list):
     }
 
 
+def build_interpretation(signals: dict, flags: list, classification: dict):
+
+    eff = signals.get("efficiency")
+    dur = signals.get("durability")
+    env = signals.get("environment")
+
+    state = classification.get("efficiency_state")
+
+    interpretation = None
+    coaching = None
+
+    # --------------------------------------------------
+    # PRIORITY 1 → FLAGS (most specific)
+    # --------------------------------------------------
+
+    for f in flags:
+        block = TRAIL_INTERPRETATION.get("flags", {}).get(f)
+        if block:
+            return block["interpretation"], block["coaching"]
+
+    # --------------------------------------------------
+    # PRIORITY 2 → EFFICIENCY
+    # --------------------------------------------------
+
+    block = TRAIL_INTERPRETATION.get("efficiency", {}).get(eff)
+    if block:
+        interpretation = block["interpretation"]
+        coaching = block["coaching"]
+
+    # --------------------------------------------------
+    # PRIORITY 3 → DURABILITY override
+    # --------------------------------------------------
+
+    if dur == "drifting":
+        block = TRAIL_INTERPRETATION.get("durability", {}).get("drifting")
+        if block:
+            interpretation = block["interpretation"]
+            coaching = block["coaching"]
+
+    # --------------------------------------------------
+    # PRIORITY 4 → ENVIRONMENT override
+    # --------------------------------------------------
+
+    if env != "none":
+        block = TRAIL_INTERPRETATION.get("environment", {}).get(env)
+        if block:
+            interpretation = block["interpretation"]
+            coaching = block["coaching"]
+
+    # --------------------------------------------------
+    # FALLBACK (state-based)
+    # --------------------------------------------------
+
+    if not interpretation:
+        block = TRAIL_INTERPRETATION.get("efficiency", {}).get(state)
+        if block:
+            interpretation = block["interpretation"]
+            coaching = block["coaching"]
+
+    return interpretation, coaching
+
 # --------------------------------------------------
 # MAIN ENTRY
 # --------------------------------------------------
@@ -206,7 +268,20 @@ def run_trail_execution(context: dict):
     # CLASSIFY
     # --------------------------------------------------
 
-    terrain_execution = classify_execution(signals, flags)
+    classification = classify_execution(signals, flags)
+
+    interpretation, coaching = build_interpretation(
+        signals,
+        flags,
+        classification
+    )
+
+    terrain_execution = {
+        **classification,
+        "interpretation": interpretation,
+        "coaching_implication": coaching,
+        "flags": flags   # keep for downstream use/debug
+    }
 
     # --------------------------------------------------
     # INJECT INTO TIER-3

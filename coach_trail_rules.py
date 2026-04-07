@@ -185,3 +185,58 @@ TRAIL_FLAGS = [
         "flag": "switchback_opportunity"
     }
 ]
+
+TRAIL_INTERPRETATION = {
+
+    "efficiency": {
+        "overexerting": {
+            "interpretation": "Effort exceeds sustainable intensity on climbs.",
+            "coaching": "Reduce intensity on gradients and avoid threshold spikes."
+        },
+        "pace_collapse": {
+            "interpretation": "Speed drops disproportionately on climbs.",
+            "coaching": "Improve pacing and manage effort more evenly on gradients."
+        },
+        "efficient": {
+            "interpretation": "Effort is well matched to terrain demands.",
+            "coaching": "Maintain current pacing and execution strategy."
+        },
+        "moderate": {
+            "interpretation": "Some inefficiencies in terrain handling are present.",
+            "coaching": "Refine pacing and avoid unnecessary effort spikes."
+        }
+    },
+
+    "durability": {
+        "drifting": {
+            "interpretation": "Cardiac drift indicates declining efficiency over time.",
+            "coaching": "Improve endurance durability and manage fatigue on climbs."
+        },
+        "stable": {
+            "interpretation": "Effort remains stable over time.",
+            "coaching": "Durability is well maintained across terrain."
+        }
+    },
+
+    "environment": {
+        "heat": {
+            "interpretation": "Heat is increasing physiological strain.",
+            "coaching": "Reduce intensity and account for thermal load."
+        },
+        "none": {
+            "interpretation": "No significant environmental constraints detected.",
+            "coaching": None
+        }
+    },
+
+    "flags": {
+        "direct_climb_penalty": {
+            "interpretation": "Direct steep climbing is increasing effort cost.",
+            "coaching": "Use zig-zag or hiking strategy to reduce gradient load."
+        },
+        "switchback_opportunity": {
+            "interpretation": "Terrain allows more efficient pathing.",
+            "coaching": "Use switchbacks to reduce effective gradient."
+        }
+    }
+}
