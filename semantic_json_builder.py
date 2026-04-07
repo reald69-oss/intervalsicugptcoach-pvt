@@ -23,6 +23,11 @@ from textwrap import dedent
 from questions_engine import detect_signals, select_question, generate_question, dominant_signal
 from audit_core.utils import set_time_context
 from prompt_builder import build_system_prompt_from_header
+from audit_core.tier3_trail_execution import (
+    evaluate_rules,
+    classify_execution
+)
+from audit_core.coach_trail_rules import TRAIL_DEFAULTS
 
 # ---------------------------------------------------------
 # Helpers
