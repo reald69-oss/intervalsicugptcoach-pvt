@@ -1858,7 +1858,7 @@ def build_semantic_json(context):
                     metrics["temp"] = float(row.get("average_weather_temp"))
 
                 # -------------------------------------------------
-                # TERRAIN RELEVANCE GATE (NEW)
+                # TERRAIN RELEVANCE GATE
                 # -------------------------------------------------
 
                 grade = metrics.get("grade")
