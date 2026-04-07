@@ -2860,6 +2860,67 @@ def build_semantic_json(context):
             )
 
         # -----------------------------------------------------
+        # Terrain Execution (Trail-specific, compact signal)
+        # -----------------------------------------------------
+
+        terrain = pi.get("terrain_execution")
+
+        if terrain:
+
+            semantic["performance_intelligence"]["terrain_execution"] = {
+
+                # -------------------------------------------------
+                # Framework
+                # -------------------------------------------------
+
+                "framework": "Terrain Execution Model (Trail Running)",
+
+                # -------------------------------------------------
+                # Interpretation
+                # -------------------------------------------------
+
+                "interpretation": (
+                    "Evaluates how effectively terrain-specific constraints "
+                    "(gradient, locomotion, pacing) are managed during running."
+                ),
+
+                "coaching_implication": {
+                    "efficient": "Execution aligned with terrain demands. Maintain current strategy.",
+                    "moderate": "Some inefficiencies detected. Improve pacing and terrain handling.",
+                    "inefficient": "Execution is limiting performance. Adjust climbing strategy and pacing.",
+                    "constrained": "External conditions (e.g. heat) are limiting execution."
+                }.get(terrain.get("efficiency_state")),
+
+                # -------------------------------------------------
+                # Context
+                # -------------------------------------------------
+
+                "context_window": "7d",
+
+                # -------------------------------------------------
+                # Classification
+                # -------------------------------------------------
+
+                "classification": terrain.get("efficiency_state"),
+                "classification_source": "terrain_execution",
+
+                # -------------------------------------------------
+                # Signals
+                # -------------------------------------------------
+
+                "signals": {
+                    "limiter": terrain.get("limiter"),
+                    "confidence": terrain.get("confidence")
+                }
+            }
+
+            debug(
+                context,
+                f"[SEMANTIC] Injected terrain_execution → "
+                f"{terrain.get('efficiency_state')} ({terrain.get('limiter')})"
+            )
+
+        # -----------------------------------------------------
         # 2️⃣ Inject Interpretation → Action Layer
         # -----------------------------------------------------
 
