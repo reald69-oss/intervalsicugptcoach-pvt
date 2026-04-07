@@ -2942,13 +2942,13 @@ def build_semantic_json(context):
                     # -------------------------------------------------
 
                     "framework": "Terrain Execution Model (Trail Running)",
+                    "context": "Applies to Run, TrailRun, VirtualRun only",
 
                     # -------------------------------------------------
                     # Interpretation (FROM TIER-3)
                     # -------------------------------------------------
 
                     "interpretation": terrain.get("interpretation"),
-
                     "coaching_implication": terrain.get("coaching_implication"),
 
                     # -------------------------------------------------
