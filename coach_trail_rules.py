@@ -209,8 +209,8 @@ TRAIL_INTERPRETATION = {
 
     "durability": {
         "drifting": {
-            "interpretation": "Cardiac drift indicates declining efficiency over time.",
-            "coaching": "Improve endurance durability and manage fatigue on climbs."
+            "interpretation": "Climbing efficiency is reduced under fatigue, with increasing effort cost on terrain.",
+            "coaching": "Manage effort more conservatively on climbs and avoid late-session intensity spikes."
         },
         "stable": {
             "interpretation": "Effort remains stable over time.",
