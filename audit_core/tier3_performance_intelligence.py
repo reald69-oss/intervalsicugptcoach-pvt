@@ -14,9 +14,10 @@ Season → 90d LIGHT chronic aggregation + 7d acute overlay
 
 from audit_core.utils import debug
 import pandas as pd
+import numpy as np
 from coaching_profile import COACH_PROFILE
 
-PI_VERSION = "PI_v1.4"
+PI_VERSION = "PI_v1.5"
 # ===========================================================
 # Public Entry
 # ===========================================================
@@ -46,6 +47,12 @@ def compute_performance_intelligence(context, contract_type="weekly"):
     # ✅ Make result visible to interpreter
     context["performance_intelligence"] = result
     context["PI_VERSION"] = PI_VERSION
+
+    #Enviornmental factors
+    compute_external_load_context(
+        context,
+        df_full
+    )
 
     # ✅ Now interpret using actual data
     interpretation = interpret_training_state(context)
@@ -755,6 +762,40 @@ def interpret_training_state(context):
             load_recovery_state = "productive_load"
 
     # --------------------------------------------------
+    # EXTERNAL LOAD CONTEXT (HEAT / ENVIRONMENT)
+    # --------------------------------------------------
+
+    external = context.get("performance_intelligence", {}).get("external_load_context", {})
+
+    heat_load = external.get("heat_load_index_7d")
+    heat_max = (external.get("exposure") or {}).get("heat_max")
+    thermal_source = external.get("thermal_source")
+
+    # --- Heat strain adjustment (ONLY valid external stressor) ---
+    heat_flag = False
+
+    if heat_max is not None and heat_max > 1.0:
+        heat_flag = True
+
+    elif heat_load is not None and heat_load > 0.8:
+        heat_flag = True
+
+    # Apply constraint (does NOT override TSB governor)
+    if heat_flag:
+
+        # escalate recovery demand by one level (bounded)
+        if load_recovery_state == "productive_load":
+            load_recovery_state = "adaptation_pressure"
+
+        elif load_recovery_state == "adaptation_pressure":
+            load_recovery_state = "load_pressure"
+
+        # add physiological context
+        heat_context_note = True
+    else:
+        heat_context_note = False
+
+    # --------------------------------------------------
     # Decision Engine
     # --------------------------------------------------
 
@@ -794,6 +835,30 @@ def interpret_training_state(context):
         next_session = "Planned structured session"
 
     # --------------------------------------------------
+    # HEAT ADJUSTMENT (EXECUTION LAYER — FINAL CONTROL)
+    # --------------------------------------------------
+
+    if heat_flag:
+
+        # Highest fatigue state → tighten to full recovery bias
+        if load_recovery_state == "maladaptation_risk":
+
+            next_session = "Full rest or very light recovery (heat-adjusted)"
+
+        # Mid states → reduce intensity
+        elif load_recovery_state in ("load_pressure", "adaptation_pressure"):
+
+            recommendation = "Prioritise aerobic work and manage heat stress"
+            next_session = "Low-intensity aerobic session (heat-adjusted)"
+
+        # Load accepting → constrain progression
+        elif load_recovery_state == "productive_load":
+
+            recommendation = "Progress load cautiously due to heat stress"
+            next_session = "Controlled endurance or reduced-intensity intervals"
+
+
+    # --------------------------------------------------
     # Freshness overlay
     # --------------------------------------------------
 
@@ -802,6 +867,13 @@ def interpret_training_state(context):
 
     elif tsb_class in ("fresh", "transition"):
         readiness += " Freshness is currently high."
+
+    # --------------------------------------------------
+    # HEAT CONTEXT (INTERPRETATION ONLY)
+    # --------------------------------------------------
+
+    if heat_context_note:
+        readiness += " Environmental heat strain is elevating cardiovascular load."
 
     # --------------------------------------------------
     # Adaptation context
@@ -882,6 +954,303 @@ def interpret_training_state(context):
         "operational_state": operational_state,
         "operational_state_context": operational_state_context
     }
+
+
+def compute_external_load_context(context, df_full):
+    """
+    Tier-3 — External Load Context (SCIENCE-ALIGNED)
+
+    Purpose:
+        Quantify TRUE external environmental stress (heat),
+        while treating terrain as contextual (not load).
+
+    Principles:
+        - Heat = independent physiological stressor (validated)
+        - Terrain = already captured in power/load → NOT a load metric
+        - Efficiency drift = bridge between external → internal response
+
+    Heat is the only independent environmental stressor here; above ~18 °C cardiovascular strain rises and above ~23 °C performance degradation becomes significant (Cheuvront & Kenefick).
+    Elevation/terrain does not add separate “load” because its metabolic cost is already captured in power/TSS; treating it as additional load double-counts stress.
+    Terrain instead acts as a **modifier**, influencing internal response (e.g., HR–power decoupling, efficiency drift), not external load itself.
+    The correct model is therefore: **heat = external load driver**, **terrain = contextual constraint**, **efficiency/HR response = physiological mediator of both**.
+
+    Output:
+        context["performance_intelligence"]["external_load_context"]
+    """
+
+    import numpy as np
+    import pandas as pd
+
+    if df_full is None or getattr(df_full, "empty", True):
+        return {}
+
+    # --------------------------------------------------
+    # SAFE NUMERIC EXTRACTION
+    # --------------------------------------------------
+
+    def _num(series):
+        return pd.to_numeric(series, errors="coerce") if series is not None else None
+
+    altitude_gain = _num(df_full.get("total_elevation_gain"))
+    distance = _num(df_full.get("distance"))
+    moving_time = _num(df_full.get("moving_time"))
+    power = _num(df_full.get("average_watts"))
+    hr = _num(df_full.get("average_heartrate"))
+    temp = _num(df_full.get("average_temp"))
+
+    if temp is None:
+        temp = _num(df_full.get("temperature"))
+
+    # --------------------------------------------------
+    # DERIVED CONTEXT SIGNALS (NOT LOAD)
+    # --------------------------------------------------
+
+    # --- Terrain context (m/km) ---
+    terrain_index = None
+    if altitude_gain is not None and distance is not None:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            terrain_index = altitude_gain / (distance / 1000.0)
+        terrain_index = terrain_index.replace([np.inf, -np.inf], np.nan)
+
+    # --- VAM (m/h) ---
+    vam = None
+    if altitude_gain is not None and moving_time is not None:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            vam = altitude_gain / (moving_time / 3600.0)
+
+    # --------------------------------------------------
+    # THERMAL SIGNAL RESOLUTION (SCIENCE-ALIGNED)
+    # --------------------------------------------------
+
+    def resolve_thermal_signal(df):
+
+        # --------------------------------------------------
+        # 1. HEAT TRAINING LOAD (PRIMARY SIGNAL)
+        # --------------------------------------------------
+        heat_training = _num(df.get("HeatTrainingLoad"))
+
+        if heat_training is not None and heat_training.notna().any():
+            return {
+                "series": heat_training.clip(0, 2),
+                "source": "heat_training_load",
+                "confidence": "high",
+                "max": float(np.nanmax(heat_training))
+            }
+
+        # --------------------------------------------------
+        # 2. HEAT STRAIN INDEX (fallback)
+        # --------------------------------------------------
+        heat_strain = _num(df.get("heat_strain_index"))
+
+        if heat_strain is not None and heat_strain.notna().any():
+            return {
+                "series": heat_strain.clip(0, 2),
+                "source": "heat_strain",
+                "confidence": "medium",
+                "max": float(np.nanmax(heat_strain))
+            }
+
+        # --------------------------------------------------
+        # 3. AMBIENT TEMP (last fallback)
+        # --------------------------------------------------
+        if temp is not None and temp.notna().any():
+
+            series = ((temp - 18.0) / (23.0 - 18.0)).clip(lower=0, upper=2)
+
+            return {
+                "series": series,
+                "source": "ambient_temp",
+                "confidence": "contextual",
+                "max": float(np.nanmax(series))
+            }
+
+        return None
+
+    thermal = resolve_thermal_signal(df_full)
+
+    heat_index = None
+    thermal_source = None
+    thermal_confidence = None
+    heat_max = None
+
+    if thermal:
+        heat_index = thermal["series"]
+        thermal_source = thermal["source"]
+        thermal_confidence = thermal["confidence"]
+        heat_max = thermal["max"]
+
+    # --------------------------------------------------
+    # INTERNAL RESPONSE LINK (EFFICIENCY DRIFT)
+    # --------------------------------------------------
+
+    efficiency_dev = None
+
+    if power is not None and hr is not None:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            efficiency = power / hr.replace(0, np.nan)
+
+        if isinstance(efficiency, pd.Series):
+            baseline = efficiency.rolling(5, min_periods=2).mean()
+            efficiency_dev = efficiency - baseline
+
+    # --------------------------------------------------
+    # AGGREGATION (7D)
+    # --------------------------------------------------
+
+    def _safe_mean(x):
+        if x is None:
+            return None
+
+        arr = np.asarray(x)
+
+        if arr.size == 0 or np.isnan(arr).all():
+            return None
+
+        return float(np.nanmean(arr))
+
+    heat_load = _safe_mean(heat_index)
+    terrain_mean = _safe_mean(terrain_index)
+    vam_mean = _safe_mean(vam)
+    efficiency_bias = _safe_mean(efficiency_dev)
+
+    # --------------------------------------------------
+    # EXPOSURE (CRITICAL — DO NOT AVERAGE AWAY)
+    # --------------------------------------------------
+
+    def _safe_max(x):
+        if x is None:
+            return None
+
+        arr = np.asarray(x)
+
+        if arr.size == 0 or np.isnan(arr).all():
+            return None
+
+        return float(np.nanmax(arr))
+    terrain_max = _safe_max(terrain_index)
+    vam_max = _safe_max(vam)
+
+    # --------------------------------------------------
+    # NORMALISED HEAT LOAD (ONLY TRUE LOAD)
+    # --------------------------------------------------
+
+    def _scale(val, low, high):
+        if val is None:
+            return None
+        return float(np.clip((val - low) / (high - low), 0, 2))
+
+    # heat_index already scaled 0–2, but stabilise
+    heat_score = _scale(heat_load, 0, 1.0)
+
+    # --------------------------------------------------
+    # CLASSIFICATION
+    # --------------------------------------------------
+
+    def _classify(v):
+        if v is None:
+            return "unknown"
+        if v < 0.5:
+            return "low"
+        elif v < 1.0:
+            return "moderate"
+        else:
+            return "high"
+
+    classification = _classify(heat_score)
+
+    # --------------------------------------------------
+    # MODIFIERS (EXPOSURE-DRIVEN)
+    # --------------------------------------------------
+
+    modifiers = {}
+
+    # Heat-driven cardiovascular strain (use exposure, not mean)
+    if heat_max is not None and heat_max > 1.0:
+        modifiers["cardiovascular_drift"] = "heat_induced"
+
+    # Terrain only matters if it alters physiology
+    if terrain_max is not None and terrain_max > 20:
+        if efficiency_bias is not None and efficiency_bias < -5:
+            modifiers["efficiency_bias"] = "terrain_induced"
+
+    # Combined stress signal
+    if (
+        heat_max is not None and heat_max > 1.0 and
+        efficiency_bias is not None and efficiency_bias < -5
+    ):
+        modifiers["combined_stress"] = "heat_and_terrain"
+
+
+    # --------------------------------------------------
+    # DOMINANT STRESSOR (EXPOSURE FIRST)
+    # --------------------------------------------------
+
+    dominant = None
+
+    if heat_max is not None and heat_max > 1.0:
+        dominant = "acute_heat"
+
+    elif heat_score is not None:
+        dominant = "heat"
+
+    # --------------------------------------------------
+    # FINAL BLOCK
+    # --------------------------------------------------
+
+    def _r(val):
+        return round(val, 2) if val is not None else None
+
+    block = {
+        # --------------------------------------------------
+        # TRUE external load (thermal only)
+        # --------------------------------------------------
+        "env_load_index_7d": _r(heat_score),
+        "heat_load_index_7d": _r(heat_score),
+
+        # --------------------------------------------------
+        # THERMAL SOURCE (CRITICAL FOR INTERPRETATION)
+        # --------------------------------------------------
+        "thermal_source": thermal_source,                 
+        "thermal_source_confidence": thermal_confidence,  
+
+        # --------------------------------------------------
+        # EXPOSURE (DO NOT AVERAGE AWAY)
+        # --------------------------------------------------
+        "exposure": {
+            "terrain_max": _r(terrain_max),
+            "heat_max": _r(heat_max),
+            "session_avg_vam_max": _r(vam_max)
+        },
+
+        # --------------------------------------------------
+        # CONTEXT (NOT LOAD)
+        # --------------------------------------------------
+        "terrain_context_7d": _r(terrain_mean),
+        "vam_mean_7d": _r(vam_mean),
+
+        # --------------------------------------------------
+        # INTERPRETATION
+        # --------------------------------------------------
+        "dominant_stressor": dominant,
+        "classification": classification,
+
+        # --------------------------------------------------
+        # PHYSIOLOGICAL MODIFIERS
+        # --------------------------------------------------
+        "modifiers": modifiers,
+
+        # --------------------------------------------------
+        # META
+        # --------------------------------------------------
+        "confidence": thermal_confidence or "contextual",
+        "context_window": "7d"
+    }
+
+    # attach safely
+    pi = context.setdefault("performance_intelligence", {})
+    pi["external_load_context"] = block
+
+    return block
 
 # ===========================================================
 # Utilities

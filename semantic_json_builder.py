@@ -2803,6 +2803,63 @@ def build_semantic_json(context):
             )
 
         # -----------------------------------------------------
+        # External Load Context (SCIENCE-ALIGNED)
+        # -----------------------------------------------------
+
+        external = pi.get("external_load_context")
+
+        if external:
+
+            semantic["performance_intelligence"]["external_load_context"] = {
+
+                # -------------------------------------------------
+                # TRUE external load (thermal only)
+                # -------------------------------------------------
+                "env_load_index_7d": external.get("env_load_index_7d"),
+                "heat_load_index_7d": external.get("heat_load_index_7d"),
+
+                # -------------------------------------------------
+                # THERMAL SOURCE (CRITICAL)
+                # -------------------------------------------------
+                "thermal_source": external.get("thermal_source"),
+                "thermal_source_confidence": external.get("thermal_source_confidence"),
+
+                # -------------------------------------------------
+                # CONTEXT (NOT load)
+                # -------------------------------------------------
+                "terrain_context_7d": external.get("terrain_context_7d"),
+                "vam_mean_7d": external.get("vam_mean_7d"),
+
+                # -------------------------------------------------
+                # EXPOSURE (max session stress — NOT averaged)
+                # -------------------------------------------------
+                "exposure": external.get("exposure"),
+
+                # -------------------------------------------------
+                # INTERPRETATION
+                # -------------------------------------------------
+                "dominant_stressor": external.get("dominant_stressor"),
+                "classification": external.get("classification"),
+
+                # -------------------------------------------------
+                # PHYSIOLOGICAL MODIFIERS
+                # -------------------------------------------------
+                "modifiers": external.get("modifiers"),
+
+                # -------------------------------------------------
+                # META
+                # -------------------------------------------------
+                "confidence": external.get("thermal_source_confidence") or external.get("confidence"),
+                "context_window": external.get("context_window"),
+            }
+
+            debug(
+                context,
+                f"[SEMANTIC] Injected external_load_context → "
+                f"{external.get('classification')} ({external.get('dominant_stressor')})"
+            )
+
+        # -----------------------------------------------------
         # 2️⃣ Inject Interpretation → Action Layer
         # -----------------------------------------------------
 
