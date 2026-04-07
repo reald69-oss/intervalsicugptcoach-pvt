@@ -2859,66 +2859,58 @@ def build_semantic_json(context):
                 f"{external.get('classification')} ({external.get('dominant_stressor')})"
             )
 
-        # -----------------------------------------------------
-        # Terrain Execution (Trail-specific, compact signal)
-        # -----------------------------------------------------
+            # -----------------------------------------------------
+            # Terrain Execution (Trail-specific, compact signal)
+            # -----------------------------------------------------
 
-        terrain = pi.get("terrain_execution")
+            terrain = pi.get("terrain_execution")
 
-        if terrain:
+            if terrain:
 
-            semantic["performance_intelligence"]["terrain_execution"] = {
+                semantic["performance_intelligence"]["terrain_execution"] = {
 
-                # -------------------------------------------------
-                # Framework
-                # -------------------------------------------------
+                    # -------------------------------------------------
+                    # Framework
+                    # -------------------------------------------------
 
-                "framework": "Terrain Execution Model (Trail Running)",
+                    "framework": "Terrain Execution Model (Trail Running)",
 
-                # -------------------------------------------------
-                # Interpretation
-                # -------------------------------------------------
+                    # -------------------------------------------------
+                    # Interpretation (FROM TIER-3)
+                    # -------------------------------------------------
 
-                "interpretation": (
-                    "Evaluates how effectively terrain-specific constraints "
-                    "(gradient, locomotion, pacing) are managed during running."
-                ),
+                    "interpretation": terrain.get("interpretation"),
 
-                "coaching_implication": {
-                    "efficient": "Execution aligned with terrain demands. Maintain current strategy.",
-                    "moderate": "Some inefficiencies detected. Improve pacing and terrain handling.",
-                    "inefficient": "Execution is limiting performance. Adjust climbing strategy and pacing.",
-                    "constrained": "External conditions (e.g. heat) are limiting execution."
-                }.get(terrain.get("efficiency_state")),
+                    "coaching_implication": terrain.get("coaching_implication"),
 
-                # -------------------------------------------------
-                # Context
-                # -------------------------------------------------
+                    # -------------------------------------------------
+                    # Context
+                    # -------------------------------------------------
 
-                "context_window": "7d",
+                    "context_window": "7d",
 
-                # -------------------------------------------------
-                # Classification
-                # -------------------------------------------------
+                    # -------------------------------------------------
+                    # Classification
+                    # -------------------------------------------------
 
-                "classification": terrain.get("efficiency_state"),
-                "classification_source": "terrain_execution",
+                    "classification": terrain.get("efficiency_state"),
+                    "classification_source": "terrain_execution",
 
-                # -------------------------------------------------
-                # Signals
-                # -------------------------------------------------
+                    # -------------------------------------------------
+                    # Signals
+                    # -------------------------------------------------
 
-                "signals": {
-                    "limiter": terrain.get("limiter"),
-                    "confidence": terrain.get("confidence")
+                    "signals": {
+                        "limiter": terrain.get("limiter"),
+                        "confidence": terrain.get("confidence")
+                    }
                 }
-            }
 
-            debug(
-                context,
-                f"[SEMANTIC] Injected terrain_execution → "
-                f"{terrain.get('efficiency_state')} ({terrain.get('limiter')})"
-            )
+                debug(
+                    context,
+                    f"[SEMANTIC] Injected terrain_execution → "
+                    f"{terrain.get('efficiency_state')} ({terrain.get('limiter')})"
+                )
 
         # -----------------------------------------------------
         # 2️⃣ Inject Interpretation → Action Layer
