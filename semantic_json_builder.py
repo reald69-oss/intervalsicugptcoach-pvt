@@ -2864,59 +2864,6 @@ def build_semantic_json(context):
                 f"{external.get('classification')} ({external.get('dominant_stressor')})"
             )
 
-            # -----------------------------------------------------
-            # Terrain Execution (Trail-specific, compact signal)
-            # -----------------------------------------------------
-
-            terrain = pi.get("run_terrain_execution")
-
-            if terrain:
-
-                semantic["performance_intelligence"]["run_terrain_execution"] = {
-
-                    # -------------------------------------------------
-                    # Framework
-                    # -------------------------------------------------
-
-                    "framework": "Terrain Execution Model (Trail Running)",
-                    "context": "Applies to Run, TrailRun, VirtualRun only",
-
-                    # -------------------------------------------------
-                    # Interpretation (FROM TIER-3)
-                    # -------------------------------------------------
-
-                    "interpretation": terrain.get("interpretation"),
-                    "coaching_implication": terrain.get("coaching_implication"),
-
-                    # -------------------------------------------------
-                    # Context
-                    # -------------------------------------------------
-
-                    "context_window": "7d",
-
-                    # -------------------------------------------------
-                    # Classification
-                    # -------------------------------------------------
-
-                    "classification": terrain.get("efficiency_state"),
-                    "classification_source": "run_terrain_execution",
-
-                    # -------------------------------------------------
-                    # Signals
-                    # -------------------------------------------------
-
-                    "signals": {
-                        "limiter": terrain.get("limiter"),
-                        "confidence": terrain.get("confidence")
-                    }
-                }
-
-                debug(
-                    context,
-                    f"[SEMANTIC] Injected run_terrain_execution → "
-                    f"{terrain.get('efficiency_state')} ({terrain.get('limiter')})"
-                )
-
         # -----------------------------------------------------
         # 2️⃣ Inject Interpretation → Action Layer
         # -----------------------------------------------------

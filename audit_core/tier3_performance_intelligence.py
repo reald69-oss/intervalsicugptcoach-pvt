@@ -87,7 +87,8 @@ def _compute_weekly(context, df_full):
     efficiency = pd.to_numeric(df_full.get("icu_efficiency_factor"), errors="coerce")
     variability = pd.to_numeric(df_full.get("icu_variability_index"), errors="coerce")
     polarisation = pd.to_numeric(df_full.get("polarization_index"), errors="coerce")
-    decoupling = decoupling_raw.abs()
+    decoupling_signed = decoupling_raw
+    decoupling_abs = decoupling_raw.abs()
     if_values = pd.to_numeric(df_full.get("icu_intensity"), errors="coerce")
     # normalize legacy intensity values (sometimes stored as %)
     if if_values is not None and not if_values.dropna().empty and if_values.max() > 2:
@@ -132,9 +133,17 @@ def _compute_weekly(context, df_full):
             "w_prime_divergence_7d": divergence,
         },
         "durability": {
-            "mean_decoupling_7d": _safe_mean(decoupling),
-            "max_decoupling_7d": _safe_max(decoupling),
-            "high_drift_sessions_7d": _safe_count(decoupling, 5.0),
+            # primary (backward compatible)
+            "mean_decoupling_7d": _safe_mean(decoupling_abs),
+
+            # new (correct physiology)
+            "mean_decoupling_signed_7d": _safe_mean(decoupling_signed),
+            "mean_decoupling_abs_7d": _safe_mean(decoupling_abs),
+
+            # FIXED → use abs (magnitude for drift)
+            "max_decoupling_7d": _safe_max(decoupling_abs),
+            "high_drift_sessions_7d": _safe_count(decoupling_abs, 5.0),
+
             "long_sessions_7d": _safe_count(moving_time, 7200),
         },
         "neural_density": {
@@ -693,7 +702,7 @@ def interpret_training_state(context):
     # --------------------------------------------------
 
     wdrm = (pi.get("anaerobic_repeatability") or {}).get("mean_depletion_pct_7d")
-    durability = (pi.get("durability") or {}).get("mean_decoupling_7d")
+    durability = (pi.get("durability") or {}).get("mean_decoupling_signed_7d")
     neural = (pi.get("neural_density") or {}).get("rolling_joules_above_ftp_7d")
 
     tsb_class = future.get("fatigue_class")
@@ -888,9 +897,16 @@ def interpret_training_state(context):
     if wdrm and wdrm > 0.6:
         adapting = "High anaerobic stimulus detected — adaptation likely but recovery important."
 
-    if durability is not None and abs(durability) > 6:
-        adapting = "Durability strain rising — aerobic consolidation advised."
+    if durability is not None:
 
+        if durability > 6:
+            adapting = "Durability strain rising — aerobic consolidation advised."
+
+        elif durability < -3:
+            adapting = "Efficiency improving under load — strong aerobic adaptation."
+
+        elif durability < 0:
+            adapting = "Efficiency stable or slightly improving under load."
     # --------------------------------------------------
     # Neural density adjustment
     # --------------------------------------------------

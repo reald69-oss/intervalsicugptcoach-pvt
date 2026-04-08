@@ -7,6 +7,8 @@ Purpose:
 - Evaluate how terrain affects execution quality
 - Convert rule-based signals into a compact Tier-3 signal
 - Inject into performance_intelligence (URF v5.1 compliant)
+- This is NOT included at this time, NDLI etc provides nbetter coverage and TEM really needs to be based on single activity with interval dat to get better insight
+- Approach therefore is to create new endpoint report specific to get onedayactivity with intervals in full - pass to this function and analyse and report a TEM analysis
 
 Output (minimal, compliant):
     performance_intelligence["run_terrain_execution"] = {
