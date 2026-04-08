@@ -328,7 +328,6 @@ RENDERER_PROFILES = {
 
             "performance_intelligence": [
                 "performance_intelligence",
-                "performance_intelligence.run_terrain_execution",
                 "wbal_summary"
             ],
 
@@ -420,8 +419,7 @@ RENDERER_PROFILES = {
             "operational_state MUST be rendered as the primary state indicator (first column).",
             "All original semantic values MUST still be represented (no omission).",
             "Do NOT summarise or drop metrics — only change layout.",
-            "If a table has more than 4 columns, split it into multiple tables (max 4 columns each).",
-            "If run_terrain_execution exists then state applies to RUN only in title"
+            "If a table has more than 4 columns, split it into multiple tables (max 4 columns each)."
         ],
         "allowed_enrichment": [
             "Restate semantic interpretation fields.",
@@ -436,7 +434,6 @@ RENDERER_PROFILES = {
             "daily_load": "full",
             "metrics_groups": "table_summary",
             "performance_intelligence": "full",
-            "performance_intelligence.run_terrain_execution": "table_summary",
             "energy_system_progression": "full",
             "zones": "forbid",
             "physiology": "full",

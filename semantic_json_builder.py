@@ -1821,69 +1821,6 @@ def build_semantic_json(context):
                 ev["flags"] = flags
 
             # ---------------------------------------------------------
-            # 8️⃣ Trail Execution (RUN only, event-safe)
-            # ---------------------------------------------------------
-
-            if ev.get("type") and "Run" in ev["type"]:
-
-                metrics = {}
-
-                # -------------------------------------------------
-                # DERIVE TERRAIN (CRITICAL FIX)
-                # -------------------------------------------------
-
-                gain = row.get("total_elevation_gain")
-                dist = row.get("distance")
-
-                if pd.notna(gain) and pd.notna(dist) and dist > 0:
-                    metrics["grade"] = (gain / dist) * 100
-
-                # -------------------------------------------------
-                # CORE SIGNALS
-                # -------------------------------------------------
-
-                if pd.notna(row.get("average_cadence")):
-                    metrics["cadence"] = float(row.get("average_cadence"))
-
-                if pd.notna(row.get("average_heartrate")):
-                    hr = float(row.get("average_heartrate"))
-                    lthr = (context.get("athlete") or {}).get("lthr", 160)
-                    metrics["hr_ratio"] = hr / lthr if lthr else 0
-
-                if pd.notna(row.get("decoupling")):
-                    metrics["decoupling"] = float(row.get("decoupling"))
-
-                # correct temp field
-                if pd.notna(row.get("average_weather_temp")):
-                    metrics["temp"] = float(row.get("average_weather_temp"))
-
-                # -------------------------------------------------
-                # TERRAIN RELEVANCE GATE
-                # -------------------------------------------------
-
-                grade = metrics.get("grade")
-
-                if grade is None or grade < 3:
-                    pass
-                else:
-                    signals, tflags = evaluate_rules(metrics)
-
-                    for k, v in TRAIL_DEFAULTS.items():
-                        signals.setdefault(k, v)
-
-                    classification = classify_execution(signals, tflags)
-
-                    ev["execution"] = {
-                        "state": classification.get("efficiency_state"),
-                        "limiter": classification.get("limiter")
-                    }
-
-                    if tflags:
-                        ev.setdefault("flags", [])
-                        ev["flags"].extend([f"trail_{f}" for f in tflags])
-
-
-            # ---------------------------------------------------------
             # Append
             # ---------------------------------------------------------
             semantic["events"].append(ev)
