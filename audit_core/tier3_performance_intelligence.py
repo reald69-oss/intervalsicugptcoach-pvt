@@ -151,10 +151,9 @@ def _compute_weekly(context, df_full):
         "model_diagnostics": {
             "w_prime_divergence_7d": divergence,
         },
+
         "durability": {
-
             "state": durability_state,
-
             "mean_decoupling_7d": mean_abs,
             #"mean_decoupling_signed_7d": mean_signed,
 
@@ -326,9 +325,7 @@ def _compute_season(context, df_light, df_full):
         "model_diagnostics": model_diag,
 
         "durability": {
-
             "state": durability_state_90d,
-
             "mean_decoupling_90d": mean_abs,
             #"mean_decoupling_signed_90d": mean_signed,
 
@@ -387,26 +384,33 @@ def _compute_season(context, df_light, df_full):
         wdrm_a = acute_overlay["anaerobic_repeatability"]
         isdm_a = acute_overlay["durability"]
 
+        # --- W′ (valid numeric comparison) ---
         acute_mean_dep = wdrm_a.get("mean_depletion_pct_7d")
         chronic_mean_dep = wdrm_c.get("mean_depletion_pct_90d")
 
-        acute_mean_dec = isdm_a.get("mean_decoupling_7d")
-        chronic_mean_dec = isdm_c.get("mean_decoupling_90d")
-
         dep_ratio = None
-        drift_ratio = None
-
         if acute_mean_dep is not None and chronic_mean_dep not in (None, 0):
             dep_ratio = acute_mean_dep / chronic_mean_dep
 
-        if acute_mean_dec is not None and chronic_mean_dec not in (None, 0):
-            drift_ratio = acute_mean_dec / chronic_mean_dec
+        # --- DURABILITY (state is the signal) ---
+        acute_state = isdm_a.get("state")
+        chronic_state = isdm_c.get("state")
+
+        # optional: magnitude context (NOT interpretation)
+        acute_stability = isdm_a.get("stability")
+        chronic_stability = isdm_c.get("stability")
+
+        stability_ratio = None
+        if acute_stability is not None and chronic_stability not in (None, 0):
+            stability_ratio = acute_stability / chronic_stability
 
         debug(
             context,
             "[T3][SEASON][DELTA] Acute vs Chronic",
             f"dep_ratio={dep_ratio}",
-            f"drift_ratio={drift_ratio}",
+            f"acute_state={acute_state}",
+            f"chronic_state={chronic_state}",
+            f"stability_ratio={stability_ratio}",
         )
 
     return {

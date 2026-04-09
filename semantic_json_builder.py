@@ -2767,6 +2767,11 @@ def build_semantic_json(context):
                 # -----------------------------
                 for metric_name, metric_value in metrics.items():
 
+                    # pass-through for pre-structured blocks (like durability.state)
+                    if isinstance(metric_value, dict) and "value" in metric_value:
+                        wrapped[group_name][metric_name] = metric_value
+                        continue
+
                     if metric_name in ("state", "durability_state_7d", "durability_state_90d"):
                         wrapped[group_name][metric_name] = metric_value
                         continue

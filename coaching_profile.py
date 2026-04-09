@@ -1761,11 +1761,6 @@ COACH_PROFILE = {
         "mean_decoupling_7d": {
             "framework": "Intensity Stability & Durability Model (ISDM)",
             "formula": "Mean HR–Power decoupling magnitude (%) (7d)",
-            "criteria": {
-                "low": "<5 — stable durability",
-                "moderate": "5–8 — moderate drift",
-                "high": ">8 — high instability"
-            },
             "interpretation": (
                 "Absolute decoupling magnitude. Does not indicate direction. "
                 "Use durability state to determine whether efficiency is improving or deteriorating."
@@ -1779,36 +1774,28 @@ COACH_PROFILE = {
         "mean_decoupling_90d": {
             "framework": "Intensity Stability & Durability Model (ISDM)",
             "formula": "Mean HR–Power decoupling magnitude (%) (90d)",
-            "criteria": {
-                "low": "<4 — stable long-term durability",
-                "moderate": "4–7 — moderate drift accumulation",
-                "high": ">7 — high variability in durability"
-            },
+
             "interpretation": (
-                "Absolute decoupling magnitude over time. Does not indicate direction. "
-                "Use durability state to determine whether efficiency is improving or deteriorating."
+                "Long-term decoupling magnitude. Reflects accumulated durability behaviour over time. "
+                "Durability state is the authoritative assessment."
             ),
             "coaching_implication": (
-                "Higher values indicate greater variability in long-term durability, "
-                "but must be interpreted alongside durability state."
+                "Use to contextualise long-term durability trends only. "
+                "Do not interpret in isolation."
             )
         },
 
-        "max_decoupling_7d": {
+        "max_decoupling_90d": {
             "framework": "Intensity Stability & Durability Model (ISDM)",
-            "formula": "Max HR–Power decoupling magnitude (%) (7d)",
-            "criteria": {
-                "low": "<6 — stable session",
-                "moderate": "6–10 — moderate drift",
-                "high": ">10 — high instability"
-            },
+            "formula": "Max HR–Power decoupling magnitude (%) (90d)",
+
             "interpretation": (
-                "Peak decoupling magnitude observed in recent sessions. "
+                "Peak long-term decoupling magnitude observed. "
                 "Does not indicate direction of change."
             ),
             "coaching_implication": (
-                "High values indicate instability in sustained effort, "
-                "but must be interpreted alongside durability state."
+                "Indicates exposure to high drift events over time. "
+                "Must be interpreted alongside durability state."
             )
         },
 
@@ -1866,11 +1853,6 @@ COACH_PROFILE = {
         "long_sessions_7d": {
             "framework": "Durability Exposure",
             "formula": "Count of long endurance sessions (7d)",
-            "criteria": {
-                "low": "0 — no long sessions",
-                "moderate": "1–2 — adequate durability stimulus",
-                "high": "3+ — high endurance demand"
-            },
             "interpretation": "Exposure to prolonged endurance stress.",
             "coaching_implication": "Supports durability development but increases cumulative fatigue."
         },
