@@ -419,7 +419,10 @@ RENDERER_PROFILES = {
             "operational_state MUST be rendered as the primary state indicator (first column).",
             "All original semantic values MUST still be represented (no omission).",
             "Do NOT summarise or drop metrics — only change layout.",
-            "If a table has more than 4 columns, split it into multiple tables (max 4 columns each)."
+            "If a table has more than 4 columns, split it into multiple tables (max 4 columns each).",
+            "IF a group contains a resolved 'state' field (e.g. durability.state), that state MUST be used as the authoritative interpretation.",
+            "Do NOT recompute, infer, or override interpretation from underlying metrics when a state is present.",
+            "Underlying metrics (e.g. decoupling, signed decoupling) may be shown, but MUST NOT be used to derive narrative if state exists."
         ],
         "allowed_enrichment": [
             "Restate semantic interpretation fields.",
@@ -672,7 +675,10 @@ RENDERER_PROFILES = {
             "operational_state MUST be rendered as the primary state indicator (first column).",
             "All original semantic values MUST still be represented (no omission).",
             "Do NOT summarise or drop metrics — only change layout.",
-            "If a table has more than 4 columns, split it into multiple tables (max 4 columns each)."
+            "If a table has more than 4 columns, split it into multiple tables (max 4 columns each).",
+            "IF a group contains a resolved 'state' field (e.g. durability.state), that state MUST be used as the authoritative interpretation.",
+            "Do NOT recompute, infer, or override interpretation from underlying metrics when a state is present.",
+            "Underlying metrics (e.g. decoupling, signed decoupling) may be shown, but MUST NOT be used to derive narrative if state exists."
         ],
         "allowed_enrichment": [
             "Restate phase descriptors already present in semantic data."
