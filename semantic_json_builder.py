@@ -2749,6 +2749,20 @@ def build_semantic_json(context):
                 wrapped[group_name] = {}
 
                 # -----------------------------
+                # GROUP HEADER FIRST (ORDER FIX)
+                # -----------------------------
+                if group_name in ("anaerobic_repeatability", "neural_density"):
+
+                    wrapped[group_name]["interpretation"] = (
+                        CHEAT_SHEET["context"].get(group_meta["context_key"])
+                    )
+
+                    wrapped[group_name]["coaching_implication"] = (
+                        CHEAT_SHEET["advice"].get(group_meta["advice_key"])
+                        or CHEAT_SHEET["coaching_links"].get(group_meta["advice_key"])
+                    )
+
+                # -----------------------------
                 # FIRST PASS: build metrics
                 # -----------------------------
                 for metric_name, metric_value in metrics.items():
@@ -2787,6 +2801,10 @@ def build_semantic_json(context):
                     block["context_window"] = window_label
 
                     wrapped[group_name][metric_name] = block
+
+                    if group_name in ("anaerobic_repeatability", "neural_density"):
+                        block.pop("interpretation", None)
+                        block.pop("coaching_implication", None)
 
                 # -----------------------------
                 # SECOND PASS: durability ONLY
