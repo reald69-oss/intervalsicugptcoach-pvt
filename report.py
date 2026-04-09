@@ -266,8 +266,8 @@ sys.stdout.reconfigure(encoding="utf-8")
 def get_worker_base(staging=False):
 
     if staging:
-        return "https://intervalsicugptcoach-staging.clive-a5a.workers.dev"
-    return "https://intervalsicugptcoach.clive-a5a.workers.dev"
+        return "https://staging.montis.icu"
+    return "https://montis.icu"
 
 #---------------------------------------------
 #  OPEN report helper

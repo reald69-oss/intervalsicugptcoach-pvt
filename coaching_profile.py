@@ -420,9 +420,8 @@ RENDERER_PROFILES = {
             "All original semantic values MUST still be represented (no omission).",
             "Do NOT summarise or drop metrics — only change layout.",
             "If a table has more than 4 columns, split it into multiple tables (max 4 columns each).",
-            "IF a group contains a resolved 'state' field (e.g. durability.state), that state MUST be used as the authoritative interpretation.",
-            "Do NOT recompute, infer, or override interpretation from underlying metrics when a state is present.",
-            "Underlying metrics (e.g. decoupling, signed decoupling) may be shown, but MUST NOT be used to derive narrative if state exists."
+            "When a group contains a resolved 'state' field, it MUST be used as the sole authoritative interpretation. Do NOT infer or recompute interpretation from underlying metrics.",
+            "Metrics may be displayed for context, but MUST NOT define or override narrative conclusions when a state is present."
         ],
         "allowed_enrichment": [
             "Restate semantic interpretation fields.",
@@ -676,9 +675,8 @@ RENDERER_PROFILES = {
             "All original semantic values MUST still be represented (no omission).",
             "Do NOT summarise or drop metrics — only change layout.",
             "If a table has more than 4 columns, split it into multiple tables (max 4 columns each).",
-            "IF a group contains a resolved 'state' field (e.g. durability.state), that state MUST be used as the authoritative interpretation.",
-            "Do NOT recompute, infer, or override interpretation from underlying metrics when a state is present.",
-            "Underlying metrics (e.g. decoupling, signed decoupling) may be shown, but MUST NOT be used to derive narrative if state exists."
+            "When a group contains a resolved 'state' field, it MUST be used as the sole authoritative interpretation. Do NOT infer or recompute interpretation from underlying metrics.",
+            "Metrics may be displayed for context, but MUST NOT define or override narrative conclusions when a state is present."
         ],
         "allowed_enrichment": [
             "Restate phase descriptors already present in semantic data."
