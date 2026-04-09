@@ -718,9 +718,8 @@ CHEAT_SHEET["context"] = {
     ),
     "DurabilityProfile": (
         "ISDM (Intensity Stability & Durability Model) reflects stability of effort over time. "
-        "Decoupling magnitude indicates how stable the effort is, while signed decoupling "
-        "indicates direction (improving efficiency vs cardiovascular drift). "
-        "Durability state provides the resolved interpretation."
+        "Decoupling magnitude indicates how stable the effort is. "
+        "Durability state provides the resolved interpretation and must be used as the authoritative assessment."
     ),
     "NeuralDensity": (
         "NDLI (Neural Density Load Index) captures clustering of high-intensity "
@@ -837,8 +836,9 @@ CHEAT_SHEET["coaching_links"] = {
         "deep W′ sessions without adequate low-intensity support."
     ),
     "DurabilityProfile": (
-        "If durability drift rising, extend aerobic steady work or reduce "
-        "high-intensity density to stabilise cardiovascular efficiency."
+        "Use durability state to guide action. "
+        "If durability is drifting, reduce intensity density or extend aerobic work. "
+        "If stable or improving, maintain current structure."
     ),
     "NeuralDensity": (
         "If neural density clustered, insert recovery microcycles or "
