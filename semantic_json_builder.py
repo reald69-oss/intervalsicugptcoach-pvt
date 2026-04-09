@@ -219,7 +219,7 @@ def semantic_block_for_metric(name, value, context):
     if phase:
         phase = phase.lower()
 
-    semantic_state = "unclassified"
+    semantic_state = None
     classification = "unknown"
     active_thresholds = {}
 
@@ -244,7 +244,7 @@ def semantic_block_for_metric(name, value, context):
                 # 🧠 CRITERIA FALLBACK
                 criteria = profile_desc.get("criteria", {})
 
-                semantic_state = "unclassified"
+                semantic_state = None
 
                 if criteria:
                     try:
@@ -278,10 +278,10 @@ def semantic_block_for_metric(name, value, context):
                     except Exception as e:
                         debug(context, f"[CRITERIA][{metric_name}] ERROR", str(e))
                         classification = "informational"
-                        semantic_state = "unclassified"
+                        semantic_state = None
                 else:
                     classification = "informational"
-                    semantic_state = "unclassified"
+                    semantic_state = None
             else:
                 green = active_thresholds.get("green")
                 amber = active_thresholds.get("amber")
@@ -327,7 +327,7 @@ def semantic_block_for_metric(name, value, context):
         "framework": profile_desc.get("framework") or derived_info.get("framework") or "Unknown",
         "formula": profile_desc.get("formula"),
         "criteria": profile_desc.get("criteria", {}),
-        "semantic_state": semantic_state,
+        "semantic_state": semantic_state if semantic_state else None,
         "thresholds": active_thresholds,
         "phase_context": phase,
         "classification": classification,
@@ -2748,23 +2748,20 @@ def build_semantic_json(context):
                 group_meta = PI_GROUPS[group_name]
                 wrapped[group_name] = {}
 
+                # -----------------------------
+                # FIRST PASS: build metrics
+                # -----------------------------
                 for metric_name, metric_value in metrics.items():
 
-                    # -----------------------------
-                    # DO NOT WRAP STATE FIELDS
-                    # -----------------------------
                     if metric_name in ("state", "durability_state_7d", "durability_state_90d"):
                         wrapped[group_name][metric_name] = metric_value
                         continue
 
-                    # -----------------------------
-                    # Build semantic block
-                    # -----------------------------
-                    block = semantic_block_for_metric(
-                        metric_name,
-                        metric_value,
-                        semantic
-                    )
+                    block = semantic_block_for_metric(metric_name, metric_value, semantic)
+
+                    # 🚨 HARD REMOVE for durability
+                    if group_name == "durability":
+                        block.pop("coaching_implication", None)
 
                     block["framework"] = group_meta["framework"]
 
@@ -2781,30 +2778,31 @@ def build_semantic_json(context):
                         or CHEAT_SHEET["coaching_links"].get(group_meta["advice_key"], {})
                     )
 
-                    # -----------------------------
-                    # Interpretation
-                    # -----------------------------
                     block["interpretation"] = metric_context or group_context
 
-                    # -----------------------------
-                    # Coaching implication
-                    # -----------------------------
-                    if group_name == "durability":
-                        block["coaching_implication"] = metric_advice or group_advice
-                    else:
+                    # 🚨 REMOVE durability coaching here
+                    if group_name != "durability":
                         block["coaching_implication"] = metric_advice or group_advice
 
-                    # -----------------------------
-                    # Context window
-                    # -----------------------------
                     block["context_window"] = window_label
 
-                    # -----------------------------
-                    # Assign metric
-                    # -----------------------------
                     wrapped[group_name][metric_name] = block
 
+                # -----------------------------
+                # SECOND PASS: durability ONLY
+                # -----------------------------
+                if group_name == "durability":
+
+                    state = wrapped[group_name].get("state")
+
+                    if state:
+                        wrapped[group_name]["state"] = {
+                            "value": state,
+                            "coaching_implication": CHEAT_SHEET["advice"]["DurabilityProfile"].get(state)
+                        }
             return wrapped
+
+
 
         semantic["performance_intelligence"]["acute"] = wrap_pi_block(acute_pi, "7d")
         semantic["performance_intelligence"]["chronic"] = wrap_pi_block(chronic_pi, "90d")

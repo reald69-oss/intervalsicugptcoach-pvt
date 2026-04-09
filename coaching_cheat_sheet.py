@@ -1112,7 +1112,8 @@ CHEAT_SHEET["advice"] = {
         "stable_improving": "Durability stable and improving — efficiency trending positively.",
         "drifting": "Elevated drift — expected under load. Monitor trend, not single-week values.",
         "improving": "Durability improving — strong efficiency adaptation.",
-    },
+        "logic": "Durability state is derived from signed decoupling (direction), not absolute magnitude. Magnitude reflects stability, direction reflects adaptation trend."
+        },
     "NeuralDensity": {
         "balanced": "Intensity density well distributed.",
         "clustered": "High short-term clustering — monitor recovery.",
