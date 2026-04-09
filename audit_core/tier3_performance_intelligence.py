@@ -156,7 +156,7 @@ def _compute_weekly(context, df_full):
             "state": durability_state,
 
             "mean_decoupling_7d": mean_abs,
-            "mean_decoupling_signed_7d": mean_signed,
+            #"mean_decoupling_signed_7d": mean_signed,
 
             "max_decoupling_7d": _safe_max(decoupling_abs),
             "high_drift_sessions_7d": _safe_count(decoupling_abs, 5.0),
@@ -313,7 +313,7 @@ def _compute_season(context, df_light, df_full):
             durability_state_90d = "stable_improving"
         else:
             durability_state_90d = "stable"
-            
+
     chronic = {
         "anaerobic_repeatability": {
             "mean_depletion_pct_90d": _safe_mean(depletion_pct),
@@ -330,7 +330,7 @@ def _compute_season(context, df_light, df_full):
             "state": durability_state_90d,
 
             "mean_decoupling_90d": mean_abs,
-            "mean_decoupling_signed_90d": mean_signed,
+            #"mean_decoupling_signed_90d": mean_signed,
 
             "max_decoupling_90d": _safe_max(decoupling_abs),
             "high_drift_sessions_90d": _safe_count(decoupling_abs, 5.0),
