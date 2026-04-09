@@ -2750,6 +2750,16 @@ def build_semantic_json(context):
 
                 for metric_name, metric_value in metrics.items():
 
+                    # -----------------------------
+                    # DO NOT WRAP STATE FIELDS
+                    # -----------------------------
+                    if metric_name in ("state", "durability_state_7d", "durability_state_90d"):
+                        wrapped[group_name][metric_name] = metric_value
+                        continue
+
+                    # -----------------------------
+                    # Build semantic block
+                    # -----------------------------
                     block = semantic_block_for_metric(
                         metric_name,
                         metric_value,
@@ -2771,10 +2781,27 @@ def build_semantic_json(context):
                         or CHEAT_SHEET["coaching_links"].get(group_meta["advice_key"], {})
                     )
 
+                    # -----------------------------
+                    # Interpretation
+                    # -----------------------------
                     block["interpretation"] = metric_context or group_context
-                    block["coaching_implication"] = metric_advice or group_advice
+
+                    # -----------------------------
+                    # Coaching implication
+                    # -----------------------------
+                    if group_name == "durability":
+                        block["coaching_implication"] = metric_advice or group_advice
+                    else:
+                        block["coaching_implication"] = metric_advice or group_advice
+
+                    # -----------------------------
+                    # Context window
+                    # -----------------------------
                     block["context_window"] = window_label
 
+                    # -----------------------------
+                    # Assign metric
+                    # -----------------------------
                     wrapped[group_name][metric_name] = block
 
             return wrapped

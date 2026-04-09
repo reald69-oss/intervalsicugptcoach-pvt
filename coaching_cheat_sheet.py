@@ -109,11 +109,11 @@ CHEAT_SHEET["thresholds"] = {
     },
     "high_depletion_sessions_7d": {"green":(0,2),"amber":(3,4)},
     #"mean_depletion_pct_90d": {"green":(0.15,0.35),"amber":(0.35,0.55)},
-    "high_depletion_sessions_90d": {"green":(0,6),"amber":(6,10)},
+    "high_depletion_sessions_90d": {"green":(0,6),"amber":(7,10)},
     #"mean_decoupling_7d": {"green":(0,5),"amber":(5,8)},
     "high_drift_sessions_7d": {"green":(0,2),"amber":(3,4)},
     #"mean_decoupling_90d": {"green":(0,4),"amber":(4,7)},
-    "high_drift_sessions_90d": {"green":(0,10),"amber":(10,20)},
+    "high_drift_sessions_90d": {"green":(0,10),"amber":(11,20)},
     "rolling_joules_above_ftp_7d": {
         "green": (0,150000),
         "amber": (150000,250000),
@@ -351,9 +351,12 @@ CHEAT_SHEET["metric_groups"] = {
     "high_depletion_sessions_90d": "AnaerobicRepeatability",
     # --- ISDM ---
     "mean_decoupling_7d": "DurabilityProfile",
+    "mean_decoupling_signed_7d": "DurabilityProfile",
     "max_decoupling_7d": "DurabilityProfile",
     "high_drift_sessions_7d": "DurabilityProfile",
+
     "mean_decoupling_90d": "DurabilityProfile",
+    "mean_decoupling_signed_90d": "DurabilityProfile",
     "high_drift_sessions_90d": "DurabilityProfile",
     # --- NDLI ---
     "rolling_joules_above_ftp_7d": "NeuralDensity",
@@ -714,8 +717,10 @@ CHEAT_SHEET["context"] = {
         "deep supra-threshold exposure."
     ),
     "DurabilityProfile": (
-        "ISDM (Intensity Stability & Durability Metric) reflects decoupling behaviour "
-        "under fatigue. Elevated values indicate cardiovascular drift or durability stress."
+        "ISDM (Intensity Stability & Durability Model) reflects stability of effort over time. "
+        "Decoupling magnitude indicates how stable the effort is, while signed decoupling "
+        "indicates direction (improving efficiency vs cardiovascular drift). "
+        "Durability state provides the resolved interpretation."
     ),
     "NeuralDensity": (
         "NDLI (Neural Density Load Index) captures clustering of high-intensity "
@@ -946,8 +951,9 @@ CHEAT_SHEET["display_names"] = {
     "high_depletion_sessions_7d": "High W′ Depletion Sessions (7-day)",
     "total_joules_above_ftp_7d": "Total Work Above FTP (7-day)",
 
-    # ISDM metrics
-    "mean_decoupling_7d": "Mean Decoupling (7-day)",
+    # ISDM metrics 7d
+    "mean_decoupling_7d": "Mean Decoupling (abs, 7-day)",
+    "mean_decoupling_signed_7d": "Decoupling Direction (7-day)",
     "max_decoupling_7d": "Max Decoupling (7-day)",
     "high_drift_sessions_7d": "High Drift Sessions (7-day)",
     "long_sessions_7d": "Long Endurance Sessions (7-day)",
@@ -966,7 +972,8 @@ CHEAT_SHEET["display_names"] = {
     "total_joules_above_ftp_90d": "Total Work Above FTP (90-day)",
 
     # ISDM metrics (90d)
-    "mean_decoupling_90d": "Mean Decoupling (90-day)",
+    "mean_decoupling_90d": "Mean Decoupling (abs, 90-day)",
+    "mean_decoupling_signed_90d": "Decoupling Direction (90-day)",
     "max_decoupling_90d": "Max Decoupling (90-day)",
     "high_drift_sessions_90d": "High Drift Sessions (90-day)",
 

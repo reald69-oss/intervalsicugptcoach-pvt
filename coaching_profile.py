@@ -1685,7 +1685,7 @@ COACH_PROFILE = {
             )
         },
         # ---------------------------------------------------------
-        # 🧠 Performance Intelligence — Directional Metrics (NO thresholds)
+        # 🧠 Performance Intelligence — Context Metrics (Interpretation-driven)
         # ---------------------------------------------------------
 
         "mean_depletion_pct_7d": {
@@ -1698,6 +1698,33 @@ COACH_PROFILE = {
             },
             "interpretation": "Average depth of anaerobic reserve usage across recent sessions.",
             "coaching_implication": "Higher values reflect repeated supra-threshold stress and increased recovery demand."
+        },
+
+        "mean_decoupling_signed_7d": {
+            "framework": "Intensity Stability & Durability Model (ISDM)",
+            "formula": "Signed HR–Power decoupling (%) (7d)",
+            "criteria": {},
+            "interpretation": (
+                "Direction of efficiency change. Negative values indicate improving efficiency; "
+                "positive values indicate cardiovascular drift."
+            ),
+            "coaching_implication": (
+                "Use to determine whether durability is improving or deteriorating under load."
+            )
+        },
+        "mean_decoupling_signed_90d": {
+            "framework": "Intensity Stability & Durability Model (ISDM)",
+            "formula": "Signed HR–Power decoupling (%) (90d)",
+            "criteria": {},
+            "interpretation": (
+                "Long-term direction of efficiency change. Negative values indicate improving "
+                "efficiency across training blocks; positive values indicate persistent "
+                "cardiovascular drift."
+            ),
+            "coaching_implication": (
+                "Indicates whether durability is improving or degrading over time. "
+                "Use alongside acute (7d) values to assess recent vs long-term adaptation."
+            )
         },
 
         "mean_depletion_pct_90d": {
@@ -1721,43 +1748,64 @@ COACH_PROFILE = {
                 "high": ">0.6 — deep depletion event"
             },
             "interpretation": "Peak anaerobic depletion reached in recent sessions.",
-            "coaching_implication": "High values indicate maximal anaerobic efforts requiring adequate recovery."
+            "coaching_implication": (
+                "Higher values reflect greater reliance on anaerobic contribution "
+                "and increased recovery demand."
+            )
         },
 
         "mean_decoupling_7d": {
             "framework": "Intensity Stability & Durability Model (ISDM)",
-            "formula": "Mean HR–Power decoupling (%) (7d)",
+            "formula": "Mean HR–Power decoupling magnitude (%) (7d)",
             "criteria": {
-                "stable": "<5 — strong durability",
-                "moderate": "5–8 — emerging fatigue",
-                "high": ">8 — durability limitation"
+                "low": "<5 — stable durability",
+                "moderate": "5–8 — moderate drift",
+                "high": ">8 — high instability"
             },
-            "interpretation": "Reflects cardiovascular drift under fatigue.",
-            "coaching_implication": "Higher values indicate reduced durability and aerobic efficiency under load."
+            "interpretation": (
+                "Absolute decoupling magnitude. Does not indicate direction. "
+                "Use durability state to determine whether efficiency is improving or deteriorating."
+            ),
+            "coaching_implication": (
+                "Higher values indicate greater instability in effort sustainability, "
+                "but must be interpreted alongside durability state."
+            )
         },
 
         "mean_decoupling_90d": {
             "framework": "Intensity Stability & Durability Model (ISDM)",
-            "formula": "Mean HR–Power decoupling (%) (90d)",
+            "formula": "Mean HR–Power decoupling magnitude (%) (90d)",
             "criteria": {
-                "stable": "<4 — strong aerobic durability",
-                "moderate": "4–7 — mild drift accumulation",
-                "high": ">7 — persistent durability limitation"
+                "low": "<4 — stable long-term durability",
+                "moderate": "4–7 — moderate drift accumulation",
+                "high": ">7 — high variability in durability"
             },
-            "interpretation": "Long-term durability profile under sustained load.",
-            "coaching_implication": "Higher values indicate systemic durability limitations or insufficient aerobic base."
+            "interpretation": (
+                "Absolute decoupling magnitude over time. Does not indicate direction. "
+                "Use durability state to determine whether efficiency is improving or deteriorating."
+            ),
+            "coaching_implication": (
+                "Higher values indicate greater variability in long-term durability, "
+                "but must be interpreted alongside durability state."
+            )
         },
 
         "max_decoupling_7d": {
             "framework": "Intensity Stability & Durability Model (ISDM)",
-            "formula": "Max HR–Power decoupling (%) (7d)",
+            "formula": "Max HR–Power decoupling magnitude (%) (7d)",
             "criteria": {
                 "low": "<6 — stable session",
                 "moderate": "6–10 — moderate drift",
-                "high": ">10 — significant durability stress"
+                "high": ">10 — high instability"
             },
-            "interpretation": "Peak durability stress observed in recent sessions.",
-            "coaching_implication": "High values suggest fatigue-driven decoupling and reduced aerobic control."
+            "interpretation": (
+                "Peak decoupling magnitude observed in recent sessions. "
+                "Does not indicate direction of change."
+            ),
+            "coaching_implication": (
+                "High values indicate instability in sustained effort, "
+                "but must be interpreted alongside durability state."
+            )
         },
 
         "total_joules_above_ftp_7d": {
@@ -1793,7 +1841,10 @@ COACH_PROFILE = {
                 "high": ">2.1 — strong aerobic efficiency"
             },
             "interpretation": "Relationship between power output and heart rate.",
-            "coaching_implication": "Higher values indicate improved aerobic efficiency and conditioning."
+            "coaching_implication": (
+                "Higher values generally indicate improved aerobic efficiency, "
+                "but should be interpreted alongside intensity and terrain context."
+            )
         },
 
         "mean_variability_index_7d": {

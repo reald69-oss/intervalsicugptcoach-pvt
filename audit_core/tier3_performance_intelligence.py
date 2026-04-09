@@ -121,6 +121,25 @@ def _compute_weekly(context, df_full):
             f"(mean_dep={mean_dep:.3f}, baseline={expected})"
         )
 
+
+    mean_signed = _safe_mean(decoupling_signed)
+    mean_abs = _safe_mean(decoupling_abs)
+
+    durability_state = None
+
+    if mean_abs is not None and mean_abs > 8:
+        durability_state = "drifting"   # magnitude dominates (bad stability)
+
+    elif mean_signed is not None:
+        if mean_signed > 3:
+            durability_state = "drifting"
+        elif mean_signed < -2:
+            durability_state = "improving"
+        elif mean_signed < 0:
+            durability_state = "stable_improving"
+        else:
+            durability_state = "stable"
+
     weekly_result = {
         "anaerobic_repeatability": {
             "max_depletion_pct_7d": _safe_max(depletion_pct),
@@ -133,17 +152,14 @@ def _compute_weekly(context, df_full):
             "w_prime_divergence_7d": divergence,
         },
         "durability": {
-            # primary (backward compatible)
-            "mean_decoupling_7d": _safe_mean(decoupling_abs),
 
-            # new (correct physiology)
-            "mean_decoupling_signed_7d": _safe_mean(decoupling_signed),
-            "mean_decoupling_abs_7d": _safe_mean(decoupling_abs),
+            "state": durability_state,
 
-            # FIXED → use abs (magnitude for drift)
+            "mean_decoupling_7d": mean_abs,
+            "mean_decoupling_signed_7d": mean_signed,
+
             "max_decoupling_7d": _safe_max(decoupling_abs),
             "high_drift_sessions_7d": _safe_count(decoupling_abs, 5.0),
-
             "long_sessions_7d": _safe_count(moving_time, 7200),
         },
         "neural_density": {
@@ -151,7 +167,6 @@ def _compute_weekly(context, df_full):
             "high_intensity_days_7d": _safe_count(joules, 20000),
             "mean_if_7d": _safe_mean(if_values),
 
-            # new Tier-3 signals
             "mean_efficiency_factor_7d": _safe_mean(efficiency),
             "mean_variability_index_7d": _safe_mean(variability),
         }
@@ -277,6 +292,28 @@ def _compute_season(context, df_light, df_full):
     if divergence_90d is not None:
         model_diag["w_prime_divergence_90d"] = divergence_90d
 
+    decoupling_signed = decoupling
+    decoupling_abs = decoupling.abs()
+
+    mean_signed = _safe_mean(decoupling_signed)
+    mean_abs = _safe_mean(decoupling_abs)
+
+    durability_state_90d = None
+
+    # chronic state: magnitude first, then direction
+    if mean_abs is not None and mean_abs > 7:
+        durability_state_90d = "drifting"
+
+    elif mean_signed is not None:
+        if mean_signed > 2:
+            durability_state_90d = "drifting"
+        elif mean_signed < -1.5:
+            durability_state_90d = "improving"
+        elif mean_signed < 0:
+            durability_state_90d = "stable_improving"
+        else:
+            durability_state_90d = "stable"
+            
     chronic = {
         "anaerobic_repeatability": {
             "mean_depletion_pct_90d": _safe_mean(depletion_pct),
@@ -289,9 +326,14 @@ def _compute_season(context, df_light, df_full):
         "model_diagnostics": model_diag,
 
         "durability": {
-            "mean_decoupling_90d": _safe_mean(decoupling),
-            "max_decoupling_90d": _safe_max(decoupling),
-            "high_drift_sessions_90d": _safe_count(decoupling, 5.0),
+
+            "state": durability_state_90d,
+
+            "mean_decoupling_90d": mean_abs,
+            "mean_decoupling_signed_90d": mean_signed,
+
+            "max_decoupling_90d": _safe_max(decoupling_abs),
+            "high_drift_sessions_90d": _safe_count(decoupling_abs, 5.0),
         },
 
         "neural_density": {
@@ -299,7 +341,6 @@ def _compute_season(context, df_light, df_full):
             "mean_if_90d": _safe_mean(if_values),
             "mean_training_load_90d": _safe_mean(training_load),
 
-            # new Tier-3 signals
             "mean_efficiency_factor_90d": _safe_mean(efficiency),
             "mean_variability_index_90d": _safe_mean(variability),
         }
@@ -702,7 +743,7 @@ def interpret_training_state(context):
     # --------------------------------------------------
 
     wdrm = (pi.get("anaerobic_repeatability") or {}).get("mean_depletion_pct_7d")
-    durability = (pi.get("durability") or {}).get("mean_decoupling_signed_7d")
+    durability_state = (pi.get("durability") or {}).get("state")
     neural = (pi.get("neural_density") or {}).get("rolling_joules_above_ftp_7d")
 
     tsb_class = future.get("fatigue_class")
@@ -894,19 +935,24 @@ def interpret_training_state(context):
 
     adapting = "Adaptation signals are stable."
 
+    # Anaerobic signal (still valid)
     if wdrm and wdrm > 0.6:
         adapting = "High anaerobic stimulus detected — adaptation likely but recovery important."
 
-    if durability is not None:
+    # Durability (USE STATE — NOT RAW VALUE)
 
-        if durability > 6:
-            adapting = "Durability strain rising — aerobic consolidation advised."
+    if durability_state == "drifting":
+        adapting = "Durability strain rising — aerobic consolidation advised."
 
-        elif durability < -3:
-            adapting = "Efficiency improving under load — strong aerobic adaptation."
+    elif durability_state == "improving":
+        adapting = "Efficiency improving under load — strong aerobic adaptation."
 
-        elif durability < 0:
-            adapting = "Efficiency stable or slightly improving under load."
+    elif durability_state == "stable_improving":
+        adapting = "Efficiency stable or improving under load."
+
+    elif durability_state == "stable":
+        adapting = "Durability stable — cardiovascular drift controlled."
+
     # --------------------------------------------------
     # Neural density adjustment
     # --------------------------------------------------
