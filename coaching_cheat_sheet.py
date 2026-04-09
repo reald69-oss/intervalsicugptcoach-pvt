@@ -111,9 +111,9 @@ CHEAT_SHEET["thresholds"] = {
     #"mean_depletion_pct_90d": {"green":(0.15,0.35),"amber":(0.35,0.55)},
     "high_depletion_sessions_90d": {"green":(0,6),"amber":(7,10)},
     #"mean_decoupling_7d": {"green":(0,5),"amber":(5,8)},
-    "high_drift_sessions_7d": {"green":(0,2),"amber":(3,4)},
+    "high_drift_sessions_7d": {"green":(0,2),"amber":(3,99)},
     #"mean_decoupling_90d": {"green":(0,4),"amber":(4,7)},
-    "high_drift_sessions_90d": {"green":(0,10),"amber":(11,20)},
+    "high_drift_sessions_90d": {"green":(0,10),"amber":(11,999)},
     "rolling_joules_above_ftp_7d": {
         "green": (0,150000),
         "amber": (150000,250000),
@@ -1109,8 +1109,9 @@ CHEAT_SHEET["advice"] = {
     },
     "DurabilityProfile": {
         "stable": "Durability stable — cardiovascular drift controlled.",
-        "fatigue": "Elevated drift — consider aerobic consolidation.",
-        "severe": "Significant durability stress — reduce load."
+        "stable_improving": "Durability stable and improving — efficiency trending positively.",
+        "drifting": "Elevated drift — expected under load. Monitor trend, not single-week values.",
+        "improving": "Durability improving — strong efficiency adaptation.",
     },
     "NeuralDensity": {
         "balanced": "Intensity density well distributed.",
