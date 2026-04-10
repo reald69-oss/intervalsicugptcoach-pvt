@@ -322,7 +322,7 @@ RENDERER_PROFILES = {
                 "metrics_groups.metabolic",
                 "metrics_groups.capacity",
                 "daily_load",
-                "events"
+                "events",
                 "planned_events_7d",
             ],
 
@@ -521,11 +521,11 @@ RENDERER_PROFILES = {
         },
 
         "planned_events_rule": [
-        #    "The planned_events section MUST be rendered as a Markdown table.",
-        #    "EVERY planned event for the current ISO week in the semantic JSON MUST appear as exactly one row.",
-        #    "Planned events for future ISO weeks can be summarised",
-        #    "Narrative descriptions of planned events are FORBIDDEN.",
-        #    "Coaching sentences for planned_events, if enabled, MUST appear AFTER the table."
+            "The planned_events_7d section MUST be rendered as a Markdown table.",
+            "Each planned event MUST appear as exactly one row."
+            "Column order MUST be: Date | Day | Name | Category | Duration (min) | TSS.",
+            "Do NOT summarise, group, or narrate planned events.",
+            "Coaching sentences for planned_events, if enabled, MUST appear AFTER the table."
         ],
 
         "framing": {
