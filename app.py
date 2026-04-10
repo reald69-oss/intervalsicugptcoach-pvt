@@ -710,8 +710,10 @@ async def run_audit_with_data(
             # DEBUG TRIGGER
             if debug:
                 internal = request.headers.get("x-montis-internal")
+                expected = os.getenv("MONTIS_INTERNAL_KEY")
 
-                if internal != os.getenv("MONTIS_INTERNAL_KEY"):
+                if not expected or internal != expected:
+                    logger.warning(f"[SECURITY] Blocked debug request from {request.client.host}")
                     raise HTTPException(status_code=403)
 
                 return await get_debug_with_data(data)
