@@ -2482,14 +2482,26 @@ def build_semantic_json(context):
 
             priority = category.split("_")[-1]
             days_to_event = (dt - today).days
+            
+            # --- taper logic (priority-aware, safe)
 
-            # --- taper logic
-            if days_to_event <= 14:
-                taper_state = "active"
-            elif days_to_event <= 30:
-                taper_state = "approaching"
-            else:
-                taper_state = "none"
+            taper_state = "none"  # always initialise
+
+            if days_to_event is not None:
+
+                if priority == "A":
+                    if days_to_event <= 10:
+                        taper_state = "taper"
+                    elif days_to_event <= 21:
+                        taper_state = "pre_taper"
+
+                elif priority == "B":
+                    if days_to_event <= 5:
+                        taper_state = "taper"
+                    elif days_to_event <= 10:
+                        taper_state = "pre_taper"
+
+                # C → stays "none"
 
             candidates.append({
                 "priority": priority,
