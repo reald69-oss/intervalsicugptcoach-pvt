@@ -2430,6 +2430,7 @@ def build_semantic_json(context):
         event_targets = {
             "exists": False,
             "next_event": {
+                "name": None,
                 "priority": None,
                 "date": None,
                 "days_to_event": None,
@@ -2466,7 +2467,8 @@ def build_semantic_json(context):
             if dt < today:
                 continue
 
-            name = (e.get("name") or "").lower()
+            name_raw = e.get("name") or "Untitled"
+            name = name_raw.lower()   # for parsing only
 
             # --- training bias (aligned with ADE)
             if "climb" in name:
@@ -2482,7 +2484,7 @@ def build_semantic_json(context):
 
             priority = category.split("_")[-1]
             days_to_event = (dt - today).days
-            
+
             # --- taper logic (priority-aware, safe)
 
             taper_state = "none"  # always initialise
@@ -2504,6 +2506,7 @@ def build_semantic_json(context):
                 # C → stays "none"
 
             candidates.append({
+                "name": name_raw, 
                 "priority": priority,
                 "date": dt.isoformat(),
                 "days_to_event": days_to_event,
@@ -2519,6 +2522,7 @@ def build_semantic_json(context):
             event_targets["exists"] = True
 
             # ✅ explicit assignment (keeps schema stable)
+            event_targets["next_event"]["name"] = next_event["name"]
             event_targets["next_event"]["priority"] = next_event["priority"]
             event_targets["next_event"]["date"] = next_event["date"]
             event_targets["next_event"]["days_to_event"] = next_event["days_to_event"]
@@ -2528,12 +2532,13 @@ def build_semantic_json(context):
             # upcoming = stripped (no taper duplication)
             event_targets["upcoming"] = [
                 {
+                    "name": c["name"],
                     "priority": c["priority"],
                     "date": c["date"],
                     "days_to_event": c["days_to_event"],
                     "training_bias": c["training_bias"]
                 }
-                for c in candidates[:3]
+                for c in candidates[1:4]
             ]
 
         context["event_targets"] = event_targets
