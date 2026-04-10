@@ -130,19 +130,24 @@ def run_adaptive_decision_engine(context):
     if next_a:
         days_to_event = (next_a["dt"].date() - today).days if today else None
 
-    if days_to_event is not None:
-        if priority == "A":
-            if days_to_event <= 10:
-                taper_state = "taper"
-            elif days_to_event <= 21:
-                taper_state = "pre_taper"
-        elif priority == "B":
-            if days_to_event <= 5:
-                taper_state = "taper"
-            elif days_to_event <= 10:
-                taper_state = "pre_taper"
-        else:
-            taper_state = "none"
+        p = next_a.get("priority") if next_a else None
+
+        if days_to_event is not None and p:
+
+            if p == "A":
+                if days_to_event <= 10:
+                    taper_state = "taper"
+                elif days_to_event <= 21:
+                    taper_state = "pre_taper"
+
+            elif p == "B":
+                if days_to_event <= 5:
+                    taper_state = "taper"
+                elif days_to_event <= 10:
+                    taper_state = "pre_taper"
+
+            else:
+                taper_state = "none"
 
         # ✅ DIRECT — no mapping
         training_bias = next_a.get("training_bias", "mixed")
