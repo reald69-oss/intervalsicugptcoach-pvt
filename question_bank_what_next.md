@@ -60,6 +60,7 @@ optimize fueling strategy
 
 ## Planning
 optimize weekly plan
+give me a strict 7 day plan based
 adjust next week training
 plan next microcycle
 suggest recovery strategy
@@ -68,12 +69,14 @@ suggest VO2 workout
 suggest threshold workout
 suggest easy ride session
 schedule rest day
+tell me your goals analyse this
+give me a plan for my next target event
 
 ## Events & Performance
 prepare for target event
 show target events
 evaluate race readiness
-optimize taper strategy
+optimize taper stratgy
 
 ## Forecasting
 forecast training progression

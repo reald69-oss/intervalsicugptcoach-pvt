@@ -2813,9 +2813,9 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     semantic.setdefault("wellness", {})
     ws = context.get("wellness_summary", {})
-    semantic["wellness"]["CTL"] = ws.get("ctl")
-    semantic["wellness"]["ATL"] = ws.get("atl")
-    semantic["wellness"]["TSB"] = ws.get("tsb")
+    semantic["training_volume"]["CTL"] = ws.get("ctl")
+    semantic["training_volume"]["ATL"] = ws.get("atl")
+    semantic["training_volume"]["TSB"] = ws.get("tsb")
     debug(context, "[SEM] CTL/ATL/TSB sourced from wellness_summary fallback")
 
     # ---------------------------------------------------------
