@@ -2642,35 +2642,42 @@ def build_semantic_json(context):
         semantic["planned_summary_by_date"] = planned_summary_by_date
 
         # ---------------------------------------------------------
-        # 🎯 DERIVED VIEW: next 7 days (non-destructive)
+        # 🎯 DERIVED VIEW: next 7 days (ONLY for current week)
         # ---------------------------------------------------------
 
-        semantic["planned_events_7d"] = []
+        if report_week_key == current_week_key:
 
-        try:
-            today = context.get("athlete_today")
+            semantic["planned_events_7d"] = []
 
-            if today:
-                today_dt = pd.to_datetime(today)
-                cutoff_dt = today_dt + pd.Timedelta(days=7)
+            try:
+                today = context.get("athlete_today")
 
-                semantic["planned_events_7d"] = [
-                    e for e in semantic.get("planned_events", [])
-                    if e.get("date")
-                    and today_dt <= pd.to_datetime(e["date"]) < cutoff_dt
-                ]
+                if today:
+                    today_dt = pd.to_datetime(today)
+                    cutoff_dt = today_dt + pd.Timedelta(days=7)
 
-                # optional: enforce chronological order
-                semantic["planned_events_7d"] = sorted(
-                    semantic["planned_events_7d"],
-                    key=lambda x: x.get("date")
-                )
+                    semantic["planned_events_7d"] = [
+                        e for e in semantic.get("planned_events", [])
+                        if e.get("date")
+                        and today_dt <= pd.to_datetime(e["date"]) < cutoff_dt
+                    ]
 
-        except Exception as e:
-            debug(context, f"[PLANNED_EVENTS_7D] ⚠️ failed: {e}")
+                    semantic["planned_events_7d"] = sorted(
+                        semantic["planned_events_7d"],
+                        key=lambda x: x.get("date")
+                    )
 
+            except Exception as e:
+                debug(context, f"[PLANNED_EVENTS_7D] ⚠️ failed: {e}")
+
+        else:
+            #do NOT create the field at all
+            semantic.pop("planned_events_7d", None)
+        
+        # ---------------------------------------------------------
         # 🔮 Tier-3 FUTURE FORECAST (only if report window is recent)
-
+        # ---------------------------------------------------------
+        
         semantic["future_forecast"] = {}
         semantic["future_actions"] = []
 
