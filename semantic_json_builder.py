@@ -2423,6 +2423,81 @@ def build_semantic_json(context):
                 )
             }
         }
+        # ---------------------------------------------------------
+        # 🎯 EVENT TARGETS (COMPRESSED FOR LLM)
+        # ---------------------------------------------------------
+
+        event_targets = {
+            "next_event": {
+                "exists": False,
+                "priority": None,
+                "date": None,
+                "days_to_event": None,
+                "event_demand": None
+            },
+            "upcoming": []
+        }
+
+        calendar_data = context.get("calendar") or []
+        today = pd.Timestamp.now().date()
+
+        candidates = []
+
+        for e in calendar_data:
+
+            if not isinstance(e, dict):
+                continue
+
+            category = str(e.get("category") or "").upper()
+
+            if category not in ("RACE_A", "RACE_B", "RACE_C"):
+                continue
+
+            date_raw = e.get("start_date_local") or e.get("date")
+            if not date_raw:
+                continue
+
+            try:
+                dt = pd.to_datetime(str(date_raw)[:10]).date()
+            except:
+                continue
+
+            if dt < today:
+                continue
+
+            name = (e.get("name") or "").lower()
+
+            if "climb" in name:
+                demand = "durability"
+            elif "tt" in name or "threshold" in name:
+                demand = "ftp"
+            elif "vo2" in name:
+                demand = "anaerobic"
+            else:
+                demand = "mixed"
+
+            priority = category.split("_")[-1]
+
+            candidates.append({
+                "priority": priority,
+                "date": dt.isoformat(),
+                "days_to_event": (dt - today).days,
+                "event_demand": demand
+            })
+
+        candidates = sorted(candidates, key=lambda x: x["date"])
+
+        if candidates:
+            next_event = candidates[0]
+
+            event_targets["next_event"] = {
+                "exists": True,
+                **next_event
+            }
+
+            event_targets["upcoming"] = candidates[:3]
+
+        context["event_targets"] = event_targets
 
         # ---------------------------------------------------------
         # Determine current ISO week (microcycle already covered)

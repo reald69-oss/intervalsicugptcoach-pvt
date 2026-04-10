@@ -33,6 +33,7 @@ REPORT_CONTRACT = {
 
         # 🎯 ADAPTIVE DECISIONS
         "actions",
+        "event_targets",
         "phase_alignment",
         "training_guidance",
         "decision_context",
@@ -64,6 +65,7 @@ REPORT_CONTRACT = {
 
         # 🎯 ADAPTIVE DECISIONS
         "actions",
+        "event_targets",
         "phase_alignment",
         "training_guidance",
         "decision_context",
@@ -93,6 +95,7 @@ REPORT_CONTRACT = {
 
         # 🎯 ADAPTIVE DECISIONS
         "actions",
+        "event_targets",
         "current_ISO_weekly_microcycle",
         "planned_summary_by_iso_week",
         "future_forecast",
@@ -123,6 +126,7 @@ REPORT_CONTRACT = {
 
         # 🎯 ADAPTIVE DECISIONS
         "actions",
+        "event_targets",
         "future_forecast",
         "future_actions",
         "phase_alignment",
@@ -341,6 +345,7 @@ RENDERER_PROFILES = {
 
             "adaptive_decisions": [
                 "actions",
+                "event_targets",
                 "phase_alignment",
                 #"decision_context",
                 #"planned_events",
@@ -448,6 +453,7 @@ RENDERER_PROFILES = {
             #"planned_summary_by_date": "forbid",
             "planned_summary_by_iso_week": "forbid",
             "actions": "table_summary",
+            "event_targets": "table_summary",
             "actions.0.adaptive_summary": "full",
             "actions.1.state_action": "full",
             "actions.3.system_guidance": "full",
@@ -606,6 +612,7 @@ RENDERER_PROFILES = {
 
             "adaptive_decisions": [
                 "actions",
+                "event_targets",
                 "current_ISO_weekly_microcycle",
                 "planned_summary_by_iso_week",
                 "future_forecast",
@@ -700,6 +707,7 @@ RENDERER_PROFILES = {
             "physiology": "summary",
             "wellness": "headline",
             "actions": "full",
+            "event_targets": "table_summary",
             "future_actions": "full",
             "insights": "forbid",
             "insight_view": "summary",

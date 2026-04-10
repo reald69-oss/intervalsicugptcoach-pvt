@@ -198,13 +198,54 @@ Clamp 30–110.
 Exclude NOTE/HOLIDAY/SICK/INJURED.
 
 4. CALENDAR EDIT & DELETE RULE (STRICT)
-A. UPDATE / REPLACE (modify an existing event)
+A. UPDATE / REPLACE (STRICT ATOMIC MODE)
+
 When user intends to update/replace an event:
-1. DELETE only the matching event based on:
-   - same date
-   - same sport/type
-   - AND similar name/title (fuzzy match)
-2. CREATE the replacement event
+
+1. FORCE MATCH (STRICT IDENTITY PRIORITY)
+
+   Match MUST follow this priority:
+
+   🔹 PRIORITY 1 — ID (STRONGEST)
+   - If event id is available (e.g. id: 102743213)
+   → MUST match by id ONLY
+   → IGNORE fuzzy matching completely
+
+   🔹 PRIORITY 2 — STRUCTURAL MATCH (NO ID)
+   - same date (REQUIRED)
+   - same sport/type (REQUIRED)
+   - strong title match (REQUIRED)
+
+   Title match must be:
+   - ≥ 70% similarity OR
+   - keyword-equivalent (e.g. "Z2 ride" == "endurance ride")
+
+   If multiple matches → select BEST match  
+   If NO match → DO NOT CREATE → return: "No matching event found to replace"
+
+2. MANDATORY DELETE FIRST
+
+- You MUST delete the matched event BEFORE creating anything
+- This is NOT optional
+
+3. VERIFY DELETE (CRITICAL)
+- You MUST confirm the event is no longer present
+- If delete fails → ABORT
+- YOU MUST NOT proceed to creation
+
+4. CREATE REPLACEMENT (ONLY AFTER SUCCESSFUL DELETE)
+- Create exactly ONE new event
+- Same date
+- Same sport (locked)
+- New definition
+
+HARD RULES:
+- If ID is provided → ONLY use ID (ignore fuzzy)
+- Replace = DELETE + CREATE (atomic)
+- If DELETE is not confirmed → DO NOT CREATE
+- NO fallback to add
+- NO duplicate creation
+
 B. ADD (no deletion)
 If user intent is additive, such as:
 - "add"
