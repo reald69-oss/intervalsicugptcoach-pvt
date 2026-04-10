@@ -2428,12 +2428,13 @@ def build_semantic_json(context):
         # ---------------------------------------------------------
 
         event_targets = {
+            "exists": False,
             "next_event": {
-                "exists": False,
                 "priority": None,
                 "date": None,
                 "days_to_event": None,
-                "event_demand": None
+                "training_bias": None,
+                "taper_state": "none"
             },
             "upcoming": []
         }
@@ -2467,22 +2468,33 @@ def build_semantic_json(context):
 
             name = (e.get("name") or "").lower()
 
+            # --- training bias (renamed from event_demand)
             if "climb" in name:
-                demand = "durability"
+                bias = "durability"
             elif "tt" in name or "threshold" in name:
-                demand = "ftp"
+                bias = "ftp"
             elif "vo2" in name:
-                demand = "anaerobic"
+                bias = "anaerobic"
             else:
-                demand = "mixed"
+                bias = "mixed"
 
             priority = category.split("_")[-1]
+            days_to_event = (dt - today).days
+
+            # --- taper logic
+            if days_to_event <= 14:
+                taper_state = "active"
+            elif days_to_event <= 30:
+                taper_state = "approaching"
+            else:
+                taper_state = "none"
 
             candidates.append({
                 "priority": priority,
                 "date": dt.isoformat(),
-                "days_to_event": (dt - today).days,
-                "event_demand": demand
+                "days_to_event": days_to_event,
+                "training_bias": bias,
+                "taper_state": taper_state
             })
 
         candidates = sorted(candidates, key=lambda x: x["date"])
@@ -2490,14 +2502,23 @@ def build_semantic_json(context):
         if candidates:
             next_event = candidates[0]
 
-            event_targets["next_event"] = {
-                "exists": True,
-                **next_event
-            }
+            event_targets["exists"] = True
 
-            event_targets["upcoming"] = candidates[:3]
+            event_targets["next_event"] = next_event
+
+            # upcoming = stripped (no taper duplication needed)
+            event_targets["upcoming"] = [
+                {
+                    "priority": c["priority"],
+                    "date": c["date"],
+                    "days_to_event": c["days_to_event"],
+                    "training_bias": c["training_bias"]
+                }
+                for c in candidates[:3]
+            ]
 
         context["event_targets"] = event_targets
+        semantic["event_targets"] = event_targets
 
         # ---------------------------------------------------------
         # Determine current ISO week (microcycle already covered)
