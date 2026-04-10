@@ -2319,6 +2319,7 @@ def build_semantic_json(context):
             event = {
                 "id": e.get("id"),
                 "uid": e.get("uid"),
+                "date": start,
                 "category": e.get("category", "OTHER"),
                 "name": e.get("name") or e.get("title") or "Untitled",
                 "description": e.get("description") or e.get("notes") or "",
@@ -2639,6 +2640,34 @@ def build_semantic_json(context):
 
         semantic["planned_events"] = planned_events
         semantic["planned_summary_by_date"] = planned_summary_by_date
+
+        # ---------------------------------------------------------
+        # 🎯 DERIVED VIEW: next 7 days (non-destructive)
+        # ---------------------------------------------------------
+
+        semantic["planned_events_7d"] = []
+
+        try:
+            today = context.get("athlete_today")
+
+            if today:
+                today_dt = pd.to_datetime(today)
+                cutoff_dt = today_dt + pd.Timedelta(days=7)
+
+                semantic["planned_events_7d"] = [
+                    e for e in semantic.get("planned_events", [])
+                    if e.get("date")
+                    and today_dt <= pd.to_datetime(e["date"]) < cutoff_dt
+                ]
+
+                # optional: enforce chronological order
+                semantic["planned_events_7d"] = sorted(
+                    semantic["planned_events_7d"],
+                    key=lambda x: x.get("date")
+                )
+
+        except Exception as e:
+            debug(context, f"[PLANNED_EVENTS_7D] ⚠️ failed: {e}")
 
         # 🔮 Tier-3 FUTURE FORECAST (only if report window is recent)
 

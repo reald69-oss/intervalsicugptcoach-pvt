@@ -16,6 +16,7 @@ REPORT_CONTRACT = {
         "metrics_groups",
         "daily_load",
         "events",
+        "planned_events_7d",
 
         # 🫀 PHYSIOLOGY RESPONSE
         "wellness",
@@ -37,7 +38,7 @@ REPORT_CONTRACT = {
         "phase_alignment",
         "training_guidance",
         "decision_context",
-        #"planned_events",
+
         "current_ISO_weekly_microcycle",
         "planned_summary_by_iso_week",
         "future_forecast",
@@ -322,6 +323,7 @@ RENDERER_PROFILES = {
                 "metrics_groups.capacity",
                 "daily_load",
                 "events"
+                "planned_events_7d",
             ],
 
             "physiology_response": [
@@ -348,7 +350,6 @@ RENDERER_PROFILES = {
                 "event_targets",
                 "phase_alignment",
                 #"decision_context",
-                #"planned_events",
                 "planned_summary_by_date",
                 "current_ISO_weekly_microcycle",
                 "planned_summary_by_iso_week",
@@ -437,6 +438,7 @@ RENDERER_PROFILES = {
             "meta": "full",
             "training_volume": "full",
             "events": "full",
+            "planned_events_7d": "full",
             "current_ISO_weekly_microcycle": "forbid",
             "daily_load": "full",
             "metrics_groups": "table_summary",

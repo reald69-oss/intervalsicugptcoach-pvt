@@ -70,7 +70,8 @@ suggest easy ride session
 schedule rest day
 
 ## Events & Performance
-prepare for event
+prepare for target event
+show target events
 evaluate race readiness
 optimize taper strategy
 
