@@ -660,48 +660,8 @@ def root():
 
 
 @app.get("/run")
-def run_audit(
-    range: str = Query("weekly"),
-    format: str = Query("markdown"),
-    demo: bool = Query(False),
-    lite: bool = Query(False)
-):
-    if demo or request.query_params.get("test") == "demo":
-        return load_demo_response("weekly", reason="MANUAL_DEMO")
-    try:
-        report, compliance, logs, context, sg, markdown = _run_full_audit(
-            range=range,
-            output_format=format,
-            render_mode="lite" if lite else "full+metrics"
-        )
-        if format in ("json", "semantic"):
-            payload = {
-                "status": "ok",
-                "report_type": range,
-                "output_format": "semantic_json",
-                "semantic_graph": sg,
-                "compliance": compliance,
-            }
-
-            clean = sanitize(payload)
-            clean = json.loads(json.dumps(clean, allow_nan=False))
-
-            return JSONResponse(clean)
-
-        return JSONResponse({
-            "status":"ok",
-            "report_type":range,
-            "output_format":"markdown",
-            "markdown":markdown
-        })
-    except HTTPException as e:
-        return JSONResponse(
-            status_code=e.status_code,
-            content={"status": "error", "message": e.detail}
-        )
-
-    except Exception as e:
-        return error_response(e)
+def run_audit():
+    raise HTTPException(status_code=403, detail="Forbidden")
 
 @app.post("/run")
 async def run_audit_with_data(
@@ -710,12 +670,18 @@ async def run_audit_with_data(
     debug: bool = Query(False),
     lite: bool = Query(False)
 ):
+    #  Railway protection
+    internal = request.headers.get("x-montis-internal")
+
+    if internal != os.getenv("MONTIS_INTERNAL_KEY"):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     debug_counts = {
         "payload": {},
         "pipeline": {}
     }
-    buffer = io.StringIO() if debug else None
 
+    buffer = io.StringIO() if debug else None
     if debug:
         redirect_ctx = redirect_stdout(buffer)
         redirect_ctx.__enter__()
@@ -1123,11 +1089,13 @@ def error_response(e: Exception, buffer=None, debug_counts=None, status_code:int
     )
 
 
-# ============================================================
-# DEBUG ENDPOINT — Semantic JSON + Logs Only
-# ============================================================
 @app.post("/debug")
 async def get_debug(request: Request):
+
+    internal = request.headers.get("x-montis-internal")
+
+    if internal != os.getenv("MONTIS_INTERNAL_KEY"):
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     raw = await request.body()
 
