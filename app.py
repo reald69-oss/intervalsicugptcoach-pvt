@@ -672,8 +672,10 @@ async def run_audit_with_data(
 ):
     #  Railway protection
     internal = request.headers.get("x-montis-internal")
+    expected = os.getenv("MONTIS_INTERNAL_KEY")
 
-    if internal != os.getenv("MONTIS_INTERNAL_KEY"):
+    if not expected or internal != expected:
+        logger.warning(f"[SECURITY] Blocked request from {request.client.host}")
         raise HTTPException(status_code=403, detail="Forbidden")
 
     debug_counts = {
@@ -707,6 +709,11 @@ async def run_audit_with_data(
 
             # DEBUG TRIGGER
             if debug:
+                internal = request.headers.get("x-montis-internal")
+
+                if internal != os.getenv("MONTIS_INTERNAL_KEY"):
+                    raise HTTPException(status_code=403)
+
                 return await get_debug_with_data(data)
 
             report_range = data.get("range","weekly")
@@ -1093,8 +1100,10 @@ def error_response(e: Exception, buffer=None, debug_counts=None, status_code:int
 async def get_debug(request: Request):
 
     internal = request.headers.get("x-montis-internal")
+    expected = os.getenv("MONTIS_INTERNAL_KEY")
 
-    if internal != os.getenv("MONTIS_INTERNAL_KEY"):
+    if not expected or internal != expected:
+        logger.warning(f"[SECURITY] Blocked request from {request.client.host}")
         raise HTTPException(status_code=403, detail="Forbidden")
 
     raw = await request.body()
