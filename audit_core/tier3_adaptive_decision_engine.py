@@ -99,13 +99,6 @@ def run_adaptive_decision_engine(context):
         candidates = []
 
         for ev in events:
-            debug(
-                context,
-                "[ADE][TARGET_EVENT][EVENT]",
-                f"name={ev.get('name')}",
-                f"category={ev.get('category')}",
-                f"date={ev.get('start_date_local') or ev.get('date')}"
-            )
 
             t = _extract_target_event(ev)
 
