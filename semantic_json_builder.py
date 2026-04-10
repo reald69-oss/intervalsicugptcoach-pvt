@@ -2468,15 +2468,17 @@ def build_semantic_json(context):
 
             name = (e.get("name") or "").lower()
 
-            # --- training bias (renamed from event_demand)
+            # --- training bias (aligned with ADE)
             if "climb" in name:
-                bias = "durability"
+                training_bias = "durability"
             elif "tt" in name or "threshold" in name:
-                bias = "ftp"
+                training_bias = "ftp"
             elif "vo2" in name:
-                bias = "anaerobic"
+                training_bias = "anaerobic"
+            elif "sprint" in name:
+                training_bias = "neuromuscular"
             else:
-                bias = "mixed"
+                training_bias = "mixed"
 
             priority = category.split("_")[-1]
             days_to_event = (dt - today).days
@@ -2493,7 +2495,7 @@ def build_semantic_json(context):
                 "priority": priority,
                 "date": dt.isoformat(),
                 "days_to_event": days_to_event,
-                "training_bias": bias,
+                "training_bias": training_bias,   # ✅ FIXED
                 "taper_state": taper_state
             })
 
@@ -2504,9 +2506,14 @@ def build_semantic_json(context):
 
             event_targets["exists"] = True
 
-            event_targets["next_event"] = next_event
+            # ✅ explicit assignment (keeps schema stable)
+            event_targets["next_event"]["priority"] = next_event["priority"]
+            event_targets["next_event"]["date"] = next_event["date"]
+            event_targets["next_event"]["days_to_event"] = next_event["days_to_event"]
+            event_targets["next_event"]["training_bias"] = next_event["training_bias"]
+            event_targets["next_event"]["taper_state"] = next_event["taper_state"]
 
-            # upcoming = stripped (no taper duplication needed)
+            # upcoming = stripped (no taper duplication)
             event_targets["upcoming"] = [
                 {
                     "priority": c["priority"],

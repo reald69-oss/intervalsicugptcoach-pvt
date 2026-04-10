@@ -19,15 +19,15 @@ def _extract_target_event(ev):
         return None
 
     if "climb" in name:
-        focus = "climbing"
+        training_bias = "durability"
     elif "tt" in name or "threshold" in name:
-        focus = "threshold"
+        training_bias = "ftp"
     elif "vo2" in name:
-        focus = "vo2"
+        training_bias = "anaerobic"
     elif "sprint" in name:
-        focus = "neuromuscular"
+        training_bias = "neuromuscular"
     else:
-        focus = "mixed"
+        training_bias = "mixed"
 
     date_raw = ev.get("start_date_local") or ev.get("date")
 
@@ -41,7 +41,7 @@ def _extract_target_event(ev):
 
     return {
         "priority": priority,
-        "focus": focus,
+        "training_bias": training_bias,
         "dt": dt
     }
 
@@ -78,7 +78,7 @@ def run_adaptive_decision_engine(context):
     nutrition_conf = nutrition.get("confidence")
 
     # --------------------------------------------------
-    # 🎯 TARGET EVENT CONTEXT (STRICT: planned_events ONLY)
+    # 🎯 TARGET EVENT CONTEXT (calendar ONLY)
     # --------------------------------------------------
 
     today_raw = context.get("athlete_today")
@@ -89,6 +89,7 @@ def run_adaptive_decision_engine(context):
         today = today_raw.date()
     else:
         today = today_raw
+
     events = context.get("calendar") or []
 
     next_a = None
@@ -114,7 +115,7 @@ def run_adaptive_decision_engine(context):
             if t["priority"] != "A":
                 continue
 
-            if not today or t["dt"].date() < today:
+            if t["dt"].date() < today:
                 continue
 
             candidates.append(t)
@@ -129,19 +130,14 @@ def run_adaptive_decision_engine(context):
     if next_a:
         days_to_event = (next_a["dt"].date() - today).days if today else None
 
-        if days_to_event <= 10:
-            taper_state = "taper"
-        elif days_to_event <= 21:
-            taper_state = "pre_taper"
+        if days_to_event is not None:
+            if days_to_event <= 10:
+                taper_state = "taper"
+            elif days_to_event <= 21:
+                taper_state = "pre_taper"
 
-        focus = next_a.get("focus")
-
-        if focus == "climbing":
-            training_bias = "durability"
-        elif focus == "threshold":
-            training_bias = "ftp"
-        elif focus == "vo2":
-            training_bias = "anaerobic"
+        # ✅ DIRECT — no mapping
+        training_bias = next_a.get("training_bias", "mixed")
 
     # --------------------------------------------------
     # Nutrition = supplementary signal only (graded)
