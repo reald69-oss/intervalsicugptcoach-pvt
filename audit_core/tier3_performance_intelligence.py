@@ -795,8 +795,11 @@ def interpret_training_state(context):
     # --- HARD GOVERNOR (TSB dominates) ---
     if tsb is not None:
 
-        if tsb <= -15:
+        if tsb <= -30:
             load_recovery_state = "maladaptation_risk"
+
+        elif tsb <= -20:
+            load_recovery_state = "functional_overreach"
 
         elif tsb <= -10:
             load_recovery_state = "load_pressure"
@@ -818,6 +821,29 @@ def interpret_training_state(context):
 
         elif autonomic_ratio >= 1.05 and load_pressure > 5:
             load_recovery_state = "productive_load"
+
+    # --------------------------------------------------
+    # VALIDATION GATE (ACWR + durability)
+    # --------------------------------------------------
+
+    acwr = context.get("acwr")
+
+    if load_recovery_state == "maladaptation_risk":
+
+        if (
+            acwr is not None and 0.8 <= acwr <= 1.3
+            and durability_state in ("stable", "stable_improving")
+        ):
+            load_recovery_state = "functional_overreach"
+
+    # --------------------------------------------------
+    # HRV sanity override
+    # --------------------------------------------------
+
+    if autonomic_ratio is not None:
+
+        if autonomic_ratio >= 1.0 and load_recovery_state == "maladaptation_risk":
+            load_recovery_state = "functional_overreach"
 
     # --------------------------------------------------
     # EXTERNAL LOAD CONTEXT (HEAT / ENVIRONMENT)
@@ -854,6 +880,46 @@ def interpret_training_state(context):
         heat_context_note = False
 
     # --------------------------------------------------
+    # Adaptation context
+    # --------------------------------------------------
+
+    adapting = "Adaptation signals are stable."
+
+    # Anaerobic signal (still valid)
+    if wdrm and wdrm > 0.6:
+        adapting = "High anaerobic stimulus detected — adaptation likely but recovery important."
+
+    # Durability (USE STATE — NOT RAW VALUE)
+
+    if durability_state == "drifting":
+        adapting = "Durability strain rising — aerobic consolidation advised."
+
+    elif durability_state == "improving":
+        adapting = "Efficiency improving under load — strong aerobic adaptation."
+
+    elif durability_state == "stable_improving":
+        adapting = "Efficiency stable or improving under load."
+
+    elif durability_state == "stable":
+        adapting = "Durability stable — cardiovascular drift controlled."
+
+    # --------------------------------------------------
+    # NDLI — intensity density check
+    # --------------------------------------------------
+
+    high_intensity_days = (pi.get("neural_density") or {}).get("high_intensity_days_7d")
+
+    if high_intensity_days is not None:
+
+        if high_intensity_days >= 5:
+
+            if load_recovery_state == "functional_overreach":
+                load_recovery_state = "adaptation_pressure"
+
+            elif load_recovery_state == "load_pressure":
+                load_recovery_state = "adaptation_pressure"
+
+    # --------------------------------------------------
     # Decision Engine
     # --------------------------------------------------
 
@@ -863,6 +929,13 @@ def interpret_training_state(context):
         readiness = "Autonomic recovery is suppressed relative to training load."
         recommendation = "Reduce load and prioritise recovery"
         next_session = "Recovery ride or full rest"
+
+    elif load_recovery_state == "functional_overreach":
+
+        state_label = "High Load / Functional Overreach"
+        readiness = "Training load is very high but still within functional limits."
+        recommendation = "Prioritise recovery to absorb load"
+        next_session = "Endurance or recovery session"
 
     elif load_recovery_state == "load_pressure":
 
@@ -893,6 +966,16 @@ def interpret_training_state(context):
         next_session = "Planned structured session"
 
     # --------------------------------------------------
+    # Freshness overlay
+    # --------------------------------------------------
+
+    if tsb_class == "overreached" or (recovery_index and recovery_index < 0.8):
+        readiness += " Acute fatigue is currently elevated."
+
+    elif tsb_class in ("fresh", "transition"):
+        readiness += " Freshness is currently high."
+
+    # --------------------------------------------------
     # HEAT ADJUSTMENT (EXECUTION LAYER — FINAL CONTROL)
     # --------------------------------------------------
 
@@ -915,55 +998,12 @@ def interpret_training_state(context):
             recommendation = "Progress load cautiously due to heat stress"
             next_session = "Controlled endurance or reduced-intensity intervals"
 
-
-    # --------------------------------------------------
-    # Freshness overlay
-    # --------------------------------------------------
-
-    if tsb_class == "overreached" or (recovery_index and recovery_index < 0.8):
-        readiness += " Acute fatigue is currently elevated."
-
-    elif tsb_class in ("fresh", "transition"):
-        readiness += " Freshness is currently high."
-
     # --------------------------------------------------
     # HEAT CONTEXT (INTERPRETATION ONLY)
     # --------------------------------------------------
 
     if heat_context_note:
         readiness += " Environmental heat strain is elevating cardiovascular load."
-
-    # --------------------------------------------------
-    # Adaptation context
-    # --------------------------------------------------
-
-    adapting = "Adaptation signals are stable."
-
-    # Anaerobic signal (still valid)
-    if wdrm and wdrm > 0.6:
-        adapting = "High anaerobic stimulus detected — adaptation likely but recovery important."
-
-    # Durability (USE STATE — NOT RAW VALUE)
-
-    if durability_state == "drifting":
-        adapting = "Durability strain rising — aerobic consolidation advised."
-
-    elif durability_state == "improving":
-        adapting = "Efficiency improving under load — strong aerobic adaptation."
-
-    elif durability_state == "stable_improving":
-        adapting = "Efficiency stable or improving under load."
-
-    elif durability_state == "stable":
-        adapting = "Durability stable — cardiovascular drift controlled."
-
-    # --------------------------------------------------
-    # Neural density adjustment
-    # --------------------------------------------------
-
-    if neural and neural > 200000:
-        recommendation = "Absorb load before adding intensity"
-        next_session = "Low-intensity aerobic session"
 
     # --------------------------------------------------
     # Operational coaching mode (2-state governance)
