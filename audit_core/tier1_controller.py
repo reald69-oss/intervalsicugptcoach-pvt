@@ -1216,7 +1216,33 @@ def run_tier1_controller(df_master, wellness, context):
             df_well[date_col] = pd.to_datetime(df_well[date_col], errors="coerce")
             df_well = df_well.sort_values(date_col)
 
-        last = df_well.iloc[-1]
+        # ---------------------------------------------------------
+        # 🧭 ALWAYS use YESTERDAY (strictly < today)
+        # ---------------------------------------------------------
+
+        today = pd.to_datetime(context.get("athlete_today")).date()
+
+        last = None
+
+        if date_col:
+            df_well[date_col] = pd.to_datetime(df_well[date_col], errors="coerce")
+
+            # normalize to date
+            df_well["_date"] = df_well[date_col].dt.date
+
+            # -----------------------------------------------------
+            # STRICTLY before today (this is the key fix)
+            # -----------------------------------------------------
+            df_past = df_well[df_well["_date"] < today]
+
+            if not df_past.empty:
+                last = df_past.iloc[-1]
+            else:
+                # fallback if only today exists
+                last = df_well.iloc[-1]
+
+        else:
+            last = df_well.iloc[-1]
 
         ctl = pd.to_numeric(last.get("ctl"), errors="coerce")
         atl = pd.to_numeric(last.get("atl"), errors="coerce")
@@ -1234,10 +1260,6 @@ def run_tier1_controller(df_master, wellness, context):
             "ctl": context["ctl"],
             "atl": context["atl"],
             "tsb": context["tsb"],
-            # do not exist in wellness data
- #           "recovery": last.get("recovery"),
- #           "fitness": last.get("fitness"),
- #           "form": last.get("form"),
         }
 
         existing = context.get("wellness_summary", {})

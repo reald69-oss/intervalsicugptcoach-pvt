@@ -76,7 +76,7 @@ give me a plan for my next target event
 prepare for target event
 show target events
 evaluate race readiness
-optimize taper stratgy
+optimize taper strategy
 
 ## Forecasting
 forecast training progression
