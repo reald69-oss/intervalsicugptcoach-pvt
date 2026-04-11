@@ -925,14 +925,14 @@ def interpret_training_state(context):
 
     if load_recovery_state == "maladaptation_risk":
 
-        state_label = "Maladaptation Risk"
-        readiness = "Autonomic recovery is suppressed relative to training load."
+        state_label = "Recovery Deficit"
+        readiness = "Recovery is not keeping up with current training load."
         recommendation = "Reduce load and prioritise recovery"
         next_session = "Recovery ride or full rest"
 
     elif load_recovery_state == "functional_overreach":
 
-        state_label = "High Load / Functional Overreach"
+        state_label = "High Load"
         readiness = "Training load is very high but still within functional limits."
         recommendation = "Prioritise recovery to absorb load"
         next_session = "Endurance or recovery session"
