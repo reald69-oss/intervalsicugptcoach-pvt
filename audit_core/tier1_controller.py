@@ -1244,16 +1244,45 @@ def run_tier1_controller(df_master, wellness, context):
         else:
             last = df_well.iloc[-1]
 
-        ctl = pd.to_numeric(last.get("ctl"), errors="coerce")
-        atl = pd.to_numeric(last.get("atl"), errors="coerce")
-        tsb = pd.to_numeric(last.get("tsb"), errors="coerce") if "tsb" in df_well.columns else None
+        # --- STEP 1: yesterday baseline (from wellness) ---
+        ctl_y = pd.to_numeric(last.get("ctl"), errors="coerce")
+        atl_y = pd.to_numeric(last.get("atl"), errors="coerce")
 
-        if pd.isna(tsb) and pd.notna(ctl) and pd.notna(atl):
-            tsb = ctl - atl
+        # --- STEP 2: today's ACTUAL load (from activities ONLY) ---
+        today_tss = 0.0
 
-        context["ctl"] = float(ctl) if pd.notna(ctl) else None
-        context["atl"] = float(atl) if pd.notna(atl) else None
-        context["tsb"] = float(tsb) if pd.notna(tsb) else None
+        if isinstance(df_master, pd.DataFrame) and not df_master.empty:
+            df_master["_date"] = pd.to_datetime(
+                df_master["start_date_local"], errors="coerce"
+            ).dt.date
+
+            today_tss = df_master.loc[
+                df_master["_date"] == today,
+                "icu_training_load"
+            ].sum()
+
+        # --- adjust today's load to match IC smoothing ---
+        load_fraction = 1.0
+
+        effective_tss = today_tss * load_fraction
+
+        # --- STEP 3: recompute CTL / ATL (Banister) ---
+        if pd.notna(ctl_y) and pd.notna(atl_y):
+
+            tau_ctl = 42.0
+            tau_atl = 7.0
+
+            ctl_today = ctl_y + (effective_tss - ctl_y) / tau_ctl
+            atl_today = atl_y + (effective_tss - atl_y) / tau_atl
+            tsb_today = ctl_today - atl_today
+
+        else:
+            ctl_today, atl_today, tsb_today = None, None, None
+
+        # --- STEP 4: overwrite context with TRUE values ---
+        context["ctl"] = round(ctl_today, 2) if ctl_today is not None else None
+        context["atl"] = round(atl_today, 2) if atl_today is not None else None
+        context["tsb"] = round(tsb_today, 2) if tsb_today is not None else None
 
         # 🔒 AUTHORITATIVE wellness snapshot ONLY
         load_snapshot = {
@@ -1279,6 +1308,8 @@ def run_tier1_controller(df_master, wellness, context):
             context,
             f"[T1-WELLNESS-LATEST] CTL={context['ctl']} ATL={context['atl']} TSB={context['tsb']}"
         )
+
+
     else:
         debug(context, "[T1] No valid wellness DataFrame — skipping wellness hydration")
 
