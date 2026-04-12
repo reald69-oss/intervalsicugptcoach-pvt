@@ -312,7 +312,8 @@ RENDERER_PROFILES = {
     "weekly": {
         "stack_structure": {
             "meta_context": [
-                "meta"
+                "meta",
+                "meta.athlete.identity.notes"
             ],
             "training_load": [
                 "training_volume",
