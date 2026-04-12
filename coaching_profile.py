@@ -313,7 +313,7 @@ RENDERER_PROFILES = {
         "stack_structure": {
             "meta_context": [
                 "meta",
-                "meta.athlete.identity.notes"
+                "meta.athlete.identity"
             ],
             "training_load": [
                 "training_volume",
@@ -437,6 +437,7 @@ RENDERER_PROFILES = {
         ],
         "section_handling": {
             "meta": "full",
+            "meta.athlete.identity": "full",
             "training_volume": "full",
             "events": "full",
             "planned_events_7d": "full",
