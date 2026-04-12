@@ -587,7 +587,8 @@ RENDERER_PROFILES = {
     "season": {
         "stack_structure": {
             "meta_context": [
-                "meta"
+                "meta",
+                "meta.athlete.identity"
             ],
             "training_load": [
                 "training_volume",
@@ -694,6 +695,7 @@ RENDERER_PROFILES = {
         ],
         "section_handling": {
             "meta": "full",
+            "meta.athlete.identity": "full",
             "training_volume": "full",
             "events": "forbid",
             "daily_load": "forbid",
@@ -791,7 +793,8 @@ RENDERER_PROFILES = {
 
         "stack_structure": {
             "meta_context": [
-                "meta"
+                "meta",
+                "meta.athlete.identity"
             ],
             "physiology_response": [
                 "wellness",
@@ -871,6 +874,7 @@ RENDERER_PROFILES = {
 
         "section_handling": {
             "meta": "full",
+            "meta.athlete.identity": "full",
             "wellness": "full",
             "wellness.recovery_markers": "full",
             "hrv_daily": "forbid",
