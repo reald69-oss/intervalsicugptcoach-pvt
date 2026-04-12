@@ -587,7 +587,6 @@ RENDERER_PROFILES = {
         "stack_structure": {
             "meta_context": [
                 "meta",
-                "meta.athlete.identity"
             ],
             "training_load": [
                 "training_volume",
@@ -642,6 +641,7 @@ RENDERER_PROFILES = {
             "placement": "after_data"
         },
         "interpretation_rules": [
+            "Render all meta.athlete.identity and always notes in REPORT CONTEXT when present",
             "If semantic.training_volume exists, render it under the header 'Training Volume' with three stacked metrics: Hours, Training Load (TSS), Distance.",
             "Focus on trends, phases, and accumulated load.",
             "Avoid session-level or daily commentary.",
@@ -694,7 +694,6 @@ RENDERER_PROFILES = {
         ],
         "section_handling": {
             "meta": "full",
-            "meta.athlete.identity.notes": "full",
             "training_volume": "full",
             "events": "forbid",
             "daily_load": "forbid",
@@ -793,7 +792,6 @@ RENDERER_PROFILES = {
         "stack_structure": {
             "meta_context": [
                 "meta",
-                "meta.athlete.identity"
             ],
             "physiology_response": [
                 "wellness",
@@ -834,6 +832,7 @@ RENDERER_PROFILES = {
         # ----------------------------------------------------------
 
         "interpretation_rules": [
+            "Render all meta.athlete.identity and always notes in REPORT CONTEXT when present",
             "Interpret recovery primarily using autonomic and subjective signals (HRV, resting HR, sleep, subjective recovery scores).",
             "Prioritise autonomic signals over training load metrics when determining recovery state.",
             "Explain HRV behaviour using trends, means, variability, and recent values relative to baseline.",
@@ -873,7 +872,6 @@ RENDERER_PROFILES = {
 
         "section_handling": {
             "meta": "full",
-            "meta.athlete.identity.notes": "full",
             "wellness": "full",
             "wellness.recovery_markers": "full",
             "hrv_daily": "forbid",
