@@ -375,7 +375,7 @@ RENDERER_PROFILES = {
         },
         "interpretation_rules": [
             "Interpretations must be descriptive/conditional, not predictive.",
-            "Render training_volume as: Hours | TSS | Distance when present.",
+            "Render training_volume as: Hours | TSS | Distance and notes when present.",
             "Render wbal_summary.temporal_pattern as a 1-line block timeline (▂ ▃ ▇ → none/low/moderate/high).",
             "Render daily_load as fixed-width timeline (labels, blocks, TSS aligned). NEVER list/table.",
             "If daily_load + CTL + ATL exist, add fatigue row (↑ ↓ —) using sign(ATL−CTL) only.",
