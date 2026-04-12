@@ -313,7 +313,6 @@ RENDERER_PROFILES = {
         "stack_structure": {
             "meta_context": [
                 "meta",
-                "meta.athlete.identity"
             ],
             "training_load": [
                 "training_volume",
@@ -375,7 +374,8 @@ RENDERER_PROFILES = {
         },
         "interpretation_rules": [
             "Interpretations must be descriptive/conditional, not predictive.",
-            "Render training_volume as: Hours | TSS | Distance and notes when present.",
+            "Render meta.athlete.identity.notes in training context",
+            "Render training_volume as: Hours | TSS | Distance when present.",
             "Render wbal_summary.temporal_pattern as a 1-line block timeline (▂ ▃ ▇ → none/low/moderate/high).",
             "Render daily_load as fixed-width timeline (labels, blocks, TSS aligned). NEVER list/table.",
             "If daily_load + CTL + ATL exist, add fatigue row (↑ ↓ —) using sign(ATL−CTL) only.",
@@ -437,7 +437,6 @@ RENDERER_PROFILES = {
         ],
         "section_handling": {
             "meta": "full",
-            "meta.athlete.identity.notes": "full",
             "training_volume": "full",
             "events": "full",
             "planned_events_7d": "full",
