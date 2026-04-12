@@ -374,7 +374,7 @@ RENDERER_PROFILES = {
         },
         "interpretation_rules": [
             "Interpretations must be descriptive/conditional, not predictive.",
-            "Render meta.athlete.identity.notes in training context",
+            "Render meta.athlete.identity.notes in REPORT CONTEXT when present",
             "Render training_volume as: Hours | TSS | Distance when present.",
             "Render wbal_summary.temporal_pattern as a 1-line block timeline (▂ ▃ ▇ → none/low/moderate/high).",
             "Render daily_load as fixed-width timeline (labels, blocks, TSS aligned). NEVER list/table.",
