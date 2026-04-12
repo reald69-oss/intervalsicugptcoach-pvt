@@ -437,7 +437,7 @@ RENDERER_PROFILES = {
         ],
         "section_handling": {
             "meta": "full",
-            "meta.athlete.identity": "full",
+            "meta.athlete.identity.notes": "full",
             "training_volume": "full",
             "events": "full",
             "planned_events_7d": "full",
@@ -695,7 +695,7 @@ RENDERER_PROFILES = {
         ],
         "section_handling": {
             "meta": "full",
-            "meta.athlete.identity": "full",
+            "meta.athlete.identity.notes": "full",
             "training_volume": "full",
             "events": "forbid",
             "daily_load": "forbid",
@@ -874,7 +874,7 @@ RENDERER_PROFILES = {
 
         "section_handling": {
             "meta": "full",
-            "meta.athlete.identity": "full",
+            "meta.athlete.identity.notes": "full",
             "wellness": "full",
             "wellness.recovery_markers": "full",
             "hrv_daily": "forbid",
