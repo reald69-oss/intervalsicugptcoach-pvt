@@ -2593,8 +2593,8 @@ def build_semantic_json(context):
                     continue
 
                 # Skip the current microcycle week
-                if week_key == current_week_key:
-                    continue
+                #if week_key == current_week_key:
+                #    continue
 
                 planned_by_week.setdefault(week_key, []).extend(events)
 
@@ -2613,8 +2613,8 @@ def build_semantic_json(context):
 
                 week_end = max_date + timedelta(days=(7 - max_date.isoweekday()))
 
-                if max_date < week_end:
-                    planned_by_week.pop(last_week_from_data, None)
+                #if max_date < week_end:
+                #    planned_by_week.pop(last_week_from_data, None)
 
                 planned_summary_by_iso_week = {}
 
@@ -2645,8 +2645,10 @@ def build_semantic_json(context):
         # ---------------------------------------------------------
         # 🎯 DERIVED VIEW: next 7 days (ONLY for current week)
         # ---------------------------------------------------------
+        today = context.get("athlete_today")
+        is_recent = pd.Timestamp(report_end) >= (today - pd.Timedelta(days=6))
 
-        if report_week_key == current_week_key:
+        if is_recent:
 
             semantic["planned_events_7d"] = []
 
