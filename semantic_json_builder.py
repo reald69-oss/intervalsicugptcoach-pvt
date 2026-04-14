@@ -4312,7 +4312,7 @@ def build_semantic_json(context):
         recent = phases[-6:]
         recent_labels = [p.get("classification") for p in recent if p.get("classification")]
 
-        fatigue_labels = {"Productive_fatigue", "Overreached"}
+        fatigue_labels = {"Overreached"}
 
         fatigue_streak = 0
         for label in reversed(recent_labels):
