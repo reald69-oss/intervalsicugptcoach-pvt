@@ -3803,12 +3803,46 @@ def build_semantic_json(context):
                     + "-W"
                     + ctl_src["date"].dt.isocalendar().week.astype(str)
                 )
+                # ensure chronological order
+                ctl_src = ctl_src.sort_values("date")
+
                 df_ctl = (
                     ctl_src.groupby("year_week", as_index=False)
-                    .agg({"CTL": "mean", "ATL": "mean", "TSB": "mean"})
+                    .last()[["year_week", "CTL", "ATL", "TSB"]]
                 )
+
+                df_ctl.columns = ["week", "ctl", "atl", "tsb"]
                 df_ctl.columns = ["week", "ctl", "atl", "tsb"]
                 df_weeks = df_weeks.merge(df_ctl, on="week", how="left")
+
+                # -----------------------------------------------------
+                # 🧠 Stabilise TSB for phase detection (prevent spikes)
+                # -----------------------------------------------------
+
+                # smooth short-term spikes (2-week rolling)
+                df_weeks["tsb_smooth"] = df_weeks["tsb"].rolling(2, min_periods=1).mean()
+
+                # cap extreme physiological outliers
+                df_weeks["tsb_capped"] = df_weeks["tsb_smooth"].clip(-50, 50)
+
+                # -----------------------------------------------------
+                # 🧠 Fill missing CTL/ATL/TSB (no-activity weeks)
+                # -----------------------------------------------------
+
+                df_weeks = df_weeks.sort_values("start").reset_index(drop=True)
+
+                # track which rows were real measurements
+                measured_mask = df_weeks["ctl"].notna()
+
+                # forward fill physiological state
+                df_weeks[["ctl", "atl", "tsb"]] = df_weeks[["ctl", "atl", "tsb"]].ffill()
+
+                # optional: tag source (debugging / future use)
+                df_weeks["state_source"] = np.where(
+                    measured_mask,
+                    "measured_activity",
+                    "carry_forward_gap"
+                )
 
                 # -----------------------------------------------------
                 # 🧠 Adjust CURRENT ISO week load using projected plan
@@ -3905,15 +3939,19 @@ def build_semantic_json(context):
                         return label.capitalize()
                 return "Unknown"
 
-            df_weeks["classification"] = df_weeks["tsb"].apply(classify_tsb)
+            df_weeks["classification"] = df_weeks["tsb_capped"].apply(classify_tsb)
+
+            
 
             # -----------------------------------------------------
-            # 🔗 Propagate calc_method / calc_context from detect_phases()
+            # 🔗 Propagate phase / calc_method / calc_context from detect_phases()
             # -----------------------------------------------------
             if "phases" in context and isinstance(context["phases"], list) and len(context["phases"]) > 0:
                 df_detected = pd.DataFrame(context["phases"])
                 if not df_detected.empty:
                     # 🩹 Ensure columns exist in df_weeks before assignment
+                    if "phase" not in df_weeks.columns:
+                        df_weeks["phase"] = None
                     if "calc_method" not in df_weeks.columns:
                         df_weeks["calc_method"] = None
                     if "calc_context" not in df_weeks.columns:
@@ -3927,15 +3965,20 @@ def build_semantic_json(context):
                             & (pd.to_datetime(df_detected["end"]) >= wk_start)
                         ]
                         if not matched.empty:
+                            df_weeks.at[idx, "phase"] = matched.iloc[-1].get("phase")
                             df_weeks.at[idx, "calc_method"] = matched.iloc[-1].get("calc_method")
 
                             context_val = matched.iloc[-1].get("calc_context")
-                            # ✅ Safe assignment for dict values (keeps them scalar)
                             df_weeks.at[idx, "calc_context"] = (
                                 context_val if isinstance(context_val, (dict, type(None))) else dict(context_val)
                             )
 
-                    debug(context, f"[PHASES] 🔄 Propagated calc_method/context into weekly roll-up")
+                    debug(context, f"[PHASES] 🔄 Propagated phase/calc_method/calc_context into weekly roll-up")
+                    debug(
+                        context,
+                        "[PHASES] weekly propagated phases:",
+                        df_weeks[["week", "phase", "calc_method"]].to_dict(orient="records")
+                    )
 
 
 
@@ -3951,18 +3994,22 @@ def build_semantic_json(context):
             current_phase = None
             segment_rows = []
 
-            for _, wk in df_weeks.iterrows():
+            for wk in df_weeks.sort_values("start").to_dict(orient="records"):
+                phase = wk.get("phase")
+
                 # fill Unclassified with previous phase if possible (prevents fragmentation)
-                if wk["phase"] == "Unclassified" and current_phase is not None:
-                    wk["phase"] = current_phase
+                if phase == "Unclassified" and current_phase is not None:
+                    phase = current_phase
+
+                wk["phase"] = phase
 
                 if current_phase is None:
-                    current_phase = wk["phase"]
+                    current_phase = phase
                     segment_rows = [wk]
                     continue
 
                 # 🚧 Phase change — flush previous block
-                if wk["phase"] != current_phase:
+                if phase != current_phase:
                     seg = pd.DataFrame(segment_rows)
                     if not seg.empty:
                         summaries.append({
@@ -3985,8 +4032,7 @@ def build_semantic_json(context):
                             ),
                         })
 
-                    # start new block
-                    current_phase = wk["phase"]
+                    current_phase = phase
                     segment_rows = [wk]
                 else:
                     segment_rows.append(wk)
@@ -4050,9 +4096,20 @@ def build_semantic_json(context):
                         if micro.get("projected_hours") is not None:
                             block["hours_total"] = round(micro["projected_hours"], 1)
 
-                        # invalidate phase classification for projected weeks # WE KEEP THI SNOW FOR ADE v2
-                        #block["phase"] = "Projected"
-                        #block["descriptor"] = "🔮 **Projected training week** — classification deferred until execution."
+                        planned_tss = float(micro.get("planned_remaining_tss") or 0)
+                        completed_tss = float(micro.get("completed_tss") or 0)
+
+                        # projected week should reflect plan structure, not inherited detect_phases label
+                        if planned_tss > completed_tss:
+                            block["phase"] = "Build"
+                            block["descriptor"] = advice.get("Build", "Build phase — maintain adaptive consistency.")
+                        elif planned_tss < completed_tss:
+                            block["phase"] = "Recovery"
+                            block["descriptor"] = advice.get("Recovery", "Recovery phase — maintain adaptive consistency.")
+                        else:
+                            block["phase"] = "Base"
+                            block["descriptor"] = advice.get("Base", "Base phase — maintain adaptive consistency.")
+
                         block["calc_method"] = "projection_forecast"
                         block["calc_context"] = None
 
@@ -4331,16 +4388,32 @@ def build_semantic_json(context):
         # -----------------------------
         # Required phase (SAFE + PRIORITY)
         # -----------------------------
-        required_phase = "build"  # default (never remove)
+        required_phase = None  # ← important change
 
+        # -------------------------
+        # Phase context
+        # -------------------------
+        current_phase = (projected_phase or "").lower()
+        last_phase = (last_block_phase or "").lower()
+
+        # -------------------------
+        # Recovery gating
+        # -------------------------
         if fatigue_streak >= 4:
-            required_phase = "recovery"
 
-        elif last_block_phase == "Overreached" and last_block_days >= 7:
+            # ❌ DO NOT trigger recovery if already transitioned
+            if current_phase not in {"build", "base"}:
+                required_phase = "recovery"
+
+        elif last_phase == "overreached" and last_block_days >= 7:
             required_phase = "recovery"
 
         elif operational_state == "recovery_priority" and fatigue_streak >= 2:
             required_phase = "recovery"
+
+        # fallback
+        if required_phase is None:
+            required_phase = current_phase or "build"
 
         # -----------------------------
         # Alignment
@@ -4352,9 +4425,7 @@ def build_semantic_json(context):
         current_phase = projected_phase or (summaries[-1].get("phase", "").lower() if summaries else "")
 
         if required_phase == "recovery":
-            if current_phase in RECOVERY_COMPATIBLE and planned_pattern != "increasing":
-                alignment = "aligned"
-            elif planned_pattern == "increasing":
+            if planned_pattern == "increasing":
                 alignment = "misaligned"
             else:
                 alignment = "aligned"
@@ -4430,7 +4501,7 @@ def build_semantic_json(context):
             "required_phase": phase,
             "alignment": alignment,
             "phase_override": phase_override,
-            "forecast_trend": forecast.get("load_trend")
+            "forecast_trend": forecast_block.get("load_trend")
         }
         debug(context, f"[PHASE_ALIGNMENT] required={required_phase} alignment={alignment}")
 

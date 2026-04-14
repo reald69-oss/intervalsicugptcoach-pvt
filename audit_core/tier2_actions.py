@@ -170,7 +170,7 @@ def detect_phases(context, events):
         method_source = "steady_load_fallback"
         method_trace = {
             "delta": round(d, 3),
-            "tsb": round(tsb, 2),
+            "tsb": round(np.clip(tsb, -50, 50), 2),
             "ctl_slope": round(ctl_slope, 2),
             "atl_slope": round(atl_slope, 2),
             "acwr": round(acwr, 2),
@@ -201,31 +201,39 @@ def detect_phases(context, events):
                             └── Sessions
         '''
         if tsb < -30:
-            # True overreach = strong spike + deep fatigue
+            # require sustained overload (2 consecutive weeks)
+            prev_tsb = df_week.iloc[i-1]["tsb"] if i > 0 else 0
+
             if (
                 d > 0.20
-                and tsb < -50
+                and tsb < -80
+                and prev_tsb < -30
                 and acwr >= 1.15
-                and atl_slope > ctl_slope * 1.3
+                and atl_slope > ctl_slope * 1.5
             ):
-                label, method_source = "Overreached", "TSB<-50 + overload spike"
+                label, method_source = "Overreached", "TSB<-80 + sustained overload"
             else:
                 label, method_source = "Build", "TSB<-30 (acute overload)"
 
-        elif tsb > 10:
-            # distinguish taper vs recovery by magnitude of drop
+        elif tsb > 5:
+            # allow deload detection at lower TSB 
             if d < -0.15:
-                label, method_source = "Taper", "TSB>10 + strong unload"
+                label, method_source = "Taper", "TSB>5 + strong unload"
+
             elif d < -0.05:
-                label, method_source = "Deload", "TSB>10 + moderate unload"
+                label, method_source = "Deload", "TSB>5 + moderate unload"
+
             else:
-                label, method_source = "Recovery", "TSB>10 + low load"
+                label, method_source = "Recovery", "TSB>5 + low load"
 
         elif -5 <= tsb <= 5 and abs(d) < 0.05:
             label, method_source = "Base", "|ΔTSS|<5% & TSB≈0"
 
         elif -30 <= tsb < -5 and d > 0.10:
             label, method_source = "Build", "TSB=-30–-5 & ΔTSS>0.1"
+
+        elif -20 <= tsb < -5 and d > 0.05:
+            label, method_source = "Build", "moderate fatigue + progressive load"
 
         labels.append(label)
         methods.append(method_source)
