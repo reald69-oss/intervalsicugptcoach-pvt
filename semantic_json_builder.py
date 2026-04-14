@@ -4376,16 +4376,7 @@ def build_semantic_json(context):
             planned_pattern = "stable"
 
         # Fatigue-class fallback only if still unknown
-        # NOTE: fatigue_class is form-state, not load direction
-        elif forecast_fatigue_class in {"transition", "fresh"}:
-            planned_pattern = "reduced"
-        elif forecast_fatigue_class == "neutral":
-            planned_pattern = "stable"
-        elif forecast_fatigue_class == "productive_fatigue":
-            planned_pattern = "increasing"
-        elif forecast_fatigue_class == "overreached":
-            planned_pattern = "reduced"
-
+        # No further fallback — unknown stays unknown
         # -----------------------------
         # Required phase (SAFE + PRIORITY)
         # -----------------------------
@@ -4398,22 +4389,12 @@ def build_semantic_json(context):
         last_phase = (last_block_phase or "").lower()
 
         # -------------------------
-        # Recovery gating
+        # Recovery gating (PHASE ONLY)
         # -------------------------
-        if fatigue_streak >= 4:
 
-            # ❌ DO NOT trigger recovery if already transitioned
-            if current_phase not in {"build", "base"}:
-                required_phase = "recovery"
-
-        elif last_phase == "overreached" and last_block_days >= 7:
+        if projected_phase in {"recovery", "deload", "taper"}:
             required_phase = "recovery"
-
-        elif operational_state == "recovery_priority" and fatigue_streak >= 2:
-            required_phase = "recovery"
-
-        # fallback
-        if required_phase is None:
+        else:
             required_phase = current_phase or "build"
 
         # -----------------------------
