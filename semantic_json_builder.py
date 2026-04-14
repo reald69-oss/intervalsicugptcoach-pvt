@@ -4449,6 +4449,14 @@ def build_semantic_json(context):
         # -------------------------
         if phase == "recovery":
             decision = f"{base_guidance} — prioritise recovery"
+
+            if "neutral" in future_title:
+                decision += " and maintain low load"
+            elif "increase" in future_title or "build" in future_title:
+                decision += " despite upcoming load progression"
+            elif "recovery" in future_title:
+                decision += " and allow full adaptation"
+
             phase_override = True
 
         # -------------------------
@@ -4477,7 +4485,7 @@ def build_semantic_json(context):
             "phase_override": phase_override,
             "forecast_trend": forecast_block.get("load_trend")
         }
-        debug(context, f"[PHASE_ALIGNMENT] required={required_phase} alignment={alignment}")
+        debug(context, f"[PHASE_ALIGNMENT] required={phase} alignment={alignment}")
 
     except Exception as e:
         debug(context, f"[PHASE_ALIGNMENT] ⚠️ failed: {e}")
