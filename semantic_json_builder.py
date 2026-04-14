@@ -4096,6 +4096,7 @@ def build_semantic_json(context):
                         if micro.get("projected_hours") is not None:
                             block["hours_total"] = round(micro["projected_hours"], 1)
 
+                        block["distance_km_total"] = None
                         planned_tss = float(micro.get("planned_remaining_tss") or 0)
                         completed_tss = float(micro.get("completed_tss") or 0)
 
