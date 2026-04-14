@@ -43,7 +43,7 @@ REPORT_CONTRACT = {
         "planned_summary_by_iso_week",
         "future_forecast",
         "future_actions",
-        "phases",
+        #"phases",
     ],
 
     "weekly_lite": [
