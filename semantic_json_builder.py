@@ -4380,7 +4380,7 @@ def build_semantic_json(context):
         # -----------------------------
         # Required phase (SAFE + PRIORITY)
         # -----------------------------
-        required_phase = None  # ← important change
+        required_phase = None
 
         # -------------------------
         # Phase context
@@ -4398,19 +4398,18 @@ def build_semantic_json(context):
             required_phase = current_phase or "build"
 
         # -----------------------------
-        # Alignment
+        # Alignment (phase vs plan direction)
         # -----------------------------
         alignment = "aligned"
 
-        RECOVERY_COMPATIBLE = {"recovery", "deload", "taper"}
+        if planned_pattern == "unknown":
+            alignment = "unknown"
 
-        current_phase = projected_phase or (summaries[-1].get("phase", "").lower() if summaries else "")
+        elif required_phase == "recovery":
+            alignment = "misaligned" if planned_pattern == "increasing" else "aligned"
 
-        if required_phase == "recovery":
-            if planned_pattern == "increasing":
-                alignment = "misaligned"
-            else:
-                alignment = "aligned"
+        else:  # build / base / peak
+            alignment = "misaligned" if planned_pattern == "reduced" else "aligned"
 
         # -----------------------------
         # Output FIRST (important)
@@ -4446,18 +4445,11 @@ def build_semantic_json(context):
         phase_override = False
 
         # -------------------------
-        # HARD RULE (PHASE) BUT NOT IF ITS THE SAME ALREADY
+        # HARD RULE (PHASE = SHOULD, ALWAYS APPLIED)
         # -------------------------
         if phase == "recovery":
-
-            if ade.get("operational_state") == "recovery_priority":
-                # ✅ ALIGNED → DO NOT OVERRIDE
-                decision = base_guidance
-                phase_override = False
-            else:
-                # ❌ CONFLICT → OVERRIDE
-                decision = "Reduce load and prioritise recovery"
-                phase_override = True
+            decision = f"{base_guidance} — prioritise recovery"
+            phase_override = True
 
         # -------------------------
         # SOFT RULE (FORECAST via ACTION)
