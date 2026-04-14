@@ -3663,19 +3663,19 @@ def build_semantic_json(context):
                             if pd.isna(paired_id):
                                 continue
 
-                            compliance = row.get("compliance")
+                            #compliance = row.get("compliance")
 
-                            try:
-                                compliance_val = float(compliance)
-                            except Exception:
-                                compliance_val = None
+                            #try:
+                            #    compliance_val = float(compliance)
+                            #except Exception:
+                            #    compliance_val = None
 
-                            if compliance_val and compliance_val > 0:
+                            #if compliance_val and compliance_val > 0:
 
-                                planned_seconds += moving_time / (compliance_val / 100.0)
+                            #    planned_seconds += moving_time / (compliance_val / 100.0)
 
-                            else:
-                                planned_seconds += moving_time
+                            #else:
+                            #    planned_seconds += moving_time
 
                     # -------------------------------------------------
                     # 6b️⃣ Add remaining planned calendar sessions
