@@ -3633,13 +3633,11 @@ def build_semantic_json(context):
                     completed_val = current_ISO_weekly_microcycle.get("completed_tss", 0.0)
 
                     projected_total = completed_val + planned_remaining
-                    delta = projected_total - weekly_target
+                    full_week_target = weekly_target + planned_remaining
+                    delta = projected_total - full_week_target
 
                     current_ISO_weekly_microcycle["projected_total_tss"] = round(projected_total, 1)
                     current_ISO_weekly_microcycle["delta_to_target"] = round(delta, 1)
-
-                    full_week_target = weekly_target + planned_remaining
-
                     current_ISO_weekly_microcycle["weekly_target_tss"] = round(full_week_target, 1)
                     current_ISO_weekly_microcycle["planned_remaining_tss"] = round(planned_remaining, 1)
 
