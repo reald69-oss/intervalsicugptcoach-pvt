@@ -2,7 +2,7 @@
 Energy System Progression Engine (ESPE)
 Version: v1.1
 
-Stateless physiological engine comparing two rolling power-curve windows.
+Stateless engine comparing two rolling power-curve windows to track energy system progression.
 
 Consumes:
     power_curve block injected by Worker
@@ -230,26 +230,25 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
 
         if system_status.get("vo2") == "decline":
             system_guidance = (
-                "Aerobic development progressing while VO₂ capacity drifts — "
-                "reintroduce VO₂ stimulus within the next microcycle."
+            "Aerobic development is progressing, but VO₂ capacity is slipping slightly — reintroduce VO₂ stimulus in the next microcycle."
             )
 
     elif adaptation_state == "vo2_expansion":
 
         system_guidance = (
-            "VO₂ capacity expanding — consolidate gains with threshold work."
+            "VO₂ capacity is improving — support it with threshold work to consolidate gains."
         )
 
     elif adaptation_state == "anaerobic_build":
 
         system_guidance = (
-            "Anaerobic power improving — maintain short high-intensity efforts."
+            "Anaerobic power is improving — keep short, high-intensity efforts in the mix."
         )
 
     elif adaptation_state == "plateau":
 
         system_guidance = (
-            "Power curve stable across systems — introduce new stimulus to drive adaptation."
+            "Power curve is stable across systems — a new stimulus may be needed to restart progression."
         )
 
     return {
