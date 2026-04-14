@@ -4321,8 +4321,10 @@ def build_semantic_json(context):
             else:
                 break
 
-        if fatigue_streak >= 4:
-            past_pattern = "fatigue_streak"
+        if fatigue_streak >= 2:
+            past_pattern = "fatigue_streak"   # already concerning
+        elif fatigue_streak == 1:
+            past_pattern = "overreach_event"  # normal if followed by recovery
         elif "Recovery" in recent_labels:
             past_pattern = "recovery_present"
         else:
