@@ -166,8 +166,8 @@ def detect_phases(context, events):
         acwr = float(df_week.iloc[i]["acwr"])
         lvi = float(df_week.iloc[i]["lvi"])
 
-        label = "Base"
-        method_source = "steady_load_fallback"
+        label = "Transition"
+        method_source = "TSB mixed + moderate load"
         method_trace = {
             "delta": round(d, 3),
             "tsb": round(np.clip(tsb, -50, 50), 2),
@@ -216,15 +216,33 @@ def detect_phases(context, events):
                 label, method_source = "Build", "TSB<-30 (acute overload)"
 
         elif tsb > 5:
-            # allow deload detection at lower TSB 
-            if d < -0.15:
-                label, method_source = "Taper", "TSB>5 + strong unload"
 
-            elif d < -0.05:
-                label, method_source = "Deload", "TSB>5 + moderate unload"
+            # --- NORMALISED LOAD (key fix) ---
+            load_ratio = tss / (ctl * 7) if ctl > 0 else 0
 
+            # --- HIGH LOAD EVEN IF FRESH → NOT RECOVERY ---
+            if acwr >= 0.95 and load_ratio >= 0.85:
+                if d > 0.05:
+                    label, method_source = "Build", "TSB>5 + high load + increasing"
+                elif d > -0.05:
+                    label, method_source = "Transition", "TSB>5 + high load + stable"
+                else:
+                    label, method_source = "Deload", "TSB>5 + high load but decreasing"
+
+            # --- TRUE UNLOAD (LOW LOAD + DROP) ---
+            elif load_ratio < 0.65:
+                if d < -0.15:
+                    label, method_source = "Taper", "TSB>5 + low load + strong unload"
+                elif d < -0.05:
+                    label, method_source = "Deload", "TSB>5 + low load + moderate unload"
+                elif d < 0:
+                    label, method_source = "Recovery", "TSB>5 + low load + slight unload"
+                else:
+                    label, method_source = "Transition", "TSB>5 + low load but stable"
+
+            # --- MIDDLE GROUND ---
             else:
-                label, method_source = "Recovery", "TSB>5 + low load"
+                label, method_source = "Transition", "TSB>5 + moderate load"
 
         elif -5 <= tsb <= 5 and abs(d) < 0.05:
             label, method_source = "Base", "|ΔTSS|<5% & TSB≈0"
