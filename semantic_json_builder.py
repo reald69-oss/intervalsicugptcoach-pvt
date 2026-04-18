@@ -29,7 +29,6 @@ from audit_core.tier3_trail_execution import (
 )
 from coach_trail_rules import TRAIL_DEFAULTS
 from audit_core.tier3_future_forecast import run_future_forecast
-from audit_core.tier3_future_forecast import project_week_state
 
 # ---------------------------------------------------------
 # Helpers
@@ -3751,23 +3750,44 @@ def build_semantic_json(context):
 
 
     # ---------------------------------------------------------
-    # 🧮 Projected end-of-week state (CTL / ATL / TSB)
+    # 📊 Projected end-of-week state (from calendar truth)
     # ---------------------------------------------------------
 
     try:
-        micro = semantic.get("current_ISO_weekly_microcycle", {})
-        wellness = semantic.get("wellness", {})
+        cal = context.get("calendar") or context.get("prefetched", {}).get("calendar")
 
-        if micro and micro.get("projected_total_tss") is not None:
+        if isinstance(cal, list) and len(cal) > 0:
 
-            proj = project_week_state(
-                wellness,
-                micro,
-                semantic.get("planned_events_7d", []),
-                semantic.get("events", [])
-            )
+            df = pd.DataFrame(cal)
+            df["date"] = pd.to_datetime(df["start_date_local"], errors="coerce")
+            df = df.dropna(subset=["date"]).sort_values("date")
 
-            semantic["current_ISO_weekly_microcycle"]["projected_state"] = proj
+            # current ISO week
+            today = pd.Timestamp.today().normalize()
+            week_start = today.to_period("W").start_time
+            week_end = week_start + pd.Timedelta(days=6)
+
+            df_week = df[
+                (df["date"] >= week_start) &
+                (df["date"] <= week_end)
+            ]
+
+            if not df_week.empty and "icu_ctl" in df_week.columns:
+
+                last = df_week.iloc[-1]
+
+                ctl = float(last.get("icu_ctl") or 0)
+                atl = float(last.get("icu_atl") or 0)
+
+                semantic["current_ISO_weekly_microcycle"]["projected_state"] = {
+                    "ctl": round(ctl, 2),
+                    "atl": round(atl, 2),
+                    "tsb": round(ctl - atl, 2),
+                    "source": "calendar"
+                }
+
+            else:
+                semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
 
         else:
             semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
