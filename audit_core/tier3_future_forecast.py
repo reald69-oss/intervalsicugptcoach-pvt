@@ -58,6 +58,77 @@ def resolve_calendar(context, forecast_days=14):
     return planned
 
 # ---------------------------------------------------------------------
+# 🚀 Tier-3 Future Forecast 1 WEEK PROJECTION (CORRECTED)
+# ---------------------------------------------------------------------
+
+def project_week_state(wellness, micro, planned_events, completed_events):
+    """
+    Projects CTL / ATL / TSB for the FULL ISO week:
+    - Includes completed load (earlier this week)
+    - Includes planned load (remaining)
+    - Uses real daily distribution
+    """
+
+    try:
+        import pandas as pd
+        from collections import defaultdict
+
+        ctl = float(wellness.get("ctl") or 0)
+        atl = float(wellness.get("atl") or 0)
+
+        ctl_tc = 42   # CTL time constant
+        atl_tc = 7    # ATL time constant
+
+        ctl_proj = ctl
+        atl_proj = atl
+
+        # -------------------------------------------------
+        # Build FULL week load map (completed + planned)
+        # -------------------------------------------------
+        daily_load = defaultdict(float)
+
+        # ✅ completed events (this week)
+        for ev in completed_events:
+            d_raw = ev.get("start_date_local") or ev.get("date")
+            if not d_raw:
+                continue
+
+            d = str(pd.to_datetime(d_raw).date())
+            tss = float(ev.get("tss") or 0)
+            daily_load[d] += tss
+
+        # ✅ planned events (remaining)
+        for ev in planned_events:
+            d = ev.get("date")
+            tss = float(ev.get("icu_training_load") or 0)
+            if d:
+                daily_load[d] += tss
+
+        # -------------------------------------------------
+        # Simulate FULL ISO week (Mon → Sun)
+        # -------------------------------------------------
+        today = pd.Timestamp.today().normalize()
+        week_start = today.to_period("W").start_time
+
+        for i in range(7):
+            day = str((week_start + pd.Timedelta(days=i)).date())
+            tss = daily_load.get(day, 0)
+
+            ctl_proj += (tss - ctl_proj) / ctl_tc
+            atl_proj += (tss - atl_proj) / atl_tc
+
+        tsb_proj = ctl_proj - atl_proj
+
+        return {
+            "ctl": round(ctl_proj, 2),
+            "atl": round(atl_proj, 2),
+            "tsb": round(tsb_proj, 2)
+        }
+
+    except Exception:
+        return None
+
+# ---------------------------------------------------------------------
 # 🚀 Tier-3 Future Forecast
 # ---------------------------------------------------------------------
 def run_future_forecast(context, forecast_days="auto"):

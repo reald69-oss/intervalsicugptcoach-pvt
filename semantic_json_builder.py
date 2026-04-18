@@ -28,6 +28,8 @@ from audit_core.tier3_trail_execution import (
     classify_execution
 )
 from coach_trail_rules import TRAIL_DEFAULTS
+from audit_core.tier3_future_forecast import run_future_forecast
+from audit_core.tier3_future_forecast import project_week_state
 
 # ---------------------------------------------------------
 # Helpers
@@ -2695,7 +2697,6 @@ def build_semantic_json(context):
 
                     context["calendar"] = calendar_data
 
-                    from audit_core.tier3_future_forecast import run_future_forecast
                     forecast_output = run_future_forecast(context)
 
                     if isinstance(forecast_output, dict):
@@ -3538,6 +3539,7 @@ def build_semantic_json(context):
 
                     weekly_target = 0.0
                     planned_remaining = 0.0
+                    missed_planned = 0.0
 
                     calendar_events = context.get("calendar", []) or []
 
@@ -3594,6 +3596,34 @@ def build_semantic_json(context):
                         planned_remaining += load
 
                     # -------------------------------------------------
+                    # ❗ MISSED planned sessions (past but not executed)
+                    # -------------------------------------------------
+
+                    for ce in calendar_events:
+
+                        ce_date = pd.to_datetime(ce.get("start_date_local"), errors="coerce")
+                        if pd.isna(ce_date):
+                            continue
+
+                        ce_date = ce_date.date()
+
+                        # same ISO week only
+                        if ce_date < monday.date() or ce_date > sunday.date():
+                            continue
+
+                        ce_id = ce.get("id")
+
+                        # skip executed planned sessions
+                        if ce_id in consumed_plan_ids:
+                            continue
+
+                        # 🔴 ONLY past days (missed)
+                        if ce_date < today.date():
+
+                            load = float(ce.get("icu_training_load", 0) or 0)
+                            missed_planned += load
+
+                    # -------------------------------------------------
                     # executed planned sessions (reconstruct original plan)
                     # -------------------------------------------------
 
@@ -3633,13 +3663,14 @@ def build_semantic_json(context):
                     completed_val = current_ISO_weekly_microcycle.get("completed_tss", 0.0)
 
                     projected_total = completed_val + planned_remaining
-                    full_week_target = weekly_target + planned_remaining
+                    full_week_target = weekly_target + planned_remaining + missed_planned
                     delta = projected_total - full_week_target
 
                     current_ISO_weekly_microcycle["projected_total_tss"] = round(projected_total, 1)
                     current_ISO_weekly_microcycle["delta_to_target"] = round(delta, 1)
                     current_ISO_weekly_microcycle["weekly_target_tss"] = round(full_week_target, 1)
                     current_ISO_weekly_microcycle["planned_remaining_tss"] = round(planned_remaining, 1)
+                    current_ISO_weekly_microcycle["missed_tss"] = round(missed_planned, 1)
 
                     # -------------------------------------------------
                     # 6️⃣ Projected Hours (reconstructed from compliance)
@@ -3717,6 +3748,32 @@ def build_semantic_json(context):
 
                 semantic["current_ISO_weekly_microcycle"] = current_ISO_weekly_microcycle
                 debug(context, f"[MICROCYCLE] {current_ISO_weekly_microcycle}")
+
+
+    # ---------------------------------------------------------
+    # 🧮 Projected end-of-week state (CTL / ATL / TSB)
+    # ---------------------------------------------------------
+
+    try:
+        micro = semantic.get("current_ISO_weekly_microcycle", {})
+        wellness = semantic.get("wellness", {})
+
+        if micro and micro.get("projected_total_tss") is not None:
+
+            proj = project_week_state(
+                wellness,
+                micro,
+                semantic.get("planned_events_7d", []),
+                semantic.get("events", [])
+            )
+
+            semantic["current_ISO_weekly_microcycle"]["projected_state"] = proj
+
+        else:
+            semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
+
+    except Exception as e:
+        debug(context, f"[WEEK_PROJECTION] ⚠️ {e}")
 
     # ---------------------------------------------------------
     # 🧭 Phase Structure Normalisation (URF v5.1 — Science-Aligned)
@@ -4074,7 +4131,6 @@ def build_semantic_json(context):
                     start = pd.Timestamp(block["start"])
                     iso = start.isocalendar()
                     block_week = f"{iso.year}-W{iso.week}"
-
                     if block_week == iso_week:
 
                         block["is_projected"] = True
@@ -4095,22 +4151,58 @@ def build_semantic_json(context):
                             block["hours_total"] = round(micro["projected_hours"], 1)
 
                         block["distance_km_total"] = None
-                        planned_tss = float(micro.get("planned_remaining_tss") or 0)
-                        completed_tss = float(micro.get("completed_tss") or 0)
 
-                        # projected week should reflect plan structure, not inherited detect_phases label
-                        if planned_tss > completed_tss:
-                            block["phase"] = "Build"
-                            block["descriptor"] = advice.get("Build", "Build phase — maintain adaptive consistency.")
-                        elif planned_tss < completed_tss:
-                            block["phase"] = "Recovery"
-                            block["descriptor"] = advice.get("Recovery", "Recovery phase — maintain adaptive consistency.")
+                        # -------------------------------------------------
+                        # 🧮 PHYSIOLOGICAL PROJECTION (THIS IS THE FIX)
+                        # -------------------------------------------------
+                        proj = micro.get("projected_state")
+
+                        if proj:
+                            block["projected_state"] = proj
+
+                            tsb = proj.get("tsb")
+
+                            # -------------------------------------------------
+                            # ✅ PHASE OVERRIDE (PROJECTED WEEK ONLY)
+                            # -------------------------------------------------
+                            if tsb < -30:
+                                block["phase"] = "Overreached"
+                            elif tsb < -5:
+                                block["phase"] = "Build"
+                            elif tsb <= 5:
+                                block["phase"] = "Base"
+                            else:
+                                block["phase"] = "Recovery"
+
                         else:
-                            block["phase"] = "Base"
-                            block["descriptor"] = advice.get("Base", "Base phase — maintain adaptive consistency.")
+                            block["projected_state"] = None
 
+                        # -------------------------------------------------
+                        # 📊 Projection intent (keep)
+                        # -------------------------------------------------
+                        block["projection_intent"] = {
+                            "direction": (
+                                "increase"
+                                if micro.get("projected_total_tss", 0) > micro.get("completed_tss", 0)
+                                else "stable"
+                            ),
+                            "remaining_load": micro.get("planned_remaining_tss", 0)
+                        }
+
+                        # -------------------------------------------------
+                        # 🔎 Traceability (keep)
+                        # -------------------------------------------------
                         block["calc_method"] = "projection_forecast"
                         block["calc_context"] = None
+
+                        # -------------------------------------------------
+                        # 🧠 Descriptor aligned to FINAL phase (important)
+                        # -------------------------------------------------
+                        if block.get("phase"):
+                            block["descriptor"] = advice.get(
+                                block["phase"],
+                                f"{block['phase']} phase — maintain adaptive consistency."
+                            )
 
                         break
 
@@ -4348,7 +4440,7 @@ def build_semantic_json(context):
         current_state = ts.get("state_label")
 
         # -----------------------------
-        # Future (planned) — source of truth = projected phase + forecast
+        # Future (planned) — source of truth = projected block + forecast
         # -----------------------------
         planned_pattern = "unknown"
 
@@ -4359,21 +4451,34 @@ def build_semantic_json(context):
         forecast_fatigue_class = forecast_block.get("fatigue_class")
 
         projected_block = next((b for b in summaries if b.get("is_projected")), None)
-        projected_phase = (projected_block.get("phase", "") if projected_block else "").lower()
+        projected_phase = (
+            (projected_block.get("phase") if projected_block else None)
+            or last_block_phase
+            or ""
+        ).lower()
 
         # Structural intent first
         if projected_phase in {"recovery", "deload", "taper"}:
             planned_pattern = "reduced"
         elif projected_phase in {"build", "peak"}:
             planned_pattern = "increasing"
-
-        # Forecast direction fallback
         elif forecast_load_trend == "declining":
             planned_pattern = "reduced"
         elif forecast_load_trend == "increasing":
             planned_pattern = "increasing"
         elif forecast_load_trend == "stable":
             planned_pattern = "stable"
+
+        # -----------------------------
+        # Required phase (physiology FIRST)
+        # -----------------------------
+        current_phase = (projected_phase or "").lower()
+        last_phase = (last_block_phase or "").lower()
+
+        if last_phase in {"recovery", "deload", "taper"}:
+            required_phase = "recovery"
+        else:
+            required_phase = current_phase or "build"
 
         # Fatigue-class fallback only if still unknown
         # No further fallback — unknown stays unknown
