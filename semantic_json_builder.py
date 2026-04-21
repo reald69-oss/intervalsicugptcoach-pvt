@@ -573,254 +573,254 @@ def build_insights(semantic):
                     else "Load appears manageable."
             }
 
-    if report_type == "wellness":
+    wellness = semantic.get("wellness", {})
 
-        wellness = semantic.get("wellness", {})
+    # --------------------------------------------------
+    # HRV Insights (only if available)
+    # --------------------------------------------------
 
-        # --------------------------------------------------
-        # HRV Insights (only if available)
-        # --------------------------------------------------
+    # --------------------------------------------------
+    # Derive Resting HR delta (7d vs 28d) with fallback
+    # --------------------------------------------------
+    daily = semantic.get("_wellness_daily_clean", [])
+    athlete_fallback_rhr = (
+        semantic.get("meta", {})
+        .get("athlete", {})
+        .get("profile", {})
+        .get("resting_hr")
+    )
 
-        # --------------------------------------------------
-        # Derive Resting HR delta (7d vs 28d) with fallback
-        # --------------------------------------------------
-        daily = wellness.get("daily", [])
+    rhr_7d = None
+    rhr_28d = None
 
-        athlete_fallback_rhr = (
-            semantic.get("meta", {})
-            .get("athlete", {})
-            .get("profile", {})
-            .get("resting_hr")
+    if daily:
+        df = pd.DataFrame(daily)
+
+        if "rest_hr" in df.columns:
+            df["rest_hr"] = pd.to_numeric(df["rest_hr"], errors="coerce")
+            df = df.dropna(subset=["rest_hr"])
+
+            if len(df) >= 7:
+                rhr_7d = df.tail(7)["rest_hr"].mean()
+
+            if len(df) >= 28:
+                rhr_28d = df.tail(28)["rest_hr"].mean()
+
+    # Primary case: full delta available
+    if rhr_7d is not None and rhr_28d is not None:
+        wellness["resting_hr_delta"] = round(rhr_7d - rhr_28d, 1)
+
+    # Fallback case: no wellness data → use athlete profile RHR
+    elif athlete_fallback_rhr is not None:
+        wellness["resting_hr_baseline"] = round(float(athlete_fallback_rhr), 1)
+
+
+    # --------------------------------------------------
+    # Derive Sleep Score average (14d)
+    # --------------------------------------------------
+    if daily:
+        df = pd.DataFrame(daily)
+
+        if "sleepscore" in df.columns:
+            df["sleepscore"] = pd.to_numeric(df["sleepscore"], errors="coerce")
+            df = df.dropna(subset=["sleepscore"])
+
+            if len(df) >= 14:
+                wellness["sleep_score"] = round(
+                    df.tail(14)["sleepscore"].mean(),
+                    1
+                )
+
+    if wellness.get("hrv_available"):
+
+        hrv_block = wellness.get("hrv", {})
+
+        hrv_mean = hrv_block.get("mean")
+        hrv_latest = hrv_block.get("latest")
+        hrv_series = wellness.get("hrv_series", [])
+
+
+        samples = (
+            wellness.get("hrv_samples")
+            if wellness.get("hrv_samples") is not None
+            else hrv_block.get("samples", 0)
         )
 
-        rhr_7d = None
-        rhr_28d = None
 
-        if daily:
-            df = pd.DataFrame(daily)
-
-            if "rest_hr" in df.columns:
-                df["rest_hr"] = pd.to_numeric(df["rest_hr"], errors="coerce")
-                df = df.dropna(subset=["rest_hr"])
-
-                if len(df) >= 7:
-                    rhr_7d = df.tail(7)["rest_hr"].mean()
-
-                if len(df) >= 28:
-                    rhr_28d = df.tail(28)["rest_hr"].mean()
-
-        # Primary case: full delta available
-        if rhr_7d is not None and rhr_28d is not None:
-            wellness["resting_hr_delta"] = round(rhr_7d - rhr_28d, 1)
-
-        # Fallback case: no wellness data → use athlete profile RHR
-        elif athlete_fallback_rhr is not None:
-            wellness["resting_hr_baseline"] = round(float(athlete_fallback_rhr), 1)
+        # --- HRV Deviation (authoritative Tier-2 value)
+        hrv_deviation_pct = (
+            semantic.get("wellness", {}).get("HRVDeviation")
+            or semantic.get("wellness", {}).get("hrv_deviation")
+        )
 
 
-        # --------------------------------------------------
-        # Derive Sleep Score average (14d)
-        # --------------------------------------------------
-        if daily:
-            df = pd.DataFrame(daily)
+        if hrv_deviation_pct is not None:
 
-            if "sleepscore" in df.columns:
-                df["sleepscore"] = pd.to_numeric(df["sleepscore"], errors="coerce")
-                df = df.dropna(subset=["sleepscore"])
-
-                if len(df) >= 14:
-                    wellness["sleep_score"] = round(
-                        df.tail(14)["sleepscore"].mean(),
-                        1
-                    )
-
-        if wellness.get("hrv_available"):
-
-            hrv_block = wellness.get("hrv", {})
-
-            hrv_mean = hrv_block.get("mean")
-            hrv_latest = hrv_block.get("latest")
-            hrv_series = wellness.get("hrv_series", [])
-
-
-            samples = (
-                wellness.get("hrv_samples")
-                if wellness.get("hrv_samples") is not None
-                else hrv_block.get("samples", 0)
+            block = semantic_block_for_metric(
+                "HRVDeviation",
+                hrv_deviation_pct,
+                semantic
             )
 
-
-            # --- HRV Deviation (authoritative Tier-2 value)
-            hrv_deviation_pct = (
-                semantic.get("wellness", {}).get("HRVDeviation")
-                or semantic.get("wellness", {}).get("hrv_deviation")
-            )
-
-
-            if hrv_deviation_pct is not None:
-
-                block = semantic_block_for_metric(
-                    "HRVDeviation",
-                    hrv_deviation_pct,
-                    semantic
-                )
-
-                insights["hrv_deviation_pct"] = {
-                    "value": hrv_deviation_pct,
-                    "window": "42d",
-                    "basis": "((latest - mean) / mean) × 100",
-                    "classification": block.get("classification"),
-                    "interpretation": block.get("interpretation"),
-                    "coaching_implication": block.get("coaching_implication"),
-                }
-
-
-            # --- HRV Stability (14d CV)
-            if hrv_series and len(hrv_series) >= 7:
-
-                df_hrv = pd.DataFrame(hrv_series)
-                df_hrv["hrv"] = pd.to_numeric(df_hrv["hrv"], errors="coerce")
-
-                recent = df_hrv.tail(14)["hrv"].dropna()
-
-                if len(recent) >= 5:
-                    mean_val = recent.mean()
-                    std_val = recent.std()
-
-                    if mean_val > 0:
-                        stability = round(1 - (std_val / mean_val), 3)
-                    else:
-                        stability = None
-                    block = semantic_block_for_metric(
-                        "HRVStability",
-                        stability,
-                        semantic
-                    )
-
-                    insights["hrv_stability_index"] = {
-                        "value": stability,
-                        "window": "14d",
-                        "basis": "1 - (std / mean)",
-                        "classification": block.get("classification"),
-                        "interpretation": block.get("interpretation"),
-                        "coaching_implication": block.get("coaching_implication"),
-                    }
-
-            # --- Autonomic Status (threshold-driven)
-            if hrv_mean is not None and hrv_latest is not None:
-
-                ratio = round(hrv_latest / hrv_mean, 3)
-
-                block = semantic_block_for_metric(
-                    "AutonomicStatus",
-                    ratio,
-                    semantic
-                )
-
-                insights["autonomic_status"] = {
-                    "value": ratio,
-                    "window": "42d",
-                    "basis": "HRV relative to 42-day mean",
-                    "classification": block.get("classification"),
-                    "interpretation": block.get("interpretation"),
-                    "coaching_implication": block.get("coaching_implication"),
-                    "confidence": block.get("metric_confidence"),
-                }
-
-
-            # --------------------------------------------------
-            # Resting HR Delta (supports nested wellness structure)
-            # --------------------------------------------------
-
-            delta_rhr = wellness.get("resting_hr_delta")
-
-            if delta_rhr is None:
-                delta_rhr = wellness.get("cardiac", {}).get("resting_hr_delta")
-
-            if delta_rhr is not None:
-
-                delta_rhr = round(float(delta_rhr), 1)
-
-                rhr_block = semantic_block_for_metric(
-                    "RestingHRDelta",
-                    delta_rhr,
-                    semantic
-                )
-
-                insights["resting_hr_delta"] = {
-                    "value": delta_rhr,
-                    "window": "7d vs 28d",
-                    "basis": "Δ Resting HR",
-                    "classification": rhr_block.get("classification"),
-                    "interpretation": rhr_block.get("interpretation"),
-                    "coaching_implication": rhr_block.get("coaching_implication"),
-                }
-
-
-            # --------------------------------------------------
-            # Sleep (supports nested wellness structure)
-            # --------------------------------------------------
-            sleep_val = (
-                wellness.get("sleep_score")
-                or wellness.get("sleep", {}).get("average_score")
-            )
-
-            if sleep_val is not None:
-
-                sleep_block = semantic_block_for_metric(
-                    "SleepQuality",
-                    sleep_val,
-                    semantic
-                )
-
-                insights["sleep_quality"] = {
-                    "value": sleep_val,
-                    "window": "14d",
-                    "basis": "Average Sleep Score",
-                    "classification": sleep_block.get("classification"),
-                    "interpretation": sleep_block.get("interpretation"),
-                    "coaching_implication": sleep_block.get("coaching_implication"),
-                }
-
-            # --------------------------------------------------
-            # NORMALISE WELLNESS SIGNALS (NEW)
-            # --------------------------------------------------
-
-            wellness_signals = {}
-
-            if "autonomic_status" in insights:
-                wellness_signals["autonomic_status"] = insights["autonomic_status"].get("classification")
-
-            if "hrv_stability_index" in insights:
-                wellness_signals["hrv_stability"] = insights["hrv_stability_index"].get("classification")
-
-            if "sleep_quality" in insights:
-                wellness_signals["sleep_quality"] = insights["sleep_quality"].get("classification")
-
-            if "resting_hr_delta" in insights:
-                wellness_signals["resting_hr"] = insights["resting_hr_delta"].get("classification")
-
-            semantic["wellness_signals"] = wellness_signals
-
-            # --------------------------------------------------
-            # RECOVERY STATE (NEW)
-            # --------------------------------------------------
-
-            training_state = (
-                semantic.get("performance_intelligence", {})
-                .get("training_state", {})
-            )
-
-            semantic["recovery_state"] = {
-                "state_label": training_state.get("state_label"),
-                "operational_state": training_state.get("operational_state"),
-                "autonomic_status": wellness_signals.get("autonomic_status"),
-                "hrv_stability": wellness_signals.get("hrv_stability"),
-                "sleep_quality": wellness_signals.get("sleep_quality"),
-                "resting_hr_status": wellness_signals.get("resting_hr"),
-                "load_context": training_state.get("signals", {}).get("load_recovery_state"),
-                "confidence": training_state.get("confidence")
+            insights["hrv_deviation_pct"] = {
+                "value": hrv_deviation_pct,
+                "window": "42d",
+                "basis": "((latest - mean) / mean) × 100",
+                "classification": block.get("classification"),
+                "interpretation": block.get("interpretation"),
+                "coaching_implication": block.get("coaching_implication"),
             }
+
+
+        # --- HRV Stability (14d CV)
+        if hrv_series and len(hrv_series) >= 7:
+
+            df_hrv = pd.DataFrame(hrv_series)
+            df_hrv["hrv"] = pd.to_numeric(df_hrv["hrv"], errors="coerce")
+
+            recent = df_hrv.tail(14)["hrv"].dropna()
+
+            if len(recent) >= 5:
+                mean_val = recent.mean()
+                std_val = recent.std()
+
+                if mean_val > 0:
+                    stability = round(1 - (std_val / mean_val), 3)
+                else:
+                    stability = None
+                block = semantic_block_for_metric(
+                    "HRVStability",
+                    stability,
+                    semantic
+                )
+
+                insights["hrv_stability_index"] = {
+                    "value": stability,
+                    "window": "14d",
+                    "basis": "1 - (std / mean)",
+                    "classification": block.get("classification"),
+                    "interpretation": block.get("interpretation"),
+                    "coaching_implication": block.get("coaching_implication"),
+                }
+
+        # --- Autonomic Status (threshold-driven)
+        if hrv_mean is not None and hrv_latest is not None:
+
+            ratio = round(hrv_latest / hrv_mean, 3)
+
+            block = semantic_block_for_metric(
+                "AutonomicStatus",
+                ratio,
+                semantic
+            )
+
+            insights["autonomic_status"] = {
+                "value": ratio,
+                "window": "42d",
+                "basis": "HRV relative to 42-day mean",
+                "classification": block.get("classification"),
+                "interpretation": block.get("interpretation"),
+                "coaching_implication": block.get("coaching_implication"),
+                "confidence": block.get("metric_confidence"),
+            }
+
+
+    # --------------------------------------------------
+    # Resting HR Delta (supports nested wellness structure)
+    # --------------------------------------------------
+
+    delta_rhr = wellness.get("resting_hr_delta")
+
+    if delta_rhr is None:
+        delta_rhr = wellness.get("cardiac", {}).get("resting_hr_delta")
+
+    if delta_rhr is not None:
+
+        delta_rhr = round(float(delta_rhr), 1)
+
+        rhr_block = semantic_block_for_metric(
+            "RestingHRDelta",
+            delta_rhr,
+            semantic
+        )
+
+        insights["resting_hr_delta"] = {
+            "value": delta_rhr,
+            "window": "7d vs 28d",
+            "basis": "Δ Resting HR",
+            "classification": rhr_block.get("classification"),
+            "interpretation": rhr_block.get("interpretation"),
+            "coaching_implication": rhr_block.get("coaching_implication"),
+        }
+
+
+    # --------------------------------------------------
+    # Sleep (supports nested wellness structure)
+    # --------------------------------------------------
+    sleep_val = (
+        wellness.get("sleep_score")
+        or wellness.get("sleep", {}).get("average_score")
+    )
+
+    if sleep_val is not None:
+
+        sleep_block = semantic_block_for_metric(
+            "SleepQuality",
+            sleep_val,
+            semantic
+        )
+
+        insights["sleep_quality"] = {
+            "value": sleep_val,
+            "window": "14d",
+            "basis": "Average Sleep Score",
+            "classification": sleep_block.get("classification"),
+            "interpretation": sleep_block.get("interpretation"),
+            "coaching_implication": sleep_block.get("coaching_implication"),
+        }
+
+    # --------------------------------------------------
+    # NORMALISE WELLNESS SIGNALS (NEW)
+    # --------------------------------------------------
+
+    wellness_signals = {}
+
+    if "autonomic_status" in insights:
+        wellness_signals["autonomic_status"] = insights["autonomic_status"].get("classification")
+
+    if "hrv_stability_index" in insights:
+        wellness_signals["hrv_stability"] = insights["hrv_stability_index"].get("classification")
+
+    if "sleep_quality" in insights:
+        wellness_signals["sleep_quality"] = insights["sleep_quality"].get("classification")
+
+    if "resting_hr_delta" in insights:
+        wellness_signals["resting_hr"] = insights["resting_hr_delta"].get("classification")
+
+    semantic["wellness_signals"] = wellness_signals
+
+    # --------------------------------------------------
+    # RECOVERY STATE (duplicates what we have already)
+    # --------------------------------------------------
+
+#    training_state = (
+#        semantic.get("performance_intelligence", {})
+#        .get("training_state", {})
+#    )
+
+#    wellness_signals = semantic.get("wellness_signals", {}) or {}
+#    semantic.setdefault("performance_intelligence", {})
+
+#    semantic["performance_intelligence"]["recovery_state"] = {
+#        "state_label": training_state.get("state_label"),
+#        "operational_state": training_state.get("operational_state"),
+#        "autonomic_status": wellness_signals.get("autonomic_status"),
+#        "hrv_stability": wellness_signals.get("hrv_stability"),
+#        "sleep_quality": wellness_signals.get("sleep_quality"),
+#        "resting_hr_status": wellness_signals.get("resting_hr"),
+#        "load_context": training_state.get("signals", {}).get("load_recovery_state"),
+#        "confidence": training_state.get("confidence")
+#    }
 
 
     return insights
@@ -1292,14 +1292,11 @@ def build_semantic_json(context):
         semantic["wellness"]["coverage"] = context["wellness_coverage"]
 
     # ---------------------------------------------------------
-    # 🧹 Inject DAILY wellness fields (wellness report only)
+    # 🧠 BUILD DAILY WELLNESS (ALL REPORTS)
     # ---------------------------------------------------------
-    if (
-        context.get("report_type") == "wellness"
-        and "wellness_daily" in context
-        and context["wellness_daily"]
-    ):
-        cleaned_daily = []
+    daily_cleaned = []
+
+    if "wellness_daily" in context and context["wellness_daily"]:
 
         for row in context["wellness_daily"]:
             cleaned = {
@@ -1309,9 +1306,16 @@ def build_semantic_json(context):
                 and not (isinstance(v, float) and math.isnan(v))
             }
             if cleaned:
-                cleaned_daily.append(cleaned)
+                daily_cleaned.append(cleaned)
 
-        semantic["wellness"]["daily"] = cleaned_daily
+    # 🔑 store for internal use (derivations)
+    context["_wellness_daily_clean"] = daily_cleaned
+    semantic["_wellness_daily_clean"] = daily_cleaned
+    # ---------------------------------------------------------
+    # 🧹 EXPOSE DAILY (WELLNESS REPORT ONLY)
+    # ---------------------------------------------------------
+    if context.get("report_type") == "wellness":
+        semantic["wellness"]["daily"] = context.get("_wellness_daily_clean", [])
 
     # 🩵 Inject HRV summary & 42-day series
     if "df_wellness" in context and not getattr(context["df_wellness"], "empty", True):
@@ -3362,7 +3366,7 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     # 🧬 WELLNESS CONSOLIDATION (URF v5.2 canonical structure)
     # ---------------------------------------------------------
-    if semantic["meta"]["report_type"] == "wellness":
+    if semantic["meta"].get("report_type") in ("weekly", "season", "wellness"):
 
         wellness = semantic.setdefault("wellness", {})
 
@@ -3427,8 +3431,8 @@ def build_semantic_json(context):
             "hrv_trend_7d",
             "hrv_samples",
             "hrv_source",
-            "sleep_score",
-            "resting_hr_delta",
+            #"sleep_score",
+            #"resting_hr_delta",
         ]:
             wellness.pop(k, None)
 

@@ -20,6 +20,7 @@ REPORT_CONTRACT = {
 
         # 🫀 PHYSIOLOGY RESPONSE
         "wellness",
+        #"insights", //old - good for wellness report though
         "insight_view",
 
         # ⚙️ PERFORMANCE INTELLIGENCE
