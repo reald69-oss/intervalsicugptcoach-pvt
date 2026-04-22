@@ -4270,7 +4270,7 @@ def build_semantic_json(context):
                     [
                         "week", "start", "end",
                         "distance_km", "hours", "tss",
-                        "ctl", "atl", "tsb", "classification"
+                        "ctl", "atl", "tsb", "phase", "classification"
                     ]
                 ].to_dict(orient="records")
             )

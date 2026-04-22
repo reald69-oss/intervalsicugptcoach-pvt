@@ -83,7 +83,6 @@ REPORT_CONTRACT = {
 
         # 🫀 PHYSIOLOGY RESPONSE
         "wellness",
-        "adaptation_metrics",
         "insight_view",
 
         # ⚙️ PERFORMANCE INTELLIGENCE
@@ -117,7 +116,6 @@ REPORT_CONTRACT = {
 
         # 🫀 PHYSIOLOGY RESPONSE
         "wellness",
-        "adaptation_metrics",
 
         # ⚙️ PERFORMANCE INTELLIGENCE
         "performance_intelligence",
@@ -597,7 +595,6 @@ RENDERER_PROFILES = {
 
             "physiology_response": [
                 "wellness",
-                "adaptation_metrics",
                 "insights_view",
                 "performance_intelligence.external_load_context"
             ],
@@ -716,8 +713,6 @@ RENDERER_PROFILES = {
             "future_actions": "full",
             "insights": "forbid",
             "insight_view": "summary",
-            "adaptation_metrics": "full"
-            
         },
 
         "emphasis": {
