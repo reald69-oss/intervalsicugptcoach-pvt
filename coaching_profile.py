@@ -84,6 +84,7 @@ REPORT_CONTRACT = {
         # 🫀 PHYSIOLOGY RESPONSE
         "wellness",
         "insight_view",
+        "insights",
 
         # ⚙️ PERFORMANCE INTELLIGENCE
         "performance_intelligence",
