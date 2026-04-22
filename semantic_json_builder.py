@@ -580,9 +580,15 @@ def build_insights(semantic):
     # --------------------------------------------------
 
     # --------------------------------------------------
-    # Derive Resting HR delta (7d vs 28d) — SAFE VERSION
+    # Derive Resting HR delta (7d vs 28d) with fallback
     # --------------------------------------------------
-    daily = wellness.get("daily", [])
+    daily = semantic.get("_wellness_daily_clean", [])
+    athlete_fallback_rhr = (
+        semantic.get("meta", {})
+        .get("athlete", {})
+        .get("profile", {})
+        .get("resting_hr")
+    )
 
     rhr_7d = None
     rhr_28d = None
@@ -594,23 +600,19 @@ def build_insights(semantic):
             df["rest_hr"] = pd.to_numeric(df["rest_hr"], errors="coerce")
             df = df.dropna(subset=["rest_hr"])
 
-            # ✅ ensure correct time order
-            if "date" in df.columns:
-                df = df.sort_values("date")
-
             if len(df) >= 7:
                 rhr_7d = df.tail(7)["rest_hr"].mean()
 
             if len(df) >= 28:
                 rhr_28d = df.tail(28)["rest_hr"].mean()
 
-    # ✅ only compute if NOT already provided upstream
-    if (
-        "resting_hr_delta" not in wellness
-        and rhr_7d is not None
-        and rhr_28d is not None
-    ):
+    # Primary case: full delta available
+    if rhr_7d is not None and rhr_28d is not None:
         wellness["resting_hr_delta"] = round(rhr_7d - rhr_28d, 1)
+
+    # Fallback case: no wellness data → use athlete profile RHR
+    elif athlete_fallback_rhr is not None:
+        wellness["resting_hr_baseline"] = round(float(athlete_fallback_rhr), 1)
 
 
     # --------------------------------------------------
