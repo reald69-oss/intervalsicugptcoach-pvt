@@ -3767,7 +3767,6 @@ def build_semantic_json(context):
             df["date"] = pd.to_datetime(df["start_date_local"], errors="coerce")
             df = df.dropna(subset=["date"]).sort_values("date")
 
-            # 🔒 Use report-anchored ISO week, NOT system clock
             iso_year, iso_week = str(micro["week_iso"]).split("-W")
             week_start = pd.Timestamp.fromisocalendar(int(iso_year), int(iso_week), 1)
             week_end = week_start + pd.Timedelta(days=6)
@@ -3775,14 +3774,19 @@ def build_semantic_json(context):
             df_week = df[
                 (df["date"] >= week_start) &
                 (df["date"] <= week_end)
-            ]
+            ].copy()
 
-            if not df_week.empty and "icu_ctl" in df_week.columns and "icu_atl" in df_week.columns:
+            # keep only rows with valid projected physiology
+            if not df_week.empty:
+                df_week["icu_ctl"] = pd.to_numeric(df_week.get("icu_ctl"), errors="coerce")
+                df_week["icu_atl"] = pd.to_numeric(df_week.get("icu_atl"), errors="coerce")
+                df_week = df_week.dropna(subset=["icu_ctl", "icu_atl"])
 
-                last = df_week.iloc[-1]
+            if not df_week.empty:
+                last = df_week.sort_values("date").iloc[-1]
 
-                ctl = float(last.get("icu_ctl") or 0)
-                atl = float(last.get("icu_atl") or 0)
+                ctl = float(last["icu_ctl"])
+                atl = float(last["icu_atl"])
 
                 semantic["current_ISO_weekly_microcycle"]["projected_state"] = {
                     "ctl": round(ctl, 2),
@@ -3790,7 +3794,6 @@ def build_semantic_json(context):
                     "tsb": round(ctl - atl, 2),
                     "source": "calendar"
                 }
-
             else:
                 semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
 
@@ -3981,7 +3984,7 @@ def build_semantic_json(context):
                                     new_phase = "Recovery"
 
                                 # ✅ APPLY TO df_weeks (this is the missing piece)
-                                df_weeks.loc[mask, "phase"] = new_phase
+                                df_weeks.loc[mask, "projected_state"] = [proj]
 
                                 # ✅ STORE projected_state so summary can use it later
                                 df_weeks.loc[mask, "projected_state"] = [proj]
@@ -4218,14 +4221,15 @@ def build_semantic_json(context):
                         # -------------------------------------------------
                         proj = micro.get("projected_state")
 
-                        if proj:
+                        # 🔒 HARD NORMALISATION
+                        if not isinstance(proj, dict):
+                            proj = None
+
+                        if proj is not None and len(proj) > 0:
                             block["projected_state"] = proj
 
                             tsb = proj.get("tsb")
 
-                            # -------------------------------------------------
-                            # ✅ PHASE OVERRIDE (PROJECTED WEEK ONLY)
-                            # -------------------------------------------------
                             if tsb < -30:
                                 block["phase"] = "Overreached"
                             elif tsb < -5:
@@ -4234,7 +4238,6 @@ def build_semantic_json(context):
                                 block["phase"] = "Base"
                             else:
                                 block["phase"] = "Recovery"
-
                         else:
                             block["projected_state"] = None
 
