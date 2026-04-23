@@ -3963,9 +3963,9 @@ def build_semantic_json(context):
                             # -------------------------------------------------
                             # ALIGN WEEKLY phase TO projected summary phase
                             # -------------------------------------------------
-                            proj = micro.get("projected_state")
+                            proj = semantic.get("current_ISO_weekly_microcycle", {}).get("projected_state")
 
-                            if proj:
+                            if proj is not None:
                                 tsb_proj = float(proj.get("tsb") or 0)
 
                                 if tsb_proj < -30:
