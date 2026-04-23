@@ -4045,7 +4045,8 @@ def build_semantic_json(context):
             if "phases" in context and isinstance(context["phases"], list) and len(context["phases"]) > 0:
                 df_detected = pd.DataFrame(context["phases"])
                 if not df_detected.empty:
-                    # 🩹 Ensure columns exist in df_weeks before assignment
+
+                    # 🩹 Ensure columns exist
                     if "phase" not in df_weeks.columns:
                         df_weeks["phase"] = None
                     if "calc_method" not in df_weeks.columns:
@@ -4056,15 +4057,17 @@ def build_semantic_json(context):
                     # Match by overlapping date ranges
                     for idx, row in df_weeks.iterrows():
 
-                        # 🔒 KEEP projected week phase exactly as already set
-                        if row.get("is_projected") is True:
+                        # 🔒 DO NOT overwrite projected week phase
+                        if row.get("is_projected"):
                             continue
 
                         wk_start, wk_end = row["start"], row["end"]
+
                         matched = df_detected[
                             (pd.to_datetime(df_detected["start"]) <= wk_end)
                             & (pd.to_datetime(df_detected["end"]) >= wk_start)
                         ]
+
                         if not matched.empty:
                             df_weeks.at[idx, "phase"] = matched.iloc[-1].get("phase")
                             df_weeks.at[idx, "calc_method"] = matched.iloc[-1].get("calc_method")
