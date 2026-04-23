@@ -3759,16 +3759,17 @@ def build_semantic_json(context):
 
     try:
         cal = context.get("calendar") or context.get("prefetched", {}).get("calendar")
+        micro = semantic.get("current_ISO_weekly_microcycle") or {}
 
-        if isinstance(cal, list) and len(cal) > 0:
+        if isinstance(cal, list) and len(cal) > 0 and micro.get("week_iso"):
 
             df = pd.DataFrame(cal)
             df["date"] = pd.to_datetime(df["start_date_local"], errors="coerce")
             df = df.dropna(subset=["date"]).sort_values("date")
 
-            # current ISO week
-            today = pd.Timestamp.today().normalize()
-            week_start = today.to_period("W").start_time
+            # 🔒 Use report-anchored ISO week, NOT system clock
+            iso_year, iso_week = str(micro["week_iso"]).split("-W")
+            week_start = pd.Timestamp.fromisocalendar(int(iso_year), int(iso_week), 1)
             week_end = week_start + pd.Timedelta(days=6)
 
             df_week = df[
@@ -3776,7 +3777,7 @@ def build_semantic_json(context):
                 (df["date"] <= week_end)
             ]
 
-            if not df_week.empty and "icu_ctl" in df_week.columns:
+            if not df_week.empty and "icu_ctl" in df_week.columns and "icu_atl" in df_week.columns:
 
                 last = df_week.iloc[-1]
 
@@ -3794,7 +3795,8 @@ def build_semantic_json(context):
                 semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
 
         else:
-            semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
+            if semantic.get("current_ISO_weekly_microcycle") is not None:
+                semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
 
     except Exception as e:
         debug(context, f"[WEEK_PROJECTION] ⚠️ {e}")
@@ -3966,16 +3968,23 @@ def build_semantic_json(context):
                             proj = semantic.get("current_ISO_weekly_microcycle", {}).get("projected_state")
 
                             if proj is not None:
-                                tsb_proj = float(proj.get("tsb") or 0)
 
-                                if tsb_proj < -30:
-                                    df_weeks.loc[mask, "phase"] = "Overreached"
-                                elif tsb_proj < -5:
-                                    df_weeks.loc[mask, "phase"] = "Build"
-                                elif tsb_proj <= 5:
-                                    df_weeks.loc[mask, "phase"] = "Base"
+                                tsb = proj.get("tsb")
+
+                                if tsb < -30:
+                                    new_phase = "Overreached"
+                                elif tsb < -5:
+                                    new_phase = "Build"
+                                elif tsb <= 5:
+                                    new_phase = "Base"
                                 else:
-                                    df_weeks.loc[mask, "phase"] = "Recovery"
+                                    new_phase = "Recovery"
+
+                                # ✅ APPLY TO df_weeks (this is the missing piece)
+                                df_weeks.loc[mask, "phase"] = new_phase
+
+                                # ✅ STORE projected_state so summary can use it later
+                                df_weeks.loc[mask, "projected_state"] = [proj]
                             
 
                         # -----------------------------
