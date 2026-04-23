@@ -3965,30 +3965,6 @@ def build_semantic_json(context):
                             df_weeks.loc[mask, "completed_tss"] = completed_tss
                             df_weeks.loc[mask, "planned_remaining_tss"] = planned_remaining_tss
                             df_weeks.loc[mask, "projected_total_tss"] = projected_tss
-                            # -------------------------------------------------
-                            # ALIGN WEEKLY phase TO projected summary phase
-                            # -------------------------------------------------
-                            proj = semantic.get("current_ISO_weekly_microcycle", {}).get("projected_state")
-
-                            if proj is not None:
-
-                                tsb = proj.get("tsb")
-
-                                if tsb < -30:
-                                    new_phase = "Overreached"
-                                elif tsb < -5:
-                                    new_phase = "Build"
-                                elif tsb <= 5:
-                                    new_phase = "Base"
-                                else:
-                                    new_phase = "Recovery"
-
-                                # ✅ APPLY TO df_weeks (this is the missing piece)
-                                df_weeks.loc[mask, "projected_state"] = [proj]
-
-                                # ✅ STORE projected_state so summary can use it later
-                                df_weeks.loc[mask, "projected_state"] = [proj]
-                            
 
                         # -----------------------------
                         # update original weekly source
@@ -4096,6 +4072,30 @@ def build_semantic_json(context):
                         df_weeks[["week", "phase", "calc_method"]].to_dict(orient="records")
                     )
 
+
+            # -----------------------------------------------------
+            # 🔧 ALIGN projected week phase AFTER projection + propagation
+            # -----------------------------------------------------
+            micro = semantic.get("current_ISO_weekly_microcycle")
+
+            if (
+                micro
+                and micro.get("week_iso")
+                and isinstance(micro.get("projected_state"), dict)
+            ):
+                proj = micro["projected_state"]
+                tsb = float(proj.get("tsb") or 0)
+
+                if tsb < -30:
+                    new_phase = "Overreached"
+                elif tsb < -5:
+                    new_phase = "Build"
+                elif tsb <= 5:
+                    new_phase = "Base"
+                else:
+                    new_phase = "Recovery"
+
+                df_weeks.loc[df_weeks["week"] == micro["week_iso"], "phase"] = new_phase
 
 
             # -----------------------------------------------------
