@@ -3960,6 +3960,23 @@ def build_semantic_json(context):
                             df_weeks.loc[mask, "completed_tss"] = completed_tss
                             df_weeks.loc[mask, "planned_remaining_tss"] = planned_remaining_tss
                             df_weeks.loc[mask, "projected_total_tss"] = projected_tss
+                            # -------------------------------------------------
+                            # ALIGN WEEKLY phase TO projected summary phase
+                            # -------------------------------------------------
+                            proj = micro.get("projected_state")
+
+                            if proj:
+                                tsb_proj = float(proj.get("tsb") or 0)
+
+                                if tsb_proj < -30:
+                                    df_weeks.loc[mask, "phase"] = "Overreached"
+                                elif tsb_proj < -5:
+                                    df_weeks.loc[mask, "phase"] = "Build"
+                                elif tsb_proj <= 5:
+                                    df_weeks.loc[mask, "phase"] = "Base"
+                                else:
+                                    df_weeks.loc[mask, "phase"] = "Recovery"
+                            
 
                         # -----------------------------
                         # update original weekly source
@@ -4038,6 +4055,11 @@ def build_semantic_json(context):
 
                     # Match by overlapping date ranges
                     for idx, row in df_weeks.iterrows():
+
+                        # 🔒 KEEP projected week phase exactly as already set
+                        if row.get("is_projected") is True:
+                            continue
+
                         wk_start, wk_end = row["start"], row["end"]
                         matched = df_detected[
                             (pd.to_datetime(df_detected["start"]) <= wk_end)
@@ -4100,6 +4122,9 @@ def build_semantic_json(context):
                             "tss_total": round(seg["tss"].sum(), 1),
                             "hours_total": round(seg["hours"].sum(), 1),
                             "distance_km_total": round(seg["distance_km"].sum(), 1),
+                            "ctl_end": round(float(seg["ctl"].iloc[-1]), 2) if "ctl" in seg and pd.notna(seg["ctl"].iloc[-1]) else None,
+                            "atl_end": round(float(seg["atl"].iloc[-1]), 2) if "atl" in seg and pd.notna(seg["atl"].iloc[-1]) else None,
+                            "tsb_end": round(float(seg["tsb"].iloc[-1]), 2) if "tsb" in seg and pd.notna(seg["tsb"].iloc[-1]) else None,
                             "descriptor": advice.get(
                                 current_phase, f"{current_phase} phase — maintain adaptive consistency."
                             ),

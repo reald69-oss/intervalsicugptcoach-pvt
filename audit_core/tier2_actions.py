@@ -379,6 +379,7 @@ def detect_phases(context, events):
                     "duration_weeks": round((prev - start_date).days / 7, 1),
                     "tss_total": round(tss_acc, 1),
                     "ctl": round(prev_ctl, 2),
+                    "atl": round(prev_atl, 2),
                     "tsb": round(prev_tsb, 2),
                     "calc_method": f"{dominant_zone} + {dominant_trend}",
                     "calc_context": {
@@ -418,7 +419,9 @@ def detect_phases(context, events):
         tss_acc += row["tss"]
 
         prev = row["week_start"]
-        prev_ctl, prev_tsb = row["ctl"], row["tsb"]
+        prev_ctl = row["ctl"]
+        prev_atl = row["atl"]
+        prev_tsb = row["tsb"]
 
     # ----------------------------
     # CLOSE FINAL PHASE
@@ -435,6 +438,7 @@ def detect_phases(context, events):
             "duration_weeks": round((prev - start_date).days / 7, 1),
             "tss_total": round(tss_acc, 1),
             "ctl": round(prev_ctl, 2),
+            "atl": round(prev_atl, 2),
             "tsb": round(prev_tsb, 2),
             "calc_method": f"{dominant_zone} + {dominant_trend}",
             "calc_context": {
