@@ -4217,27 +4217,58 @@ def build_semantic_json(context):
                         block["distance_km_total"] = None
 
                         # -------------------------------------------------
-                        # 🧮 PHYSIOLOGICAL PROJECTION (THIS IS THE FIX)
+                        # 🧮 PHYSIOLOGICAL PROJECTION (RAILWAY SAFE)
                         # -------------------------------------------------
+
                         proj = micro.get("projected_state")
 
-                        # 🔒 HARD NORMALISATION
+                        # 🔒 HARD NORMALISATION (structure)
                         if not isinstance(proj, dict):
                             proj = None
 
-                        if proj is not None and len(proj) > 0:
-                            block["projected_state"] = proj
+                        # 🔒 HARD NORMALISATION (values)
+                        def _to_float(v):
+                            try:
+                                if v is None:
+                                    return None
+                                if isinstance(v, str):
+                                    v = v.strip()
+                                    if v == "":
+                                        return None
+                                f = float(v)
+                                if pd.isna(f):
+                                    return None
+                                return f
+                            except Exception:
+                                return None
 
-                            tsb = proj.get("tsb")
+                        if proj:
+                            ctl = _to_float(proj.get("ctl"))
+                            atl = _to_float(proj.get("atl"))
+                            tsb = _to_float(proj.get("tsb"))
 
-                            if tsb < -30:
-                                block["phase"] = "Overreached"
-                            elif tsb < -5:
-                                block["phase"] = "Build"
-                            elif tsb <= 5:
-                                block["phase"] = "Base"
+                            # only accept if at least tsb is valid
+                            if tsb is not None:
+                                block["projected_state"] = {
+                                    "ctl": ctl,
+                                    "atl": atl,
+                                    "tsb": tsb,
+                                    "source": proj.get("source", "unknown")
+                                }
+
+                                # 🔒 SAFE CLASSIFICATION
+                                if tsb < -30:
+                                    block["phase"] = "Overreached"
+                                elif tsb < -5:
+                                    block["phase"] = "Build"
+                                elif tsb <= 5:
+                                    block["phase"] = "Base"
+                                else:
+                                    block["phase"] = "Recovery"
+
                             else:
-                                block["phase"] = "Recovery"
+                                # tsb invalid → drop projection
+                                block["projected_state"] = None
                         else:
                             block["projected_state"] = None
 
