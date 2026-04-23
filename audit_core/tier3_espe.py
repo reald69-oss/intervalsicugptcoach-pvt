@@ -108,7 +108,7 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
         "60m": _anchor_meta(current.get("60m")),
     }
 
-    delta = _compute_delta_percent(current, previous, context)
+    delta = _compute_delta_percent(current, previous, context) if any(previous.values()) else {}
 
     glycolytic_bias = _safe_ratio(
         _power(current.get("1m")),
