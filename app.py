@@ -352,7 +352,7 @@ def normalize_prefetched_context(data):
 
                 if len(curve_list) == 1:
                     debug(context, f"[NORM] ⚠ single window only for {sport} — using fallback")
-                    prev = curve_list[0]
+                    prev = {}
                     curr = curve_list[0]
                 else:
                     prev = curve_list[0]
