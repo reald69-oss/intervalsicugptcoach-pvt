@@ -3759,34 +3759,29 @@ def build_semantic_json(context):
 
     try:
         cal = context.get("calendar") or context.get("prefetched", {}).get("calendar")
-        micro = semantic.get("current_ISO_weekly_microcycle") or {}
 
-        if isinstance(cal, list) and len(cal) > 0 and micro.get("week_iso"):
+        if isinstance(cal, list) and len(cal) > 0:
 
             df = pd.DataFrame(cal)
             df["date"] = pd.to_datetime(df["start_date_local"], errors="coerce")
             df = df.dropna(subset=["date"]).sort_values("date")
 
-            iso_year, iso_week = str(micro["week_iso"]).split("-W")
-            week_start = pd.Timestamp.fromisocalendar(int(iso_year), int(iso_week), 1)
+            # current ISO week
+            today = pd.Timestamp.today().normalize()
+            week_start = today.to_period("W").start_time
             week_end = week_start + pd.Timedelta(days=6)
 
             df_week = df[
                 (df["date"] >= week_start) &
                 (df["date"] <= week_end)
-            ].copy()
+            ]
 
-            # keep only rows with valid projected physiology
-            if not df_week.empty:
-                df_week["icu_ctl"] = pd.to_numeric(df_week.get("icu_ctl"), errors="coerce")
-                df_week["icu_atl"] = pd.to_numeric(df_week.get("icu_atl"), errors="coerce")
-                df_week = df_week.dropna(subset=["icu_ctl", "icu_atl"])
+            if not df_week.empty and "icu_ctl" in df_week.columns:
 
-            if not df_week.empty:
-                last = df_week.sort_values("date").iloc[-1]
+                last = df_week.iloc[-1]
 
-                ctl = float(last["icu_ctl"])
-                atl = float(last["icu_atl"])
+                ctl = float(last.get("icu_ctl") or 0)
+                atl = float(last.get("icu_atl") or 0)
 
                 semantic["current_ISO_weekly_microcycle"]["projected_state"] = {
                     "ctl": round(ctl, 2),
@@ -3794,12 +3789,12 @@ def build_semantic_json(context):
                     "tsb": round(ctl - atl, 2),
                     "source": "calendar"
                 }
+
             else:
                 semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
 
         else:
-            if semantic.get("current_ISO_weekly_microcycle") is not None:
-                semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
+            semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
 
     except Exception as e:
         debug(context, f"[WEEK_PROJECTION] ⚠️ {e}")
@@ -3965,6 +3960,23 @@ def build_semantic_json(context):
                             df_weeks.loc[mask, "completed_tss"] = completed_tss
                             df_weeks.loc[mask, "planned_remaining_tss"] = planned_remaining_tss
                             df_weeks.loc[mask, "projected_total_tss"] = projected_tss
+                            # -------------------------------------------------
+                            # ALIGN WEEKLY phase TO projected summary phase
+                            # -------------------------------------------------
+                            proj = micro.get("projected_state")
+
+                            if proj:
+                                tsb_proj = float(proj.get("tsb") or 0)
+
+                                if tsb_proj < -30:
+                                    df_weeks.loc[mask, "phase"] = "Overreached"
+                                elif tsb_proj < -5:
+                                    df_weeks.loc[mask, "phase"] = "Build"
+                                elif tsb_proj <= 5:
+                                    df_weeks.loc[mask, "phase"] = "Base"
+                                else:
+                                    df_weeks.loc[mask, "phase"] = "Recovery"
+                            
 
                         # -----------------------------
                         # update original weekly source
@@ -4033,8 +4045,7 @@ def build_semantic_json(context):
             if "phases" in context and isinstance(context["phases"], list) and len(context["phases"]) > 0:
                 df_detected = pd.DataFrame(context["phases"])
                 if not df_detected.empty:
-
-                    # 🩹 Ensure columns exist
+                    # 🩹 Ensure columns exist in df_weeks before assignment
                     if "phase" not in df_weeks.columns:
                         df_weeks["phase"] = None
                     if "calc_method" not in df_weeks.columns:
@@ -4045,17 +4056,15 @@ def build_semantic_json(context):
                     # Match by overlapping date ranges
                     for idx, row in df_weeks.iterrows():
 
-                        # 🔒 DO NOT overwrite projected week phase
-                        if row.get("is_projected"):
+                        # 🔒 KEEP projected week phase exactly as already set
+                        if row.get("is_projected") is True:
                             continue
 
                         wk_start, wk_end = row["start"], row["end"]
-
                         matched = df_detected[
                             (pd.to_datetime(df_detected["start"]) <= wk_end)
                             & (pd.to_datetime(df_detected["end"]) >= wk_start)
                         ]
-
                         if not matched.empty:
                             df_weeks.at[idx, "phase"] = matched.iloc[-1].get("phase")
                             df_weeks.at[idx, "calc_method"] = matched.iloc[-1].get("calc_method")
@@ -4072,30 +4081,6 @@ def build_semantic_json(context):
                         df_weeks[["week", "phase", "calc_method"]].to_dict(orient="records")
                     )
 
-
-            # -----------------------------------------------------
-            # 🔧 ALIGN projected week phase AFTER projection + propagation
-            # -----------------------------------------------------
-            micro = semantic.get("current_ISO_weekly_microcycle")
-
-            if (
-                micro
-                and micro.get("week_iso")
-                and isinstance(micro.get("projected_state"), dict)
-            ):
-                proj = micro["projected_state"]
-                tsb = float(proj.get("tsb") or 0)
-
-                if tsb < -30:
-                    new_phase = "Overreached"
-                elif tsb < -5:
-                    new_phase = "Build"
-                elif tsb <= 5:
-                    new_phase = "Base"
-                else:
-                    new_phase = "Recovery"
-
-                df_weeks.loc[df_weeks["week"] == micro["week_iso"], "phase"] = new_phase
 
 
             # -----------------------------------------------------
