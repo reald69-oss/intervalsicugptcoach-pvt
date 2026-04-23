@@ -66,9 +66,26 @@ def run_espe(power_curve_block: Dict[str, Any], context: Dict[str, Any]) -> Dict
 
         debug(context, f"[ESPE] processing sport={sport}")
 
-        if not _valid_curve_block(data, context, sport):
-            result["sports"][sport] = _unsupported("invalid or insufficient data")
+        current = data.get("current", {})
+        previous = data.get("previous", {})
+
+        # --- require CURRENT only ---
+        required = ["5m", "20m"] if sport == "Run" else ["1m", "5m", "20m", "60m"]
+
+        has_current = all(
+            (_power(current.get(k)) is not None and _power(current.get(k)) > 0)
+            for k in required
+        )
+
+        if not has_current:
+            result["sports"][sport] = _unsupported("missing current power data")
             continue
+
+        # --- check if comparison is possible ---
+        has_previous = all(
+            (_power(previous.get(k)) is not None and _power(previous.get(k)) > 0)
+            for k in required
+        )
 
         result["sports"][sport] = _process_sport(sport, data, context)
 
@@ -91,7 +108,7 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
         "60m": _anchor_meta(current.get("60m")),
     }
 
-    delta = _compute_delta_percent(current, previous, context)
+    delta = _compute_delta_percent(current, previous, context) if previous else {}
 
     glycolytic_bias = _safe_ratio(
         _power(current.get("1m")),
@@ -649,7 +666,7 @@ def _valid_curve_block(
         cur = _power(current.get(k))
         prev = _power(previous.get(k))
 
-        if cur is None or prev is None or cur <= 0 or prev <= 0:
+        if cur is None or cur <= 0:
             debug(context, f"[ESPE] missing anchor {k} for {sport}")
             return False
 
