@@ -108,7 +108,12 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
         "60m": _anchor_meta(current.get("60m")),
     }
 
-    delta = _compute_delta_percent(current, previous, context) if any(previous.values()) else {}
+    has_previous = any(
+    _power(previous.get(k)) not in (None, 0)
+    for k in ("1m", "5m", "20m", "60m")
+    )
+
+    delta = _compute_delta_percent(current, previous, context) if has_previous else None
 
     glycolytic_bias = _safe_ratio(
         _power(current.get("1m")),
@@ -126,10 +131,18 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
         _power(current.get("20m"))
     )
 
-    system_status = _classify_system_status(sport, delta)
-    system_timeline = _build_system_timeline(system_status)
+    system_status = (
+        _classify_system_status(sport, delta)
+        if delta
+        else {k: "baseline" for k in ["anaerobic", "vo2", "threshold", "aerobic_durability"]}
+    )
+    system_timeline = (
+        _build_system_timeline(system_status)
+        if delta
+        else {k: "baseline" for k in system_status.keys()}
+    )
 
-    plateau = _detect_plateau(sport, delta, context)
+    plateau = _detect_plateau(sport, delta, context) if delta else False
 
     balance_score = _compute_balance_score(glycolytic_bias, aerobic_durability)
 
@@ -168,27 +181,40 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
     )
 
     adaptation_bias = _derive_adaptation_bias(system_status)
-    adaptation_state = classify_adaptation_state(system_status, delta)
+    adaptation_state = (
+        classify_adaptation_state(system_status, delta)
+        if delta
+        else "baseline"
+    )
 
-    curve_dynamics = _compute_curve_dynamics(delta)
+    curve_dynamics = _compute_curve_dynamics(delta or {})
 
     # ---- curve window definition ----
     window = data.get(
         "window_days",
         CHEAT_SHEET["thresholds"]["ESPE"]["curve_windows"]["default_days"]
-    )
+    ) or CHEAT_SHEET["thresholds"]["ESPE"]["curve_windows"]["default_days"]
     anchors_context = {
         "window_days": window,
         "description": f"Best power values recorded within the last {window} days"
     }
 
-    curve_window = {
-        "current_days": window,
-        "previous_days": window,
-        "comparison": f"{window}d_vs_{window}d",
-        "anchor": "report_end",
-        "curve_source": "FFT_CURVES"
-    }
+    if has_previous:
+        curve_window = {
+            "current_days": window,
+            "previous_days": window,
+            "comparison": f"{window}d_vs_{window}d",
+            "anchor": "report_end",
+            "curve_source": "FFT_CURVES"
+        }
+    else:
+        curve_window = {
+            "current_days": window,
+            "previous_days": None,
+            "comparison": f"{window}d_baseline",
+            "anchor": "report_end",
+            "curve_source": "FFT_CURVES"
+        }
 
     # ---- derived metrics block ----
     markers = COACH_PROFILE.get("markers", {})
