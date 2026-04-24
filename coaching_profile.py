@@ -386,8 +386,8 @@ RENDERER_PROFILES = {
             "Render performance_intelligence as WDRM / ISDM / NDLI only (no recompute/merge).",
             "If high_dep_sessions>0 AND high_drift_sessions>0 → note neuromuscular+metabolic overlap.",
             "Cross-section interpretation allowed when describing same physiology.",
-            "If energy_system_progression exists, summarise direction using system_status + adaptation_state.",
-            "Prioritise ESPE signals over repeating metric definitions.",
+            "When energy_system_progression exists: If delta_percent is null → describe as 'baseline established' with no adaptation direction. If delta_percent exists → summarise adaptation direction using system_status and adaptation_state."
+            "Prioritise ESPE signals when delta_percent exists; otherwise treat ESPE as baseline reference only."
             "Render power anchors as [<power> W](link) when activity_link exists, else plain.",
             "Title current_ISO_weekly_microcycle as 'Current ISO Week ## (Mon-Sun)'.",
             "If a section is marked full, render every entity and field exactly as present in the semantic data",
@@ -646,7 +646,7 @@ RENDERER_PROFILES = {
             "Avoid session-level or daily commentary.",
             "If performance_intelligence exists, render chronic signals (90d) first, then acute signals (7d). Emphasise contrast between long-term capacity and current stress.",
             "Interpretation may combine signals across sections when they describe the same physiological process (e.g. fatigue, adaptation, durability).",
-            "When energy_system_progression exists, generate at least one sentence summarising the current adaptation direction using system_status and adaptation_state.",
+            "When energy_system_progression exists: If delta_percent is null → describe as 'baseline established' with no adaptation direction. If delta_percent exists → summarise adaptation direction using system_status and adaptation_state."
             "Insights SHOULD prioritise adaptation signals (ESPE) before repeating metric definitions.",
             "Ensure current_ISO_weekly_microcycle is totled as 'Current ISO Week ## (Mon-Sun)'",
             "If actions[0].resolution == 'overridden_by_phase':",

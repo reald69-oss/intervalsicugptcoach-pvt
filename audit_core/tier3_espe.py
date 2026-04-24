@@ -1,6 +1,6 @@
 """
 Energy System Progression Engine (ESPE)
-Version: v1.1
+Version: v1.2
 
 Stateless engine comparing two rolling power-curve windows to track energy system progression.
 
@@ -9,6 +9,8 @@ Consumes:
 
 Produces:
     energy_system_progression section
+
+v1.2 factored for baseline where no previous exists
 """
 
 from typing import Dict, Any
