@@ -91,9 +91,9 @@ CHEAT_SHEET["thresholds"] = {
         "red": (0.0, 0.9)
     },
     "HRVStability": {
-        "green": (0.85, 1.0),
-        "amber": (0.7, 0.85),
-        "red": (0.0, 0.7)
+        "green": (0.8, 1.0),
+        "amber": (0.65, 0.8),
+        "red": (0.0, 0.65)
     },
     "HRVTrend": {
         "green": (0.0, 5.0),
