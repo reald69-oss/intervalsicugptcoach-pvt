@@ -3353,13 +3353,17 @@ def build_semantic_json(context):
 
     # ---- Endurance / Aerobic Decay ----
     durability = chronic.get("durability", {})
-    dec_metric = durability.get("mean_decoupling_90d")
+    dec_raw = durability.get("mean_decoupling_90d")
 
-    if isinstance(dec_metric, dict):
-        dec = dec_metric.get("value")
-        if dec is not None:
-            adaptation["Endurance Decay"] = round(float(dec) / 100, 3)
-            adaptation["Aerobic Decay"] = round(float(dec) / 100, 3)
+    dec = None
+
+    if isinstance(dec_raw, dict):
+        dec = dec_raw.get("value")
+    else:
+        dec = dec_raw
+
+    if dec is not None:
+        adaptation["Endurance Decay"] = round(float(dec), 1)
 
     semantic["adaptation_metrics"] = adaptation
 
