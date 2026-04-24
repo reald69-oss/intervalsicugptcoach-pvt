@@ -609,8 +609,8 @@ CLASSIFICATION_ALIASES = {
 # === Context ===
 CHEAT_SHEET["context"] = {
     "ACWR": (
-    "EWMA Acute:Chronic Load Ratio — compares 7-day vs 28-day weighted loads. "
-    "0.8–1.3 = productive training, <0.8 = recovery or detraining, >1.5 = overload/injury risk."
+        "EWMA Acute:Chronic Load Ratio — compares acute vs chronic weighted loads. "
+        "0.8–1.3 = productive training, <0.8 = recovery or detraining, >1.5 = overload/injury risk."
     ),
     "Monotony": "1–2 shows healthy variation; >2.5 means repetitive stress pattern.",
     "Strain": (
