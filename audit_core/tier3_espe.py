@@ -180,7 +180,11 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
         else "unknown"
     )
 
-    adaptation_bias = _derive_adaptation_bias(system_status)
+    adaptation_bias = (
+        _derive_adaptation_bias(system_status)
+        if delta
+        else "baseline"
+    )
     adaptation_state = (
         classify_adaptation_state(system_status, delta)
         if delta
