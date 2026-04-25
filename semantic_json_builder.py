@@ -4040,7 +4040,28 @@ def build_semantic_json(context):
                 return "Unknown"
 
             df_weeks["classification"] = df_weeks["tsb_capped"].apply(classify_tsb)
+            # -----------------------------------------------------
+            # 🔒 CLIP TO REAL REPORT WINDOW (USE META PERIOD)
+            # -----------------------------------------------------
+            report_start = None
 
+            period_meta = semantic.get("meta", {}).get("period")
+
+            if isinstance(period_meta, str) and "→" in period_meta:
+                try:
+                    report_start = pd.to_datetime(
+                        period_meta.split("→")[0].strip(),
+                        errors="coerce"
+                    )
+                except Exception:
+                    report_start = None
+
+            if report_start is not None:
+                df_weeks = df_weeks[
+                    df_weeks["end"] >= report_start
+                ].reset_index(drop=True)
+
+                debug(context, f"[PHASES] 🧹 Clipped weeks before {report_start.date()}")
             
 
             # -----------------------------------------------------
