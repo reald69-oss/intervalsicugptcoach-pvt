@@ -4041,11 +4041,11 @@ def build_semantic_json(context):
 
             df_weeks["classification"] = df_weeks["tsb_capped"].apply(classify_tsb)
             # -----------------------------------------------------
-            # 🔒 CLIP TO REAL REPORT WINDOW (USE META PERIOD)
+            # 🔒 CLIP TO REAL REPORT WINDOW (FULL WEEKS ONLY)
             # -----------------------------------------------------
-            report_start = None
-
             period_meta = semantic.get("meta", {}).get("period")
+
+            report_start = None
 
             if isinstance(period_meta, str) and "→" in period_meta:
                 try:
@@ -4058,10 +4058,10 @@ def build_semantic_json(context):
 
             if report_start is not None:
                 df_weeks = df_weeks[
-                    df_weeks["end"] >= report_start
+                    df_weeks["start"] >= report_start
                 ].reset_index(drop=True)
 
-                debug(context, f"[PHASES] 🧹 Clipped weeks before {report_start.date()}")
+                debug(context, f"[PHASES] 🧹 Clipped weeks before {report_start.date()} (full weeks only)")
             
 
             # -----------------------------------------------------
