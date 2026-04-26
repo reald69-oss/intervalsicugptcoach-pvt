@@ -19,7 +19,7 @@ from coaching_cheat_sheet import CHEAT_SHEET
 from audit_core.utils import debug
 from coaching_profile import COACH_PROFILE
 
-ESPE_VERSION = "espe_v1.1"
+ESPE_VERSION = "espe_v1.2"
 
 # ---------------------------------------------------------------------
 # Power Anchor Helpers
