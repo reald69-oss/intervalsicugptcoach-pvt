@@ -1761,6 +1761,12 @@ def build_semantic_json(context):
             val = row.get("icu_training_load")
             ev["tss"] = int(val) if pd.notna(val) else 0
 
+            val = row.get("icu_atl")
+            ev["icu_atl"] = float(val) if pd.notna(val) else 0.0
+
+            val = row.get("icu_ctl")
+            ev["icu_ctl"] = float(val) if pd.notna(val) else 0.0
+
             # ---------------------------------------------------------
             # 4️⃣ IF (icu_intensity ONLY — canonical)
             # ---------------------------------------------------------
