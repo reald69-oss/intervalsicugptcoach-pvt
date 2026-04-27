@@ -4047,28 +4047,33 @@ def build_semantic_json(context):
 
             df_weeks["classification"] = df_weeks["tsb_capped"].apply(classify_tsb)
             # -----------------------------------------------------
-            # 🔒 CLIP TO REAL REPORT WINDOW (FULL WEEKS ONLY)
+            # 🔒 CLIP TO ISO WINDOW (REPORT-SPECIFIC)
             # -----------------------------------------------------
-            period_meta = semantic.get("meta", {}).get("period")
+            report_type = semantic.get("meta", {}).get("report_type")
 
-            report_start = None
+            if report_type in ("weekly", "season"):
 
-            if isinstance(period_meta, str) and "→" in period_meta:
-                try:
-                    report_start = pd.to_datetime(
-                        period_meta.split("→")[0].strip(),
-                        errors="coerce"
-                    )
-                except Exception:
-                    report_start = None
+                today = pd.Timestamp(context["athlete_today"]).normalize()
 
-            if report_start is not None:
+                # ✅ ISO-aligned week start (Monday)
+                current_week_start = today - pd.Timedelta(days=today.weekday())
+
+                weeks_back = 13
+
+                start_week = current_week_start - pd.Timedelta(weeks=weeks_back)
+                end_week   = current_week_start
+
                 df_weeks = df_weeks[
-                    df_weeks["start"] >= report_start
+                    (df_weeks["start"] >= start_week) &
+                    (df_weeks["start"] <= end_week)
                 ].reset_index(drop=True)
 
-                debug(context, f"[PHASES] 🧹 Clipped weeks before {report_start.date()} (full weeks only)")
-            
+                debug(
+                    context,
+                    f"[PHASES] 🧹 ISO CLIP APPLIED → {start_week.date()} → {end_week.date()} "
+                    f"(rows={len(df_weeks)})"
+                )
+                        
 
             # -----------------------------------------------------
             # 🔗 Propagate phase / calc_method / calc_context from detect_phases()
