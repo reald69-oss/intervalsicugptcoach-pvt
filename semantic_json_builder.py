@@ -4184,6 +4184,9 @@ def build_semantic_json(context):
                     "tss_total": round(seg["tss"].sum(), 1),
                     "hours_total": round(seg["hours"].sum(), 1),
                     "distance_km_total": round(seg["distance_km"].sum(), 1),
+                    "ctl_end": round(float(seg["ctl"].iloc[-1]), 2) if "ctl" in seg and pd.notna(seg["ctl"].iloc[-1]) else None,
+                    "atl_end": round(float(seg["atl"].iloc[-1]), 2) if "atl" in seg and pd.notna(seg["atl"].iloc[-1]) else None,
+                    "tsb_end": round(float(seg["tsb"].iloc[-1]), 2) if "tsb" in seg and pd.notna(seg["tsb"].iloc[-1]) else None,
                     "descriptor": advice.get(
                         current_phase, f"{current_phase} phase — maintain adaptive consistency."
                     ),
