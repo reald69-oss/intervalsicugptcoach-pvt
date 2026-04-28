@@ -1489,15 +1489,40 @@ def build_semantic_json(context):
     # 🔗 ATHLETE: identity + multi-sport profiles + context
     # ---------------------------------------------------------
     athlete = context.get("athlete_raw") or context.get("athlete") or {}
-    sports = athlete.get("sportSettings", []) or []
 
+    # ---------------------------------------------------------
+    # 🔧 NORMALISE sportSettings shape (list OR dict)
+    # ---------------------------------------------------------
+    raw_sports = athlete.get("sportSettings") or []
+
+    if isinstance(raw_sports, dict):
+        # already normalised → {ride:{}, run:{}}
+        sports = list(raw_sports.values())
+    elif isinstance(raw_sports, list):
+        # raw Intervals format
+        sports = raw_sports
+    else:
+        sports = []
+
+    # ---------------------------------------------------------
+    # 🧠 SPORT GROUP MAPPING (ALWAYS defined)
+    # ---------------------------------------------------------
     sport_groups = CHEAT_SHEET.get("sport_groups", {})
 
     def match_group(types):
-        types = set(types or [])
+        if not types:
+            return None
+
+        # ensure iterable
+        if isinstance(types, str):
+            types = [types]
+
+        types = set(types)
+
         for group, group_types in sport_groups.items():
             if types & set(group_types):
                 return group
+
         return None
 
     # -----------------------------------------------------
@@ -1522,11 +1547,14 @@ def build_semantic_json(context):
     )
 
     # -----------------------------------------------------
-    # ⚙️ BUILD ALL SPORT PROFILES
+    # ⚙️ BUILD ALL SPORT PROFILES (CONTROLLED + COMPLETE)
     # -----------------------------------------------------
     sport_profiles = {}
 
     for s in sports:
+        if not isinstance(s, dict):
+            continue
+
         group = match_group(s.get("types"))
         if not group:
             continue
@@ -1543,17 +1571,49 @@ def build_semantic_json(context):
             pace_units = "M_PER_SEC"
 
         sport_profiles[key] = {
+            # -----------------------------
+            # Core physiology
+            # -----------------------------
             "ftp": s.get("ftp"),
             "eftp": mmp_model.get("ftp"),
             "w_prime": s.get("w_prime"),
             "p_max": s.get("p_max"),
             "lthr": s.get("lthr"),
             "max_hr": s.get("max_hr"),
+
+            # -----------------------------
+            # Pace (THIS is what you were missing)
+            # -----------------------------
             "threshold_pace": threshold_pace,
             "pace_units": pace_units,
-            "power_zones": s.get("power_zones"),
-            "hr_zones": s.get("hr_zones"),
             "pace_zones": s.get("pace_zones"),
+            "pace_zone_names": s.get("pace_zone_names"),
+            "pace_load_type": s.get("pace_load_type"),
+            "gap_model": s.get("gap_model"),
+
+            # -----------------------------
+            # Zones
+            # -----------------------------
+            "power_zones": s.get("power_zones"),
+            "power_zone_names": s.get("power_zone_names"),
+            "hr_zones": s.get("hr_zones"),
+            "hr_zone_names": s.get("hr_zone_names"),
+
+            # -----------------------------
+            # Key metadata (minimal but useful)
+            # -----------------------------
+            "types": s.get("types"),
+            "load_order": s.get("load_order"),
+            "tiz_order": s.get("tiz_order"),
+
+            # -----------------------------
+            # Performance model
+            # -----------------------------
+            "mmp_model": mmp_model,
+
+            # -----------------------------
+            # Custom physiology
+            # -----------------------------
             "vo2max_garmin": custom_fields.get("VO2MaxGarmin"),
             "lactate_mmol_l": custom_fields.get("HrtLndLt1"),
             "lactate_power": custom_fields.get("HrtLndLt1p"),

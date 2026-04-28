@@ -1160,9 +1160,6 @@ CHEAT_SHEET["sport_groups"] = {
         "Run",
         "TrailRun",
         "VirtualRun",
-        "Walk",
-        "Hike",
-        "Snowshoe",
     ],
 
     # -----------------------------
@@ -1184,6 +1181,15 @@ CHEAT_SHEET["sport_groups"] = {
         "RollerSki",
         "Snowboard",
         "VirtualSki",
+        "Snowshoe",
+    ],
+
+    # -----------------------------
+    #  HIKE
+    # -----------------------------
+    "Hike": [
+        "Walk",
+        "Hike",
     ],
 
     # -----------------------------
