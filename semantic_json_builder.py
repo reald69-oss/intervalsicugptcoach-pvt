@@ -3980,7 +3980,12 @@ def build_semantic_json(context):
                 # 🧠 Fill missing CTL/ATL/TSB (no-activity weeks)
                 # -----------------------------------------------------
 
+                # 🧭 Sort by start date for deterministic order
                 df_weeks = df_weeks.sort_values("start").reset_index(drop=True)
+
+                # ✅ FIX: normalise projection flag (prevents 7-day fragmentation)
+                df_weeks["is_projected"] = df_weeks.get("is_projected", False)
+                df_weeks["is_projected"] = df_weeks["is_projected"].fillna(False).astype(bool)
 
                 # track which rows were real measurements
                 measured_mask = df_weeks["ctl"].notna()
@@ -4195,6 +4200,7 @@ def build_semantic_json(context):
 
             for wk in df_weeks.sort_values("start").to_dict(orient="records"):
                 phase = wk.get("phase")
+                is_proj = wk.get("is_projected", False)
 
                 # fill Unclassified with previous phase if possible (prevents fragmentation)
                 if phase == "Unclassified" and current_phase is not None:
@@ -4204,11 +4210,15 @@ def build_semantic_json(context):
 
                 if current_phase is None:
                     current_phase = phase
+                    current_is_proj = None
                     segment_rows = [wk]
                     continue
 
                 # 🚧 Phase change — flush previous block
-                if phase != current_phase:
+                if (
+                    phase != current_phase
+                    or is_proj != current_is_proj
+                ):
                     seg = pd.DataFrame(segment_rows)
                     if not seg.empty:
                         summaries.append({
@@ -4235,6 +4245,7 @@ def build_semantic_json(context):
                         })
 
                     current_phase = phase
+                    current_is_proj = is_proj
                     segment_rows = [wk]
                 else:
                     segment_rows.append(wk)
