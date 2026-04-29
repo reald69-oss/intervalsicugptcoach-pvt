@@ -2399,6 +2399,8 @@ def build_semantic_json(context):
                 "end_date_local": e.get("end_date_local"),
                 "duration_minutes": resolve_planned_duration_minutes(e),
                 "icu_training_load": e.get("icu_training_load") or e.get("tss"),
+                "icu_atl":  e.get("icu_atl"),
+                "icu_ctl": e.get("icu_ctl"),
                 "load_target": e.get("load_target"),
                 "time_target": e.get("time_target"),
                 "distance_target": e.get("distance_target"),
@@ -4276,10 +4278,17 @@ def build_semantic_json(context):
                 for block in summaries:
 
                     # derive ISO week from block start date
-                    start = pd.Timestamp(block["start"])
-                    iso = start.isocalendar()
-                    block_week = f"{iso.year}-W{iso.week}"
-                    if block_week == iso_week:
+                    block_start = pd.Timestamp(block["start"])
+                    block_end   = pd.Timestamp(block["end"])
+
+                    micro_start = pd.Timestamp.fromisocalendar(
+                        int(iso_week.split("-W")[0]),
+                        int(iso_week.split("-W")[1]),
+                        1
+                    )
+                    micro_end = micro_start + pd.Timedelta(days=6)
+
+                    if block_start <= micro_end and block_end >= micro_start:
 
                         block["is_projected"] = True
                         block["projection_basis"] = "planned_remaining"
