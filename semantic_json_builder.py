@@ -1798,16 +1798,24 @@ def build_semantic_json(context):
                 ev["start_date_local"] = convert_to_str(row["start_date_local"])
 
             # ---------------------------------------------------------
-            # 2️⃣ Activity link
+            # 2️⃣ Activity link + ID
             # ---------------------------------------------------------
             activity_id = row.get("id") or row.get("activity_id")
 
             if pd.notna(activity_id):
-                activity_id = str(activity_id)
-                if not activity_id.startswith("i"):
-                    activity_id = f"i{activity_id}"
+                try:
+                    clean_id = str(int(float(activity_id)))  # removes .0 safely
+                except:
+                    clean_id = str(activity_id).strip()
 
-                ev["activity_link"] = f"https://intervals.icu/activities/{activity_id}"
+                # raw ID (no prefix)
+                ev["activity_id"] = clean_id
+
+                # link ID (with 'i' prefix)
+                link_id = clean_id if clean_id.startswith("i") else f"i{clean_id}"
+                ev["activity_link"] = f"https://intervals.icu/activities/{link_id}"
+            else:
+                ev["activity_id"] = None
 
             # ---------------------------------------------------------
             # 3️⃣ Core render fields (SAFE)
