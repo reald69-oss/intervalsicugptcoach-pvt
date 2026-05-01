@@ -1827,6 +1827,9 @@ def build_semantic_json(context):
             val = row.get("icu_ctl")
             ev["icu_ctl"] = float(val) if pd.notna(val) else 0.0
 
+            val = row.get("paired_event_id")
+            ev["paired_event_id"] = str(int(val)) if pd.notna(val) else None
+
             # ---------------------------------------------------------
             # 4️⃣ IF (icu_intensity ONLY — canonical)
             # ---------------------------------------------------------
@@ -2407,6 +2410,7 @@ def build_semantic_json(context):
                 "strain_score": e.get("strain_score"),
                 "plan_name": e.get("plan_name"),
                 "plan_workout_id": e.get("plan_workout_id"),
+                "paired_activity_id": e.get("paired_activity_id"),
                 "color": e.get("color"),
                 "tags": e.get("tags"),
                 "day_of_week": (
@@ -2417,10 +2421,15 @@ def build_semantic_json(context):
             }
 
             # 🧹 Remove all null/NaN/empty values
+            KEEP_NULL_KEYS = {"paired_activity_id"}
+
             event = {
                 k: v
                 for k, v in event.items()
-                if v not in (None, "", [], {}) and not (isinstance(v, float) and isnan(v))
+                if (
+                    k in KEEP_NULL_KEYS
+                    or (v not in (None, "", [], {}) and not (isinstance(v, float) and isnan(v)))
+                )
             }
 
             planned_events.append(event)
