@@ -2515,9 +2515,73 @@ def build_semantic_json(context):
                 )
             }
         }
+
         # ---------------------------------------------------------
-        # 🎯 EVENT TARGETS (COMPRESSED FOR LLM)
+        # 🎯 EVENT TARGETS (COMPRESSED FOR LLM) + RACE CLASSIFICATION
         # ---------------------------------------------------------
+
+        def classify_race_type(e, name):
+            sport = str(e.get("type") or "").lower()
+            duration_h = (e.get("moving_time") or 0) / 3600
+            distance_km = (e.get("distance") or 0) / 1000
+
+            # 🚴 RIDING
+            if "ride" in sport:
+                if duration_h >= 3.5:
+                    return "fondo"
+                if duration_h <= 1.5:
+                    if any(k in name for k in ["crit", "circuit", "loop"]):
+                        return "crit"
+                    return "short_ride"
+                if any(k in name for k in ["tt", "time trial"]):
+                    return "tt"
+                return "tt"
+
+            # 🏃 RUNNING
+            if "run" in sport:
+                if distance_km >= 30:
+                    return "run_marathon"
+                if distance_km >= 18:
+                    return "run_half"
+                if distance_km <= 6:
+                    return "run_5k"
+                if distance_km <= 12:
+                    return "run_10k"
+                return "run_general"
+
+            return "unknown"
+
+
+        RACE_PROFILES = {
+            "fondo": {
+                "priority_systems": ["durability", "aerobic"],
+                "targets": {"tsb": [5, 15], "ndli": "low", "wdrm": "low-moderate"}
+            },
+            "tt": {
+                "priority_systems": ["threshold"],
+                "targets": {"tsb": [8, 18], "ndli": "low", "wdrm": "low"}
+            },
+            "crit": {
+                "priority_systems": ["anaerobic", "neural"],
+                "targets": {"tsb": [10, 20], "ndli": "controlled", "wdrm": "moderate"}
+            },
+            "run_marathon": {
+                "priority_systems": ["durability"],
+                "targets": {"tsb": [5, 15], "ndli": "low", "wdrm": "low"}
+            },
+            "run_half": {
+                "priority_systems": ["durability"],
+                "targets": {"tsb": [5, 15], "ndli": "low", "wdrm": "low"}
+            },
+            "run_10k": {
+                "priority_systems": ["vo2"],
+                "targets": {"tsb": [8, 18], "ndli": "controlled", "wdrm": "moderate"}
+            },
+            "run_5k": {
+                "priority_systems": ["anaerobic", "vo2"],
+                "targets": {"tsb": [10, 20], "ndli": "controlled", "wdrm": "moderate"}
+            }
+        }
 
         event_targets = {
             "exists": False,
@@ -2536,7 +2600,9 @@ def build_semantic_json(context):
                 "date": None,
                 "days_to_event": None,
                 "training_bias": None,
-                "taper_state": "none"
+                "taper_state": "none",
+                "race_type": None,
+                "race_profile": None
             },
             "upcoming": []
         }
@@ -2552,7 +2618,6 @@ def build_semantic_json(context):
                 continue
 
             category = str(e.get("category") or "").upper()
-
             if category not in ("RACE_A", "RACE_B", "RACE_C"):
                 continue
 
@@ -2569,9 +2634,11 @@ def build_semantic_json(context):
                 continue
 
             name_raw = e.get("name") or "Untitled"
-            name = name_raw.lower()   # for parsing only
+            name = name_raw.lower()
 
-            # --- training bias (aligned with ADE)
+            # -----------------------------
+            # training bias (existing)
+            # -----------------------------
             if "climb" in name:
                 training_bias = "durability"
             elif "tt" in name or "threshold" in name:
@@ -2583,28 +2650,31 @@ def build_semantic_json(context):
             else:
                 training_bias = "mixed"
 
+            # -----------------------------
+            # race classification (NEW)
+            # -----------------------------
+            race_type = classify_race_type(e, name)
+            race_profile = RACE_PROFILES.get(race_type, {})
+
             priority = category.split("_")[-1]
             days_to_event = (dt - today).days
 
-            # --- taper logic (priority-aware, safe)
-
-            taper_state = "none"  # always initialise
+            # -----------------------------
+            # taper logic (existing)
+            # -----------------------------
+            taper_state = "none"
 
             if days_to_event is not None:
-
                 if priority == "A":
                     if days_to_event <= 10:
                         taper_state = "taper"
                     elif days_to_event <= 21:
                         taper_state = "pre_taper"
-
                 elif priority == "B":
                     if days_to_event <= 5:
                         taper_state = "taper"
                     elif days_to_event <= 10:
                         taper_state = "pre_taper"
-
-                # C → stays "none"
 
             candidates.append({
                 "id": e.get("id"),
@@ -2620,8 +2690,12 @@ def build_semantic_json(context):
                 "moving_time": e.get("moving_time"),
                 "date": dt.isoformat(),
                 "days_to_event": days_to_event,
-                "training_bias": training_bias,   # ✅ FIXED
-                "taper_state": taper_state
+                "training_bias": training_bias,
+                "taper_state": taper_state,
+
+                # ✅ NEW
+                "race_type": race_type,
+                "race_profile": race_profile
             })
 
         candidates = sorted(candidates, key=lambda x: x["date"])
@@ -2631,43 +2705,21 @@ def build_semantic_json(context):
 
             event_targets["exists"] = True
 
-            # ✅ explicit assignment (keeps schema stable)
-            event_targets["next_event"]["id"] = next_event["id"]
-            event_targets["next_event"]["name"] = next_event["name"]
-            event_targets["next_event"]["category"] = next_event["category"]
-            event_targets["next_event"]["priority"] = next_event["priority"]
-            event_targets["next_event"]["icu_atl"] = next_event["icu_atl"]
-            event_targets["next_event"]["icu_ctl"] = next_event["icu_ctl"]
-            event_targets["next_event"]["type"] = next_event["type"]
-            event_targets["next_event"]["load"] = next_event["load"]
-            event_targets["next_event"]["intensity"] = next_event["intensity"]
-            event_targets["next_event"]["distance"] = next_event["distance"]
-            event_targets["next_event"]["moving_time"] = next_event["moving_time"]
-            event_targets["next_event"]["date"] = next_event["date"]
-            event_targets["next_event"]["days_to_event"] = next_event["days_to_event"]
-            event_targets["next_event"]["training_bias"] = next_event["training_bias"]
-            event_targets["next_event"]["taper_state"] = next_event["taper_state"]
+            for k in event_targets["next_event"].keys():
+                event_targets["next_event"][k] = next_event.get(k)
 
-            # upcoming = stripped (no taper duplication)
-            event_targets["upcoming"] = [
-                {
-                    "id": c["id"],
-                    "name": c["name"],
-                    "category": c["category"],
-                    "priority": c["priority"],
-                    "icu_atl": c["icu_atl"],
-                    "icu_ctl": c["icu_ctl"],
-                    "type": c["type"],
-                    "load": c["load"],
-                    "intensity": c["intensity"],
-                    "distance": c["distance"],
-                    "moving_time": c["moving_time"],
-                    "date": c["date"],
-                    "days_to_event": c["days_to_event"],
-                    "training_bias": c["training_bias"]
-                }
-                for c in candidates[1:4]
-            ]
+        event_targets["upcoming"] = [
+            {
+                k: c.get(k)
+                for k in [
+                    "id","name","category","priority","icu_atl","icu_ctl",
+                    "type","load","intensity","distance","moving_time",
+                    "date","days_to_event","training_bias",
+                    "race_type","race_profile"
+                ]
+            }
+            for c in candidates[1:4]
+        ]
 
         context["event_targets"] = event_targets
         semantic["event_targets"] = event_targets
