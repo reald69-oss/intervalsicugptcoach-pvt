@@ -60,11 +60,26 @@ Each interval MUST use EXACTLY ONE intensity anchor:
     - 4m 115% FTP
     - 10m Ramp 70-40% FTP cooldown
 
-2. HEART RATE
-   - Format:
-     X–Y% HRmax
-   - Examples:
-     85-90% HRmax
+2. HEART RATE (FULL SUPPORT — STRICT)
+
+Allowed formats:
+
+- X–Y% LTHR
+- X–Y% HR
+- z1 HR | z2 HR | z3 HR | z4 HR | z5 HR
+- X–Y% HRmax
+
+EXAMPLES:
+- 5m 85% LTHR
+- 5m 80% HR
+- 5m z2 HR
+- 5m 70% HRmax
+
+STRICT RULES:
+
+- LTHR, HR, HRmax, and zX HR are DISTINCT anchors
+- Model MUST NOT convert between them
+- EXACTLY ONE anchor per interval
 
 3. PACE (Running default)
    - Format (MANDATORY):
@@ -79,6 +94,17 @@ STRICT RULES
 - NO secondary metrics
 - NO brackets
 - NO conversions
+
+HR DEFAULT LOGIC (MANDATORY)
+
+If user says:
+- "HR-based" OR "heart rate" (no qualifier)
+
+THEN:
+- For endurance → use z2 HR
+- For steady work → use %HR
+- For structured threshold → use %LTHR
+- DO NOT default to HRmax
 
 FORBIDDEN:
 - 70% HRmax (200w)
@@ -112,7 +138,7 @@ If type = Run:
 INTENSITY TERMINATION (HARD)
 
 - Parsing ends EXACTLY at:
-  FTP | w | HRmax | HR | pace
+  FTP | w | HRmax | HR | LTHR | pace
 
 - Nothing numeric allowed after the anchor
 
@@ -120,6 +146,8 @@ SPORT DEFAULTS:
 - Run → prefer PACE (primary) or HR
 - Ride → prefer FTP or watts
 - Swim → pace or effort
+
+HRmax MUST NOT be used for endurance rides unless explicitly requested
 
 OPTIONAL DESCRIPTION
 

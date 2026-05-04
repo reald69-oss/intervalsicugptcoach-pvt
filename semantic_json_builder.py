@@ -2522,7 +2522,9 @@ def build_semantic_json(context):
         event_targets = {
             "exists": False,
             "next_event": {
+                "id": None,
                 "name": None,
+                "category": None,
                 "priority": None,
                 "date": None,
                 "days_to_event": None,
@@ -2598,7 +2600,9 @@ def build_semantic_json(context):
                 # C → stays "none"
 
             candidates.append({
-                "name": name_raw, 
+                "id": e.get("id"),
+                "name": name_raw,
+                "category": e.get("category"),
                 "priority": priority,
                 "date": dt.isoformat(),
                 "days_to_event": days_to_event,
@@ -2614,7 +2618,9 @@ def build_semantic_json(context):
             event_targets["exists"] = True
 
             # ✅ explicit assignment (keeps schema stable)
+            event_targets["next_event"]["id"] = next_event["id"]
             event_targets["next_event"]["name"] = next_event["name"]
+            event_targets["next_event"]["category"] = next_event["category"]
             event_targets["next_event"]["priority"] = next_event["priority"]
             event_targets["next_event"]["date"] = next_event["date"]
             event_targets["next_event"]["days_to_event"] = next_event["days_to_event"]
@@ -2624,7 +2630,9 @@ def build_semantic_json(context):
             # upcoming = stripped (no taper duplication)
             event_targets["upcoming"] = [
                 {
+                    "id": c["id"],
                     "name": c["name"],
+                    "category": c["category"],
                     "priority": c["priority"],
                     "date": c["date"],
                     "days_to_event": c["days_to_event"],
