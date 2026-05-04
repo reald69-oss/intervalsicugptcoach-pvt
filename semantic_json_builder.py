@@ -2569,31 +2569,38 @@ def build_semantic_json(context):
         RACE_PROFILES = {
             "fondo": {
                 "priority_systems": ["durability", "aerobic"],
-                "targets": {"tsb": [5, 15], "ndli": "low", "wdrm": "low-moderate"}
+                "targets": {"tsb": [5, 15], "ndli": "low", "wdrm": "low-moderate"},
+                "durability_bounds": {"excellent": 3, "good": 5, "moderate": 8}
             },
             "tt": {
                 "priority_systems": ["threshold"],
-                "targets": {"tsb": [8, 18], "ndli": "low", "wdrm": "low"}
+                "targets": {"tsb": [8, 18], "ndli": "low", "wdrm": "low"},
+                "durability_bounds": {"excellent": 2, "good": 4, "moderate": 6}
             },
             "crit": {
                 "priority_systems": ["anaerobic", "neural"],
-                "targets": {"tsb": [10, 20], "ndli": "controlled", "wdrm": "moderate"}
+                "targets": {"tsb": [10, 20], "ndli": "controlled", "wdrm": "moderate"},
+                "durability_bounds": {"excellent": 4, "good": 7, "moderate": 10}
             },
             "run_marathon": {
                 "priority_systems": ["durability"],
-                "targets": {"tsb": [5, 15], "ndli": "low", "wdrm": "low"}
+                "targets": {"tsb": [5, 15], "ndli": "low", "wdrm": "low"},
+                "durability_bounds": {"excellent": 3, "good": 5, "moderate": 8}
             },
             "run_half": {
                 "priority_systems": ["durability"],
-                "targets": {"tsb": [5, 15], "ndli": "low", "wdrm": "low"}
+                "targets": {"tsb": [5, 15], "ndli": "low", "wdrm": "low"},
+                "durability_bounds": {"excellent": 3, "good": 5, "moderate": 8}
             },
             "run_10k": {
                 "priority_systems": ["vo2"],
-                "targets": {"tsb": [8, 18], "ndli": "controlled", "wdrm": "moderate"}
+                "targets": {"tsb": [8, 18], "ndli": "controlled", "wdrm": "moderate"},
+                "durability_bounds": {"excellent": 4, "good": 7, "moderate": 10}
             },
             "run_5k": {
                 "priority_systems": ["anaerobic", "vo2"],
-                "targets": {"tsb": [10, 20], "ndli": "controlled", "wdrm": "moderate"}
+                "targets": {"tsb": [10, 20], "ndli": "controlled", "wdrm": "moderate"},
+                "durability_bounds": {"excellent": 5, "good": 8, "moderate": 12}
             }
         }
 
