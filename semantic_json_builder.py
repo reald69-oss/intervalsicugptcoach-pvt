@@ -2526,6 +2526,9 @@ def build_semantic_json(context):
                 "name": None,
                 "category": None,
                 "priority": None,
+                "icu_atl": None,
+                "icu_ctl": None,
+                "type": None,
                 "load": None,
                 "intensity": None,
                 "distance": None,
@@ -2608,6 +2611,9 @@ def build_semantic_json(context):
                 "name": name_raw,
                 "category": e.get("category"),
                 "priority": priority,
+                "icu_atl": e.get("icu_atl"),
+                "icu_ctl": e.get("icu_ctl"),
+                "type": e.get("type"),
                 "load": e.get("icu_training_load"),
                 "intensity": e.get("icu_intensity"),
                 "distance": e.get("distance"),
@@ -2630,6 +2636,9 @@ def build_semantic_json(context):
             event_targets["next_event"]["name"] = next_event["name"]
             event_targets["next_event"]["category"] = next_event["category"]
             event_targets["next_event"]["priority"] = next_event["priority"]
+            event_targets["next_event"]["icu_atl"] = next_event["icu_atl"]
+            event_targets["next_event"]["icu_ctl"] = next_event["icu_ctl"]
+            event_targets["next_event"]["type"] = next_event["type"]
             event_targets["next_event"]["load"] = next_event["load"]
             event_targets["next_event"]["intensity"] = next_event["intensity"]
             event_targets["next_event"]["distance"] = next_event["distance"]
@@ -2646,6 +2655,9 @@ def build_semantic_json(context):
                     "name": c["name"],
                     "category": c["category"],
                     "priority": c["priority"],
+                    "icu_atl": c["icu_atl"],
+                    "icu_ctl": c["icu_ctl"],
+                    "type": c["type"],
                     "load": c["load"],
                     "intensity": c["intensity"],
                     "distance": c["distance"],
