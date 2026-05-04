@@ -2521,24 +2521,37 @@ def build_semantic_json(context):
         # ---------------------------------------------------------
 
         def classify_race_type(e, name):
+
             sport = str(e.get("type") or "").lower()
             duration_h = (e.get("moving_time") or 0) / 3600
             distance_km = (e.get("distance") or 0) / 1000
 
+            # -----------------------------
             # 🚴 RIDING
+            # -----------------------------
             if "ride" in sport:
-                if duration_h >= 3.5:
-                    return "fondo"
-                if duration_h <= 1.5:
-                    if any(k in name for k in ["crit", "circuit", "loop"]):
-                        return "crit"
-                    return "short_ride"
+
+                # ✅ FIRST: explicit intent (strongest signal)
                 if any(k in name for k in ["tt", "time trial"]):
                     return "tt"
-                return "tt"
 
+                if any(k in name for k in ["crit", "circuit", "loop"]):
+                    return "crit"
+
+                # ✅ THEN: duration fallback
+                if duration_h >= 3.5:
+                    return "fondo"
+
+                if duration_h <= 1.5:
+                    return "short_ride"
+
+                return "tt"  # default mid-duration
+
+            # -----------------------------
             # 🏃 RUNNING
+            # -----------------------------
             if "run" in sport:
+
                 if distance_km >= 30:
                     return "run_marathon"
                 if distance_km >= 18:
@@ -2547,6 +2560,7 @@ def build_semantic_json(context):
                     return "run_5k"
                 if distance_km <= 12:
                     return "run_10k"
+
                 return "run_general"
 
             return "unknown"
