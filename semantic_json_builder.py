@@ -2526,6 +2526,10 @@ def build_semantic_json(context):
                 "name": None,
                 "category": None,
                 "priority": None,
+                "load": None,
+                "intensity": None,
+                "distance": None,
+                "moving_time": None,
                 "date": None,
                 "days_to_event": None,
                 "training_bias": None,
@@ -2604,6 +2608,10 @@ def build_semantic_json(context):
                 "name": name_raw,
                 "category": e.get("category"),
                 "priority": priority,
+                "load": e.get("icu_training_load"),
+                "intensity": e.get("icu_intensity"),
+                "distance": e.get("distance"),
+                "moving_time": e.get("moving_time"),
                 "date": dt.isoformat(),
                 "days_to_event": days_to_event,
                 "training_bias": training_bias,   # ✅ FIXED
@@ -2622,6 +2630,10 @@ def build_semantic_json(context):
             event_targets["next_event"]["name"] = next_event["name"]
             event_targets["next_event"]["category"] = next_event["category"]
             event_targets["next_event"]["priority"] = next_event["priority"]
+            event_targets["next_event"]["load"] = next_event["load"]
+            event_targets["next_event"]["intensity"] = next_event["intensity"]
+            event_targets["next_event"]["distance"] = next_event["distance"]
+            event_targets["next_event"]["moving_time"] = next_event["moving_time"]
             event_targets["next_event"]["date"] = next_event["date"]
             event_targets["next_event"]["days_to_event"] = next_event["days_to_event"]
             event_targets["next_event"]["training_bias"] = next_event["training_bias"]
@@ -2634,6 +2646,10 @@ def build_semantic_json(context):
                     "name": c["name"],
                     "category": c["category"],
                     "priority": c["priority"],
+                    "load": c["load"],
+                    "intensity": c["intensity"],
+                    "distance": c["distance"],
+                    "moving_time": c["moving_time"],
                     "date": c["date"],
                     "days_to_event": c["days_to_event"],
                     "training_bias": c["training_bias"]
