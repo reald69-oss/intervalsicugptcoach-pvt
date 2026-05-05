@@ -1402,40 +1402,126 @@ def run_tier1_controller(df_master, wellness, context):
         debug(context, f"  power: {context['zone_dist_power']}")
         debug(context, f"  hr:    {context['zone_dist_hr']}")
 
-
-    # --- Step 6c: Outlier Detection ---
+    # =========================================================
+    # 🔥 OUTLIER DETECTION (365d SUMMARY — LIGHT DATASET)
+    # =========================================================
     try:
-        df = df_master.copy()
-        debug(context, f"[DEBUG-OUTLIER] Starting detection on {len(df)} rows")
-        if "icu_training_load" in df.columns:
-            mean_tss = df["icu_training_load"].mean()
-            std_tss = df["icu_training_load"].std()
-            threshold = 1.5 * std_tss  # slightly more sensitive than 2σ
+        # -----------------------------------------------------
+        # 1️⃣ Correct dataset (authoritative)
+        # -----------------------------------------------------
+        df = context.get("df_light_full")
 
-            outliers = df[
-                (df["icu_training_load"] > mean_tss + threshold) |
-                (df["icu_training_load"] < mean_tss - threshold)
-            ][["id", "name", "start_date_local", "icu_training_load"]]
+        if df is None or df.empty:
+            df = context.get("_df_light_90d")
 
-            outliers_formatted = []
-            for _, o in outliers.iterrows():
-                outliers_formatted.append({
-                    "date": str(o.get("start_date_local", "?")).split(" ")[0],
-                    "event": o.get("name", "?"),
-                    "issue": "TSS outlier",
-                    "obs": f"TSS={o.get('icu_training_load', '?')}"
-                })
-            context["outliers"] = outliers_formatted
+        if df is None or df.empty:
+            df = df_master  # final fallback (weekly)
 
-            debug(context, f"[DEBUG-T1] Outlier events detected: {len(outliers)}")
-            debug(context, f"[DEBUG-OUTLIER] mean TSS={mean_tss:.1f}, std={std_tss:.1f}, threshold={threshold:.1f}")
-            debug(context, f"[DEBUG-OUTLIER] min/max TSS: {df['icu_training_load'].min()} / {df['icu_training_load'].max()}")
-        else:
+        df = df.copy()
+
+        debug(context, f"[OUTLIERS] Dataset rows={len(df)}")
+
+        # -----------------------------------------------------
+        # 2️⃣ Guardrails
+        # -----------------------------------------------------
+        if "icu_training_load" not in df.columns:
             context["outliers"] = []
-            debug(context, "[DEBUG-OUTLIER] No icu_training_load column found.")
+            context["outlier_summary"] = {}
+            debug(context, "[OUTLIERS] No icu_training_load column")
+        else:
+
+            # Remove junk sessions (align with Tier-2 logic)
+            df = df[
+                (df["icu_training_load"] > 20) &
+                (df.get("moving_time", 0) > 1800)
+            ]
+
+            if df.empty:
+                context["outliers"] = []
+                context["outlier_summary"] = {}
+                debug(context, "[OUTLIERS] No valid rows after filtering")
+            else:
+
+                # -----------------------------------------------------
+                # 3️⃣ Stats
+                # -----------------------------------------------------
+                mean_tss = df["icu_training_load"].mean()
+                std_tss = df["icu_training_load"].std()
+
+                if std_tss == 0 or pd.isna(std_tss):
+                    context["outliers"] = []
+                    context["outlier_summary"] = {}
+                    debug(context, "[OUTLIERS] std_tss invalid")
+                else:
+
+                    df["zscore"] = (df["icu_training_load"] - mean_tss) / std_tss
+
+                    # -----------------------------------------------------
+                    # 4️⃣ Detect + rank
+                    # -----------------------------------------------------
+                    outliers = df[df["zscore"].abs() > 1.5].copy()
+
+                    if outliers.empty:
+                        context["outliers"] = []
+                        context["outlier_summary"] = {
+                            "count": 0,
+                            "mean_tss": round(mean_tss, 1),
+                            "std_tss": round(std_tss, 1)
+                        }
+                    else:
+                        outliers["abs_z"] = outliers["zscore"].abs()
+                        outliers = outliers.sort_values("abs_z", ascending=False)
+
+                        # 🔒 keep top N
+                        TOP_N = 5
+                        outliers = outliers.head(TOP_N)
+
+                        # -----------------------------------------------------
+                        # 5️⃣ Format (with activity_id + link)
+                        # -----------------------------------------------------
+                        formatted = []
+
+                        for _, o in outliers.iterrows():
+
+                            raw_id = o.get("id") or o.get("activity_id")
+
+                            activity_id = None
+                            activity_link = None
+
+                            if pd.notna(raw_id):
+                                activity_id = str(raw_id)
+                                if not activity_id.startswith("i"):
+                                    activity_id = f"i{activity_id}"
+
+                                activity_link = f"https://intervals.icu/activities/{activity_id}"
+
+                            formatted.append({
+                                "date": str(o.get("start_date_local", "?"))[:10],
+                                "event": o.get("name", "?"),
+                                "activity_id": activity_id,
+                                "activity_link": activity_link,
+                                "tss": float(o.get("icu_training_load", 0)),
+                                "load_vs_mean": round(o["icu_training_load"] / mean_tss, 2),
+                                "zscore": round(float(o.get("zscore", 0)), 2),
+                                "type": "high" if o["zscore"] > 0 else "low"
+                            })
+
+                        # -----------------------------------------------------
+                        # 6️⃣ Store in context
+                        # -----------------------------------------------------
+                        context["outliers"] = formatted
+                        context["outlier_summary"] = {
+                            "count": int(len(outliers)),
+                            "mean_tss": round(mean_tss, 1),
+                            "std_tss": round(std_tss, 1)
+                        }
+
+                        debug(context, f"[OUTLIERS] Found {len(formatted)} outliers")
+
     except Exception as e:
         debug(context, f"⚠ Outlier detection failed: {e}")
         context["outliers"] = []
+        context["outlier_summary"] = {}
 
     # ------------------------------------------------------------
     # 🔎 Defensive sanity check before qualitative mapping

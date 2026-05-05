@@ -4941,6 +4941,19 @@ def build_semantic_json(context):
         else:
             ade_action["resolution"] = "honoured"
 
+    # --------------------------------------------------
+    # 🔥 Outliers (365d)
+    # --------------------------------------------------
+    outliers = context.get("outliers")
+
+    if outliers:
+        semantic.setdefault("outliers", {
+            "block_type": "outliers",
+            "version": "v1",
+            "items": outliers,
+            "summary": context.get("outlier_summary", {}),
+        })
+
     # ---------------------------------------------------------
     # 🧠 LLM CONTROL SIGNALS (FINAL PROMOTION)
     # MUST BE LAST STEP BEFORE RETURN

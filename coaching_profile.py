@@ -141,6 +141,7 @@ REPORT_CONTRACT = {
 
         # 🧭 TRAINING LOAD
         "training_volume",
+        "outliers",
 
         # 🫀 PHYSIOLOGY RESPONSE
         "wellness",
@@ -993,7 +994,8 @@ RENDERER_PROFILES = {
             ],
 
             "training_load": [
-                "training_volume"
+                "training_volume",
+                "outliers"
             ],
 
             "physiology_response": [
