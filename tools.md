@@ -49,7 +49,51 @@ Write Calendar → writeCalendarV1 → body: planned_workouts[]* → create or u
 Delete Calendar → deleteCalendarV1 → body: id* | date* | dates* → remove workouts or events
 
 List Activities (Light) → listActivitiesLight → params: oldest?, newest?, fields?, athleteID?
-One Day Full Activity → getOneDayFullActivityV1 → params: date? | activity_id?, athleteID? → full activity breakdown or activities for a given day
+
+One Day Full Activity → getOneDayFullActivityV1
+
+Returns full activity with **interval-level detail** (`icu_intervals`) for deep analysis (execution, fatigue, durability).
+
+---
+
+### icu_intervals (key fields)
+
+- `t` = duration (s)  
+- `z` = zone  
+- `load` = TSS contribution  
+- `type` = WORK | RECOVERY  
+
+- `hr` = avg HR  
+- `dec` = decoupling (durability signal)
+
+- `w` = avg watts  
+- `wp` = normalized watts (effort variability)
+
+- `j` = total work (J)  
+- `j_af` = work above FTP (high-intensity load)
+
+- `wbal_s` / `wbal_e` = W′ start/end (anaerobic depletion)
+
+- `cad` = cadence  
+
+- `start` / `end` = time bounds  
+- `si` / `ei` = data indices  
+
+---
+
+### Interpretation rules (MANDATORY)
+
+- Use **sequence + density**, not averages  
+- `dec ↑` → durability breakdown  
+- `wp >> w` → stochastic effort  
+- `j_af + wbal drop` → anaerobic strain  
+- clustered WORK → high neural load  
+
+Used for:
+- WDRM (repeatability)  
+- ISDM (durability)  
+- NDLI (intensity density)  
+
 One Day Wellness → getOneDayWellnessV1 → params: date*, athleteID? → HRV, fatigue, recovery
 
 Power Curves → getPowerCurvesExtV1 → params: type*, curves?, pmType?, athleteID? → power curve modelling
