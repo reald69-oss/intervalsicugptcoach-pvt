@@ -1497,7 +1497,7 @@ def run_tier1_controller(df_master, wellness, context):
 
                             formatted.append({
                                 "date": str(o.get("start_date_local", "?"))[:10],
-                                "event": o.get("name", "?"),
+                                "title": o.get("name", "?"),
                                 "activity_id": activity_id,
                                 "activity_link": activity_link,
                                 "tss": float(o.get("icu_training_load", 0)),
