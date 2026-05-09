@@ -1248,16 +1248,55 @@ def run_tier1_controller(df_master, wellness, context):
                 errors="coerce"
             ).fillna(0).sum()
 
-        # --- recompute observed CTL / ATL / TSB from yesterday + today's actual load ---
-        if pd.notna(ctl_y) and pd.notna(atl_y):
-            tau_ctl = 42.0
-            tau_atl = 7.0
+        # ---------------------------------------------------------
+        # Prefer authoritative CTL / ATL from latest activity today
+        # ---------------------------------------------------------
+        ctl_today = None
+        atl_today = None
+        tsb_today = None
 
-            ctl_today = ctl_y + (today_tss - ctl_y) / tau_ctl
-            atl_today = atl_y + (today_tss - atl_y) / tau_atl
-            tsb_today = ctl_today - atl_today
-        else:
-            ctl_today, atl_today, tsb_today = None, None, None
+        if isinstance(df_master, pd.DataFrame) and not df_master.empty:
+
+            df_today = df_master.loc[df_master["_date"] == today].copy()
+
+            if not df_today.empty:
+
+                df_today["icu_ctl"] = pd.to_numeric(
+                    df_today["icu_ctl"],
+                    errors="coerce"
+                )
+
+                df_today["icu_atl"] = pd.to_numeric(
+                    df_today["icu_atl"],
+                    errors="coerce"
+                )
+
+                df_today = df_today.sort_values(
+                    "start_date_local"
+                )
+
+                valid = df_today[
+                    df_today["icu_ctl"].notna() &
+                    df_today["icu_atl"].notna()
+                ]
+
+                if not valid.empty:
+                    latest = valid.iloc[-1]
+
+                    ctl_today = float(latest["icu_ctl"])
+                    atl_today = float(latest["icu_atl"])
+                    tsb_today = ctl_today - atl_today
+
+        # ---------------------------------------------------------
+        # Fallback to latest wellness snapshot
+        # ---------------------------------------------------------
+        if ctl_today is None or atl_today is None:
+
+            if pd.notna(ctl_y) and pd.notna(atl_y):
+
+                ctl_today = float(ctl_y)
+                atl_today = float(atl_y)
+                tsb_today = ctl_today - atl_today
 
         context["ctl"] = round(float(ctl_today), 2) if ctl_today is not None else None
         context["atl"] = round(float(atl_today), 2) if atl_today is not None else None
@@ -1276,11 +1315,11 @@ def run_tier1_controller(df_master, wellness, context):
         }
 
         context["load_metrics"] = {
-            "CTL": {"value": context["ctl"], "status": "recomputed_observed"},
-            "ATL": {"value": context["atl"], "status": "recomputed_observed"},
-            "TSB": {"value": context["tsb"], "status": "recomputed_observed"},
+            "CTL": {"value": context["ctl"], "status": "authoritative_activity"},
+            "ATL": {"value": context["atl"], "status": "authoritative_activity"},
+            "TSB": {"value": context["tsb"], "status": "derived"},
         }
-
+        
         debug(
             context,
             f"[T1-WELLNESS-OBSERVED] baseline_date={last.get('_date')} today_tss={today_tss} "
