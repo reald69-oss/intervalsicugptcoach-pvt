@@ -3024,6 +3024,7 @@ def build_semantic_json(context):
     semantic["training_volume"]["CTL"] = round(ws.get("ctl"),2)
     semantic["training_volume"]["ATL"] = round(ws.get("atl"),2)
     semantic["training_volume"]["TSB"] = round(ws.get("tsb"),2)
+    semantic["training_volume"]["load_state"] = context.get("load_state", {})
     debug(context, "[SEM] CTL/ATL/TSB sourced from wellness_summary fallback")
 
     # ---------------------------------------------------------

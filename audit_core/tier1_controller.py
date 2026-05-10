@@ -1203,12 +1203,12 @@ def run_tier1_controller(df_master, wellness, context):
 
     # --- Step 6a: Extract CTL / ATL / TSB from   yesterday + today's completed load ---
     """
-    | State               | Meaning                     | Source                                    |
-    | ------------------- | --------------------------- | ----------------------------------------- |
-    | Sunrise             | before today’s load         | yesterday CTL/ATL decayed forward         |
-    | No-event end of day | after a day with zero load  | usually same as decay-forward daily state |
-    | Planned sunset      | after planned calendar load | today wellness/calendar CTL/ATL           |
-    | Actual sunset       | after completed activity    | latest today activity CTL/ATL             |
+    | State               | Meaning                                      | Source                                    |
+    |--------------------|----------------------------------------------|-------------------------------------------|
+    | Sunrise            | Start-of-day freshness before today's load   | Yesterday CTL/ATL decayed overnight       |
+    | No-event end state | End-of-day state with zero training load     | Usually close to sunrise state            |
+    | Planned sunset     | Projected end-of-day after planned workouts  | Today's wellness/calendar CTL/ATL         |
+    | Actual sunset      | Real end-of-day after completed activities   | Latest completed activity CTL/ATL         |
 
     """
 
@@ -1361,11 +1361,65 @@ def run_tier1_controller(df_master, wellness, context):
             "TSB": {"value": context["tsb"], "status": "derived"},
         }
 
+        # ---------------------------------------------------------
+        # Semantic meaning of current CTL / ATL / TSB state
+        # ---------------------------------------------------------
+
+        # ---------------------------------------------------------
+        # Determine active CTL / ATL state meaning
+        # ---------------------------------------------------------
+        has_completed_activity = (
+            "df_today" in locals()
+            and "valid" in locals()
+            and not df_today.empty
+            and not valid.empty
+        )
+
         state_mode = (
             "sunset_activity"
-            if not df_today.empty and not valid.empty
-            else "sunrise_wellness"
+            if has_completed_activity
+            else "sunrise"
         )
+
+        context["load_state"] = {
+            "mode": state_mode,
+
+            "meaning": (
+                "actual_sunset"
+                if state_mode == "sunset_activity"
+                else "sunrise"
+            ),
+
+            "source": (
+                "latest_completed_activity"
+                if state_mode == "sunset_activity"
+                else "ewma_decay_from_previous_day"
+            ),
+
+            "method": (
+                "authoritative_activity"
+                if state_mode == "sunset_activity"
+                else "pure_ewma_decay"
+            ),
+
+            "tau_ctl": (
+                None
+                if state_mode == "sunset_activity"
+                else 42.0
+            ),
+
+            "tau_atl": (
+                None
+                if state_mode == "sunset_activity"
+                else 7.0
+            ),
+
+            "includes_planned_load": False,
+
+            "includes_completed_load": (
+                state_mode == "sunset_activity"
+            ),
+        }
 
         debug(
             context,
