@@ -526,7 +526,7 @@ RENDERER_PROFILES = {
         "planned_events_rule": [
             "The planned_events_7d section MUST be rendered as a Markdown table.",
             "Each planned event MUST appear as exactly one row."
-            "Column order MUST be: Date | Day | Name | Category | Duration (min) | TSS.",
+            "Column order MUST be: Date | Day | Name | Category | Duration (min) | TSS | CTL | ATL",
             "Do NOT summarise, group, or narrate planned events.",
             "Coaching sentences for planned_events, if enabled, MUST appear AFTER the table."
         ],
