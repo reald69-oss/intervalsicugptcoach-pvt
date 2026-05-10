@@ -1368,17 +1368,32 @@ def run_tier1_controller(df_master, wellness, context):
         # ---------------------------------------------------------
         # Determine active CTL / ATL state meaning
         # ---------------------------------------------------------
-        has_completed_activity = (
+        has_completed_activity = False
+        activity_type = "none"
+
+        if (
             "df_today" in locals()
             and "valid" in locals()
             and not df_today.empty
             and not valid.empty
-        )
+        ):
+
+            latest = valid.iloc[-1]
+
+            paired_event_id = latest.get("paired_event_id")
+
+            has_completed_activity = True
+
+            activity_type = (
+                "planned_completed"
+                if pd.notna(paired_event_id)
+                else "unplanned_completed"
+            )
 
         state_mode = (
-            "sunset_activity"
+            activity_type
             if has_completed_activity
-            else "sunrise"
+            else "sunrise_decay"
         )
 
         context["load_state"] = {
@@ -1386,39 +1401,37 @@ def run_tier1_controller(df_master, wellness, context):
 
             "meaning": (
                 "actual_sunset"
-                if state_mode == "sunset_activity"
+                if has_completed_activity
                 else "sunrise"
             ),
 
             "source": (
                 "latest_completed_activity"
-                if state_mode == "sunset_activity"
+                if has_completed_activity
                 else "ewma_decay_from_previous_day"
             ),
 
             "method": (
                 "authoritative_activity"
-                if state_mode == "sunset_activity"
+                if has_completed_activity
                 else "pure_ewma_decay"
             ),
 
             "tau_ctl": (
                 None
-                if state_mode == "sunset_activity"
+                if has_completed_activity
                 else 42.0
             ),
 
             "tau_atl": (
                 None
-                if state_mode == "sunset_activity"
+                if has_completed_activity
                 else 7.0
             ),
 
             "includes_planned_load": False,
 
-            "includes_completed_load": (
-                state_mode == "sunset_activity"
-            ),
+            "includes_completed_load": has_completed_activity,
         }
 
         debug(
