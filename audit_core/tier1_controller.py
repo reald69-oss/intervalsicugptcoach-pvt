@@ -1203,13 +1203,39 @@ def run_tier1_controller(df_master, wellness, context):
 
     # --- Step 6a: Extract CTL / ATL / TSB from   yesterday + today's completed load ---
     """
-    | State               | Meaning                                      | Source                                    |
-    |--------------------|----------------------------------------------|-------------------------------------------|
-    | Sunrise            | Start-of-day freshness before today's load   | Yesterday CTL/ATL decayed overnight       |
-    | No-event end state | End-of-day state with zero training load     | Usually close to sunrise state            |
-    | Planned sunset     | Projected end-of-day after planned workouts  | Today's wellness/calendar CTL/ATL         |
-    | Actual sunset      | Real end-of-day after completed activities   | Latest completed activity CTL/ATL         |
+    ## mode
 
+    | mode | Meaning |
+    |---|---|
+    | `sunrise_decay` | CTL/ATL derived from overnight EWMA decay from previous day |
+    | `planned_completed` | CTL/ATL sourced from completed activity linked to a planned calendar event |
+    | `unplanned_completed` | CTL/ATL sourced from completed activity not linked to a planned calendar event |
+    | `fallback_wellness` | CTL/ATL sourced from latest available wellness snapshot fallback |
+
+    ## day_context
+
+    | day_context | Meaning |
+    |---|---|
+    | `normal_day` | No remaining planned workouts after current state |
+    | `mixed_day` | Completed activity exists AND additional planned workouts still remain |
+
+    ## meaning
+
+    | meaning | Meaning |
+    |---|---|
+    | `sunrise` | Start-of-day freshness before load |
+    | `actual_sunset` | Post-completed-activity physiological state |
+    | `unknown_current_state` | Fallback state with uncertain freshness/load interpretation |
+
+    ## Example combinations
+
+    | mode | day_context | Interpretation |
+    |---|---|---|
+    | `sunrise_decay` | `normal_day` | Morning freshness before training |
+    | `planned_completed` | `normal_day` | Planned workout completed; no remaining workouts |
+    | `planned_completed` | `mixed_day` | Planned workout completed but more planned workouts remain |
+    | `unplanned_completed` | `normal_day` | Unplanned activity completed; no remaining workouts |
+    | `unplanned_completed` | `mixed_day` | Unplanned activity completed while planned workouts still remain |
     """
 
 
@@ -1396,8 +1422,46 @@ def run_tier1_controller(df_master, wellness, context):
             else "sunrise_decay"
         )
 
+        # ---------------------------------------------------------
+        # Detect remaining planned workouts today
+        # ---------------------------------------------------------
+        has_remaining_planned = False
+
+        calendar_events = context.get("calendar", [])
+
+        if isinstance(calendar_events, list):
+
+            for ev in calendar_events:
+
+                ev_date = pd.to_datetime(
+                    ev.get("start_date_local"),
+                    errors="coerce"
+                )
+
+                if pd.isna(ev_date):
+                    continue
+
+                if ev_date.date() != today:
+                    continue
+
+                # planned but not completed
+                if not ev.get("paired_activity_id"):
+                    has_remaining_planned = True
+                    break
+
+        # ---------------------------------------------------------
+        # Day context
+        # ---------------------------------------------------------
+        day_context = (
+            "mixed_day"
+            if has_completed_activity and has_remaining_planned
+            else state_mode
+        )
+
         context["load_state"] = {
             "mode": state_mode,
+
+            "day_context": day_context,
 
             "meaning": (
                 "actual_sunset"
