@@ -1202,6 +1202,17 @@ def run_tier1_controller(df_master, wellness, context):
     context["dailyMerged"] = daily_summary
 
     # --- Step 6a: Extract CTL / ATL / TSB from   yesterday + today's completed load ---
+    """
+    | State               | Meaning                     | Source                                    |
+    | ------------------- | --------------------------- | ----------------------------------------- |
+    | Sunrise             | before today’s load         | yesterday CTL/ATL decayed forward         |
+    | No-event end of day | after a day with zero load  | usually same as decay-forward daily state |
+    | Planned sunset      | after planned calendar load | today wellness/calendar CTL/ATL           |
+    | Actual sunset       | after completed activity    | latest today activity CTL/ATL             |
+
+    """
+
+
     if isinstance(wellness, pd.DataFrame) and not wellness.empty:
         df_well = wellness.copy()
         df_well.columns = [c.strip().lower() for c in df_well.columns]
@@ -1221,18 +1232,47 @@ def run_tier1_controller(df_master, wellness, context):
         today = pd.to_datetime(context.get("athlete_today")).date()
 
         # ---------------------------------------------------------
-        # ALWAYS use latest wellness row strictly BEFORE today
+        # TRUE SUNRISE
+        # yesterday sunset carried into today with decay only
         # ---------------------------------------------------------
         df_past = df_well[df_well["_date"] < today]
 
         if not df_past.empty:
-            last = df_past.iloc[-1]
+            sunrise = df_past.iloc[-1]
         else:
-            last = df_well.iloc[-1]
+            sunrise = df_well.iloc[-1]
 
-        # --- yesterday baseline from wellness ---
-        ctl_y = pd.to_numeric(last.get("ctl"), errors="coerce")
-        atl_y = pd.to_numeric(last.get("atl"), errors="coerce")
+        ctl_y = pd.to_numeric(
+            sunrise.get("ctl"),
+            errors="coerce"
+        )
+
+        atl_y = pd.to_numeric(
+            sunrise.get("atl"),
+            errors="coerce"
+        )
+
+        ctl_sunrise = None
+        atl_sunrise = None
+        tsb_sunrise = None
+
+        if pd.notna(ctl_y) and pd.notna(atl_y):
+
+            tau_ctl = 42.0
+            tau_atl = 7.0
+
+            # overnight decay only
+            ctl_sunrise = float(
+                ctl_y - (ctl_y / tau_ctl)
+            )
+
+            atl_sunrise = float(
+                atl_y - (atl_y / tau_atl)
+            )
+
+            tsb_sunrise = (
+                ctl_sunrise - atl_sunrise
+            )
 
         # --- today's COMPLETED load only from activities ---
         today_tss = 0.0
@@ -1288,15 +1328,16 @@ def run_tier1_controller(df_master, wellness, context):
                     tsb_today = ctl_today - atl_today
 
         # ---------------------------------------------------------
-        # Fallback to latest wellness snapshot
+        # No completed activity today:
+        # use SUNRISE state from wellness
         # ---------------------------------------------------------
         if ctl_today is None or atl_today is None:
 
-            if pd.notna(ctl_y) and pd.notna(atl_y):
+            if pd.notna(ctl_sunrise) and pd.notna(atl_sunrise):
 
-                ctl_today = float(ctl_y)
-                atl_today = float(atl_y)
-                tsb_today = ctl_today - atl_today
+                ctl_today = float(ctl_sunrise)
+                atl_today = float(atl_sunrise)
+                tsb_today = float(tsb_sunrise)
 
         context["ctl"] = round(float(ctl_today), 2) if ctl_today is not None else None
         context["atl"] = round(float(atl_today), 2) if atl_today is not None else None
@@ -1319,11 +1360,22 @@ def run_tier1_controller(df_master, wellness, context):
             "ATL": {"value": context["atl"], "status": "authoritative_activity"},
             "TSB": {"value": context["tsb"], "status": "derived"},
         }
-        
+
+        state_mode = (
+            "sunset_activity"
+            if not df_today.empty and not valid.empty
+            else "sunrise_wellness"
+        )
+
         debug(
             context,
-            f"[T1-WELLNESS-OBSERVED] baseline_date={last.get('_date')} today_tss={today_tss} "
-            f"CTL={context['ctl']} ATL={context['atl']} TSB={context['tsb']}"
+            f"[T1-WELLNESS-OBSERVED] "
+            f"mode={state_mode} "
+            f"sunrise_date={sunrise.get('_date')} "
+            f"today_tss={today_tss} "
+            f"CTL={context['ctl']} "
+            f"ATL={context['atl']} "
+            f"TSB={context['tsb']}"
         )
 
     else:
