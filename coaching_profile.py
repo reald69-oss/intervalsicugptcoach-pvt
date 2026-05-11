@@ -94,7 +94,7 @@ REPORT_CONTRACT = {
         "energy_system_progression",
         "physiology",
         "phases_summary",
-        "phases",
+        #"phases",
         "phases_future",
         
         # 🎯 ADAPTIVE DECISIONS

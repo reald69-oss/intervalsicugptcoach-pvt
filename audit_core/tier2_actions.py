@@ -506,6 +506,67 @@ def detect_phases(context, events):
     debug(context, "[PHASES] ---- Phase detection end ----")
     return context
 
+def classify_phase_v2(row, prev_phase_final=None):
+    cfg = CHEAT_SHEET["thresholds"]["phase_detection_v2"]
+
+    boundaries = cfg["PhaseBoundaries"]
+
+    delta = float(row.get("delta", 0) or 0)
+    acwr = float(row.get("acwr", 1) or 1)
+    tsb = float(row.get("tsb", 0) or 0)
+
+    phase_raw = "Transition"
+
+    for phase, b in boundaries.items():
+        if not (b["trend_min"] <= delta <= b["trend_max"]):
+            continue
+
+        if acwr > b.get("acwr_max", 999):
+            continue
+
+        if "tsb_min" in b and tsb < b["tsb_min"]:
+            continue
+
+        if "tsb_max" in b and tsb > b["tsb_max"]:
+            continue
+
+        phase_raw = phase
+        break
+
+    phase_final = phase_raw
+
+    # RULE 1 — peak after taper
+    if (
+        prev_phase_final == "Taper"
+        and delta > 0
+        and acwr <= 1.10
+    ):
+        phase_final = "Peak"
+
+    # RULE 2 — true recovery
+    elif (
+        acwr < 0.65
+        and delta < -0.10
+        and tsb > 5
+    ):
+        phase_final = "Recovery"
+
+    # RULE 3 — transition after recovery
+    elif (
+        prev_phase_final == "Recovery"
+        and abs(delta) < 0.15
+    ):
+        phase_final = "Transition"
+
+    # RULE 4 — prevent false peak
+    elif (
+        phase_raw == "Peak"
+        and tsb < 5
+    ):
+        phase_final = "Base"
+
+    return phase_raw, phase_final
+
 def build_future_projected_weeks(context, weekly_phases):
     """
     Build projected future ISO weeks from planned calendar events.
@@ -738,6 +799,35 @@ def build_future_projected_weeks(context, weekly_phases):
         hours = float(wk.get("moving_time_total", 0) or 0) / 3600
         distance_km = float(wk.get("distance_m_total", 0) or 0) / 1000
 
+        acwr = atl / ctl if ctl > 0 else 1.0
+
+        prev_tss = (
+            projected_rows[-1]["tss"]
+            if projected_rows and projected_rows[-1].get("tss", 0) > 0
+            else None
+        )
+
+        delta = (
+            (tss - prev_tss) / prev_tss
+            if prev_tss
+            else 0.0
+        )
+
+        prev_phase_final = (
+            projected_rows[-1]["phase"]
+            if projected_rows
+            else None
+        )
+
+        phase_raw, phase = classify_phase_v2(
+            {
+                "delta": delta,
+                "acwr": acwr,
+                "tsb": tsb,
+            },
+            prev_phase_final=prev_phase_final
+        )
+
         if tsb < -30:
             classification = "High_fatigue"
         elif tsb < -10:
@@ -746,15 +836,6 @@ def build_future_projected_weeks(context, weekly_phases):
             classification = "Neutral"
         else:
             classification = "Fresh"
-
-        if tsb < -30:
-            phase = "Overreached"
-        elif tsb < -5:
-            phase = "Build"
-        elif tsb <= 5:
-            phase = "Base"
-        else:
-            phase = "Recovery"
 
         projected_rows.append({
             "week": wk["week"],
@@ -769,16 +850,18 @@ def build_future_projected_weeks(context, weekly_phases):
             "atl": round(atl, 2),
             "tsb": round(tsb, 2),
 
-            "phase": phase,
-            "classification": classification,
-
             "is_projected": True,
             "projection_basis": "calendar_180d",
 
             "completed_tss": 0.0,
             "planned_remaining_tss": round(tss, 1),
             "projected_total_tss": round(tss, 1),
-            "projected_hours": round(hours, 2)
+            "projected_hours": round(hours, 2),
+            "phase_raw": phase_raw,
+            "phase": phase,
+            "classification": classification,
+            "acwr": round(acwr, 2),
+            "delta": round(delta, 3)
         })
 
     debug(
@@ -952,31 +1035,6 @@ def evaluate_actions(context):
                 "metric": "FatOxidation",
                 "state": "needs_improvement"
             })
-
-
-    # ---- Load Variability Index ---- # not a coaching metric now = old 
-#    if lvi < th["LoadVariabilityIndex"]["amber"][0]:
-
-#        metric_signals.append({
-#            "metric": "LoadVariabilityIndex",
-#            "state": "poor"
-#        })
-
-#    elif lvi < th["LoadVariabilityIndex"]["green"][0]:
-
-#        metric_signals.append({
-#            "metric": "LoadVariabilityIndex",
-#            "state": "moderate"
-#        })
-
-#    else:
-
-#        metric_signals.append({
-#            "metric": "LoadVariabilityIndex",
-#            "state": "healthy"
-#        })
-
-    # ---------------- Append metric feedback ----------------
 
     final_actions = []
 

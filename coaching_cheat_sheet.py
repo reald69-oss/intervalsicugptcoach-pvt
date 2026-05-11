@@ -289,6 +289,166 @@ CHEAT_SHEET["thresholds"] = {
             "lvi_min": 0.65
         }
     },
+
+    # ================================================================
+    # 🧠 PHASE DETECTION ENGINE v2.1
+    # ================================================================
+    # V2 separates:
+    #   1) PhaseBoundaries  → raw weekly load-pattern classification
+    #   2) PhaseRulesV2     → sequence-aware refinement layer
+    #
+    # PhaseBoundaries remain deterministic and threshold-based.
+    # PhaseRulesV2 is applied AFTER raw phase detection.
+    #
+    # Core metrics:
+    #   tss        → weekly training load
+    #   delta      → smoothed week-to-week % change in TSS
+    #   ctl        → chronic training load / fitness
+    #   atl        → acute training load / fatigue
+    #   tsb        → ctl - atl
+    #   acwr       → atl / ctl
+    #
+    # V1 classified load pattern only.
+    # V2 classifies load pattern + periodisation context.
+    # ================================================================
+
+    "phase_detection_v2": {
+
+        "version": "2.1",
+
+        # ============================================================
+        # RAW LOAD-PATTERN CLASSIFIER
+        # ============================================================
+
+        "PhaseBoundaries": {
+
+            "Recovery": {
+                "trend_min": -1.00,
+                "trend_max": -0.30,
+                "acwr_max": 0.85,
+                "tsb_min": 5
+            },
+
+            "Taper": {
+                "trend_min": -0.40,
+                "trend_max": -0.12,
+                "acwr_max": 1.00,
+                "tsb_min": 0
+            },
+
+            "Deload": {
+                "trend_min": -0.12,
+                "trend_max": -0.01,
+                "acwr_max": 1.10
+            },
+
+            "Base": {
+                "trend_min": -0.01,
+                "trend_max": 0.05,
+                "acwr_max": 1.15
+            },
+
+            "Peak": {
+                "trend_min": -0.15,
+                "trend_max": 0.02,
+                "acwr_max": 1.00,
+                "tsb_min": 8
+            },
+
+            "Build": {
+                "trend_min": 0.03,
+                "trend_max": 0.30,
+                "acwr_max": 1.30
+            }
+        },
+
+        # ============================================================
+        # SEQUENCE-AWARE REFINEMENT RULES
+        # ============================================================
+
+        "PhaseRulesV2": {
+
+            "version": "phase_rules_v2.1",
+
+            "execution_order": [
+                "peak_after_taper",
+                "true_recovery_strict",
+                "transition_after_recovery",
+                "prevent_false_peak",
+                "default_raw_phase"
+            ],
+
+            # --------------------------------------------------------
+            # RULE 1 — PEAK AFTER TAPER
+            # --------------------------------------------------------
+
+            "peak_after_taper": {
+                "if": {
+                    "prev_phase_final": "Taper",
+                    "delta_gt": 0.00,
+                    "acwr_lte": 1.10
+                },
+                "then": {
+                    "phase_final": "Peak"
+                }
+            },
+
+            # --------------------------------------------------------
+            # RULE 2 — TRUE RECOVERY
+            # --------------------------------------------------------
+
+            "true_recovery_strict": {
+                "if": {
+                    "acwr_lt": 0.65,
+                    "delta_lt": -0.10,
+                    "tsb_gt": 5
+                },
+                "then": {
+                    "phase_final": "Recovery"
+                }
+            },
+
+            # --------------------------------------------------------
+            # RULE 3 — TRANSITION AFTER RECOVERY
+            # --------------------------------------------------------
+
+            "transition_after_recovery": {
+                "if": {
+                    "prev_phase_final": "Recovery",
+                    "abs_delta_lt": 0.15
+                },
+                "then": {
+                    "phase_final": "Transition"
+                }
+            },
+
+            # --------------------------------------------------------
+            # RULE 4 — PREVENT FALSE PEAK
+            # --------------------------------------------------------
+
+            "prevent_false_peak": {
+                "if": {
+                    "phase_raw": "Peak",
+                    "tsb_lt": 5
+                },
+                "then": {
+                    "phase_final": "Base"
+                }
+            },
+
+            # --------------------------------------------------------
+            # RULE 5 — DEFAULT
+            # --------------------------------------------------------
+
+            "default_raw_phase": {
+                "then": {
+                    "phase_final": "phase_raw"
+                }
+            }
+        }
+    },
+
+
     "ESPE": {
         "Ride": {
             "anaerobic": {"strong": 3.0, "moderate": 1.5, "mild": 0.8, "decline": -1.5},
@@ -338,6 +498,10 @@ CHEAT_SHEET["thresholds"] = {
         },
     }
 }
+
+
+
+
 
 CHEAT_SHEET["metric_groups"] = {
     # --- WDRM ---
