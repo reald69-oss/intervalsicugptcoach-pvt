@@ -294,6 +294,14 @@ def _process_sport(sport: str, data: Dict[str, Any], context: Dict[str, Any]) ->
             "Anaerobic power is improving — keep short, high-intensity efforts in the mix."
         )
 
+    elif adaptation_state == "mixed_adaptation":
+
+        system_guidance = (
+            "Mixed adaptation pattern detected — sprint power has improved, "
+            "but anaerobic repeatability and long-duration durability have declined. "
+            "Rebalance training with sustained VO₂ and aerobic durability work."
+        )
+
     elif adaptation_state == "plateau":
 
         system_guidance = (
@@ -610,6 +618,7 @@ def classify_adaptation_state(system_status, deltas):
     dur = deltas.get("60m")
     vo2 = deltas.get("5m")
     neu = deltas.get("5s")
+    ana_1m = deltas.get("1m")
 
     # fatigue
     if thr is not None and vo2 is not None and thr < -3 and vo2 < -3:
@@ -623,12 +632,25 @@ def classify_adaptation_state(system_status, deltas):
     if thr is not None and dur is not None and thr > 1 and dur > 2:
         return "aerobic_consolidation"
 
-    # anaerobic
-    if neu is not None and neu > 5:
+    # mixed adaptation
+    # sprint freshness but declining anaerobic repeatability
+    if (
+        neu is not None and neu > 5 and
+        ana_1m is not None and ana_1m < -3
+    ):
+        return "mixed_adaptation"
+
+    # anaerobic build
+    # require both sprint + sustained anaerobic progression
+    if (
+        neu is not None and neu > 5 and
+        ana_1m is not None and ana_1m > 2
+    ):
         return "anaerobic_build"
 
     # plateau
     vals = [v for v in deltas.values() if v is not None]
+
     if vals and all(abs(v) < 1 for v in vals):
         return "plateau"
 
