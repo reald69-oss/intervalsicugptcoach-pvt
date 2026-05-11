@@ -594,8 +594,8 @@ RENDERER_PROFILES = {
             "training_load": [
                 "training_volume",
                 "metrics",
-                "trend_metrics"
-            ],
+                "trend_metrics",
+                "phases_future"            ],
 
             "physiology_response": [
                 "wellness",
