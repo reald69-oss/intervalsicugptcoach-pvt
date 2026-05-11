@@ -29,6 +29,7 @@ from audit_core.tier3_trail_execution import (
 )
 from coach_trail_rules import TRAIL_DEFAULTS
 from audit_core.tier3_future_forecast import run_future_forecast
+from audit_core.tier2_actions import build_future_projected_weeks
 
 # ---------------------------------------------------------
 # Helpers
@@ -874,16 +875,16 @@ def build_semantic_json(context):
     # ------------------------------------------------------------------
     # 🧭 Phase Detection (Base → Build → Peak → Taper → Recovery)
     # ------------------------------------------------------------------
-    try:
-        from audit_core.tier2_actions import detect_phases
-        if not context.get("phases"):
-            events = context.get("activities_full") or context.get("df_events") or []
-            if isinstance(events, pd.DataFrame):
-                events = events.to_dict(orient="records")
-            context = detect_phases(context, events)
-            debug(context, f"[SEMANTIC] Injected detected phases → {len(context.get('phases', []))}")
-    except Exception as e:
-        debug(context, f"[SEMANTIC] ⚠️ Phase detection failed: {e}")
+#    try:
+#        from audit_core.tier2_actions import detect_phases
+#        if not context.get("phases"):
+#            events = context.get("activities_full") or context.get("df_events") or []
+#            if isinstance(events, pd.DataFrame):
+#                events = events.to_dict(orient="records")
+#            context = detect_phases(context, events)
+#            debug(context, f"[SEMANTIC] Injected detected phases → {len(context.get('phases', []))}")
+#    except Exception as e:
+#        debug(context, f"[SEMANTIC] ⚠️ Phase detection failed: {e}")
 
     # ---------------------------------------------------------
     # BASE SEMANTIC STRUCTURE
@@ -1988,6 +1989,7 @@ def build_semantic_json(context):
     # 🪜 Weekly Phases Summary (URF v5.2 canonical)
     # ---------------------------------------------------------
     if semantic["meta"]["report_type"] in ("season", "summary", "weekly"):
+
         # --- Force authoritative dataset for season/summary totals ---
         if "df_light" in context and isinstance(context["df_light"], pd.DataFrame) and len(context["df_light"]) > 100:
             df_ref = context["df_light"]
@@ -2088,7 +2090,11 @@ def build_semantic_json(context):
                 total_tss += week_data["tss"]
                 total_distance += week_data["distance_km"]
 
-            semantic["weekly_phases"] = weekly_phases
+            debug(
+                context,
+                f"[WEEKLY] weekly_phases sample="
+                f"{weekly_phases[:2] if weekly_phases else 'EMPTY'}"
+            )
 
             # --- Build unified weekly phase summary ---
             semantic["weekly_phases"] = weekly_phases
@@ -4128,6 +4134,59 @@ def build_semantic_json(context):
                 )
 
                 # -----------------------------------------------------
+                # 🔮 Append future projected ISO weeks
+                # -----------------------------------------------------
+
+                future_weeks = build_future_projected_weeks(
+                    context=context,
+                    weekly_phases=df_weeks.to_dict(orient="records")
+                )
+
+                # -----------------------------------------------------
+                # 🔮 Store future projected ISO weeks separately
+                # -----------------------------------------------------
+
+                semantic["phases_future"] = []
+
+                if future_weeks:
+
+                    df_future = pd.DataFrame(future_weeks)
+
+                    if not df_future.empty:
+
+                        df_future["start"] = pd.to_datetime(
+                            df_future["start"],
+                            errors="coerce"
+                        )
+
+                        df_future["end"] = pd.to_datetime(
+                            df_future["end"],
+                            errors="coerce"
+                        )
+
+                        df_future = (
+                            df_future
+                            .sort_values("start")
+                            .reset_index(drop=True)
+                        )
+
+                        semantic["phases_future"] = (
+                            df_future.assign(
+                                start=lambda x: pd.to_datetime(x["start"]).dt.strftime("%Y-%m-%d"),
+                                end=lambda x: pd.to_datetime(x["end"]).dt.strftime("%Y-%m-%d"),
+                                ctl=lambda x: pd.to_numeric(x["ctl"], errors="coerce").round(2),
+                                atl=lambda x: pd.to_numeric(x["atl"], errors="coerce").round(2),
+                                tsb=lambda x: pd.to_numeric(x["tsb"], errors="coerce").round(2),
+                            ).to_dict(orient="records")
+                        )
+
+                        debug(
+                            context,
+                            f"[FUTURE] ✅ Stored "
+                            f"{len(semantic['phases_future'])} future ISO weeks"
+                        )
+
+                # -----------------------------------------------------
                 # 🧠 Adjust CURRENT ISO week load using projected plan
                 # -----------------------------------------------------
 
@@ -4623,14 +4682,28 @@ def build_semantic_json(context):
 
 
             # -----------------------------------------------------
-            # Enforce output ordering (summary before phases)
+            # Enforce output ordering
+            # phases_summary → phases → phases_future
             # -----------------------------------------------------
+
             ordered = {}
+
             for k, v in semantic.items():
-                if k not in ("phases_summary", "phases"):
+                if k not in (
+                    "phases_summary",
+                    "phases",
+                    "phases_future"
+                ):
                     ordered[k] = v
-            ordered["phases_summary"] = semantic["phases_summary"]
-            ordered["phases"] = semantic["phases"]
+
+            if "phases_summary" in semantic:
+                ordered["phases_summary"] = semantic["phases_summary"]
+
+            if "phases" in semantic:
+                ordered["phases"] = semantic["phases"]
+
+            if "phases_future" in semantic:
+                ordered["phases_future"] = semantic["phases_future"]
 
             semantic.clear()
             semantic.update(ordered)

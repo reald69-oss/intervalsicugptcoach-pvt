@@ -135,6 +135,26 @@ HR Curves → getHRCurvesV1 → params: curves?, type?, athleteID? → HR curve 
 
 Power-HR Curve → getPowerHRCurveV1 → params: start*, end*, athleteID? → power vs heart rate relationship
 
+Activity HR Curve → getActivityHRCurveV1 → params: activity_id*, athleteID? → heart rate curve for a single activity
+
+Activity Pace Curve → getActivityPaceCurveV1 → params: activity_id*, gap?, athleteID? → pace or GAP curve for a single activity
+
+- `gap=true` = GAP (grade-adjusted pace)
+- `gap=false` = raw pace
+- useful for terrain-normalized running analysis and durability
+
+Activity Segments → getActivitySegmentsV1 → params: activity_id*, athleteID? → detected climbs, intervals, and execution segments from a single activity
+
+Activity Interval Stats → getActivityIntervalStatsV1 → params: activity_id*, start_index*, end_index*, athleteID? → detailed interval metrics for a selected segment or interval range within a single activity
+
+Used for:
+- climb analysis
+- interval execution
+- durability within segment
+- pacing analysis
+- W′ depletion analysis
+- fatigue progression
+
 MMP Model → getMMPModelV1 → params: type?, athleteID? → best sustainable power model across durations
 
 ---
