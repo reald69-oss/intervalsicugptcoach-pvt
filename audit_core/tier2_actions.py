@@ -768,6 +768,9 @@ def build_future_projected_weeks(context, weekly_phases):
         ctl = float(ctl)
         atl = float(atl)
 
+        if pd.isna(last_date):
+            return float(ctl), float(atl)
+
         last_day = pd.Timestamp(last_date).normalize()
         end_day = pd.Timestamp(week_end).normalize()
 
