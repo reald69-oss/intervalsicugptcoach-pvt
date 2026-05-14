@@ -1625,11 +1625,13 @@ def run_tier1_controller(df_master, wellness, context):
         debug(context, f"  hr:    {context['zone_dist_hr']}")
 
     # =========================================================
-    # 🔥 OUTLIER DETECTION (365d SUMMARY — LIGHT DATASET)
+    # 🔥 OUTLIER DETECTION (MULTI-FACTOR LOAD-ORDER MODEL)
     # =========================================================
     try:
+        import numpy as np
+
         # -----------------------------------------------------
-        # 1️⃣ Correct dataset (authoritative)
+        # 1️⃣ Correct dataset
         # -----------------------------------------------------
         df = context.get("df_light_full")
 
@@ -1637,114 +1639,530 @@ def run_tier1_controller(df_master, wellness, context):
             df = context.get("_df_light_90d")
 
         if df is None or df.empty:
-            df = df_master  # final fallback (weekly)
+            df = df_master
 
         df = df.copy()
 
         debug(context, f"[OUTLIERS] Dataset rows={len(df)}")
 
         # -----------------------------------------------------
-        # 2️⃣ Guardrails
+        # 2️⃣ Athlete sport settings
         # -----------------------------------------------------
-        if "icu_training_load" not in df.columns:
+        athlete = context.get("athlete") or {}
+
+        sport_settings = athlete.get("sportSettings", [])
+
+        debug(
+            context,
+            f"[OUTLIERS] sportSettings={len(sport_settings)}"
+        )
+
+        # -----------------------------------------------------
+        # Build sport lookup
+        # -----------------------------------------------------
+        sport_lookup = {}
+
+        for s in sport_settings:
+
+            for t in s.get("types", []):
+
+                sport_lookup[t] = s
+
+        debug(
+            context,
+            f"[OUTLIERS] sport_lookup_types={list(sport_lookup.keys())[:10]}"
+        )
+
+        # -----------------------------------------------------
+        # 3️⃣ Guardrails
+        # -----------------------------------------------------
+        required = [
+            "icu_training_load",
+            "moving_time"
+        ]
+
+        if not all(c in df.columns for c in required):
+
             context["outliers"] = []
             context["outlier_summary"] = {}
-            debug(context, "[OUTLIERS] No icu_training_load column")
+
+            debug(
+                context,
+                "[OUTLIERS] Missing required columns"
+            )
+
         else:
 
-            # Remove junk sessions (align with Tier-2 logic)
+            # -------------------------------------------------
+            # Filter invalid sessions
+            # -------------------------------------------------
             df = df[
                 (df["icu_training_load"] > 20) &
-                (df.get("moving_time", 0) > 1800)
-            ]
+                (df["moving_time"] > 1800)
+            ].copy()
 
             if df.empty:
+
                 context["outliers"] = []
                 context["outlier_summary"] = {}
-                debug(context, "[OUTLIERS] No valid rows after filtering")
+
+                debug(
+                    context,
+                    "[OUTLIERS] No valid rows"
+                )
+
             else:
 
-                # -----------------------------------------------------
-                # 3️⃣ Stats
-                # -----------------------------------------------------
-                mean_tss = df["icu_training_load"].mean()
-                std_tss = df["icu_training_load"].std()
+                # -------------------------------------------------
+                # 4️⃣ Derived metrics
+                # -------------------------------------------------
+                df["hours"] = df["moving_time"] / 3600
 
-                if std_tss == 0 or pd.isna(std_tss):
+                df["density"] = np.where(
+                    df["hours"] > 0,
+                    df["icu_training_load"] / df["hours"],
+                    0
+                )
+
+                # -------------------------------------------------
+                # Optional columns
+                # -------------------------------------------------
+                optional_cols = [
+                    "icu_weighted_avg_watts",
+                    "average_heartrate",
+                    "average_speed"
+                ]
+
+                for col in optional_cols:
+
+                    if col not in df.columns:
+                        df[col] = np.nan
+
+                # -------------------------------------------------
+                # 5️⃣ Baselines
+                # -------------------------------------------------
+                def safe_stats(series):
+
+                    s = pd.to_numeric(
+                        series,
+                        errors="coerce"
+                    ).dropna()
+
+                    if s.empty:
+                        return {
+                            "mean": 0,
+                            "std": 0
+                        }
+
+                    return {
+                        "mean": float(s.mean()),
+                        "std": float(s.std())
+                    }
+
+                stats = {
+
+                    "tss":
+                        safe_stats(df["icu_training_load"]),
+
+                    "density":
+                        safe_stats(df["density"]),
+
+                    "power":
+                        safe_stats(df["icu_weighted_avg_watts"]),
+
+                    "hr":
+                        safe_stats(df["average_heartrate"]),
+
+                    "pace":
+                        safe_stats(df["average_speed"])
+                }
+
+                debug(
+                    context,
+                    f"[OUTLIERS] stats={stats}"
+                )
+
+                # -------------------------------------------------
+                # 6️⃣ Safe zscore helper
+                # -------------------------------------------------
+                def safe_z(v, mean_v, std_v):
+
+                    if (
+                        std_v == 0 or
+                        pd.isna(std_v) or
+                        pd.isna(v)
+                    ):
+                        return 0
+
+                    return (v - mean_v) / std_v
+
+                # -------------------------------------------------
+                # 7️⃣ Resolve metric chain
+                # -------------------------------------------------
+                def resolve_metric_chain(load_order):
+
+                    if not load_order:
+                        return ["HR"]
+
+                    return (
+                        str(load_order)
+                        .upper()
+                        .split("_")
+                    )
+
+                # -------------------------------------------------
+                # 8️⃣ Per-row analysis
+                # -------------------------------------------------
+                rows = []
+
+                for _, o in df.iterrows():
+
+                    sport = str(
+                        o.get("type", "Unknown")
+                    )
+
+                    sport_cfg = sport_lookup.get(sport, {})
+
+                    load_order = sport_cfg.get(
+                        "load_order",
+                        "HR"
+                    )
+
+                    metric_chain = resolve_metric_chain(
+                        load_order
+                    )
+
+                    # ---------------------------------------------
+                    # Core zscores
+                    # ---------------------------------------------
+                    z_tss = safe_z(
+                        o["icu_training_load"],
+                        stats["tss"]["mean"],
+                        stats["tss"]["std"]
+                    )
+
+                    z_density = safe_z(
+                        o["density"],
+                        stats["density"]["mean"],
+                        stats["density"]["std"]
+                    )
+
+                    # ---------------------------------------------
+                    # Primary metric resolution
+                    # ---------------------------------------------
+                    z_primary = 0
+                    primary_label = "none"
+
+                    power_val = pd.to_numeric(
+                        o["icu_weighted_avg_watts"],
+                        errors="coerce"
+                    )
+
+                    hr_val = pd.to_numeric(
+                        o["average_heartrate"],
+                        errors="coerce"
+                    )
+
+                    pace_val = pd.to_numeric(
+                        o["average_speed"],
+                        errors="coerce"
+                    )
+
+                    for metric in metric_chain:
+
+                        # -----------------------------------------
+                        # POWER
+                        # -----------------------------------------
+                        if (
+                            metric == "POWER" and
+                            pd.notna(power_val) and
+                            power_val > 0
+                        ):
+
+                            z_primary = safe_z(
+                                power_val,
+                                stats["power"]["mean"],
+                                stats["power"]["std"]
+                            )
+
+                            primary_label = "power"
+
+                            break
+
+                        # -----------------------------------------
+                        # PACE
+                        # -----------------------------------------
+                        elif (
+                            metric == "PACE" and
+                            pd.notna(pace_val) and
+                            pace_val > 0
+                        ):
+
+                            z_primary = safe_z(
+                                pace_val,
+                                stats["pace"]["mean"],
+                                stats["pace"]["std"]
+                            )
+
+                            primary_label = "pace"
+
+                            break
+
+                        # -----------------------------------------
+                        # HR
+                        # -----------------------------------------
+                        elif (
+                            metric == "HR" and
+                            pd.notna(hr_val) and
+                            hr_val > 0
+                        ):
+
+                            z_primary = safe_z(
+                                hr_val,
+                                stats["hr"]["mean"],
+                                stats["hr"]["std"]
+                            )
+
+                            primary_label = "hr"
+
+                            break
+
+
+                    # ---------------------------------------------
+                    # Composite score
+                    # ---------------------------------------------
+                    zscore = np.sqrt(
+                        (
+                            (z_tss ** 2) * 0.45 +
+                            (z_density ** 2) * 0.35 +
+                            (z_primary ** 2) * 0.20
+                        )
+                    )
+
+                    direction = (
+                        "high"
+                        if z_tss >= 0
+                        else "low"
+                    )
+
+                    rows.append({
+
+                        **o,
+
+                        "sport":
+                            sport,
+
+                        "primary_metric":
+                            primary_label,
+
+                        "z_tss":
+                            z_tss,
+
+                        "z_density":
+                            z_density,
+
+                        "z_primary":
+                            z_primary,
+
+                        "zscore":
+                            zscore,
+
+                        "direction":
+                            direction
+                    })
+
+                # -------------------------------------------------
+                # 9️⃣ Final dataframe
+                # -------------------------------------------------
+                scored = pd.DataFrame(rows)
+
+                outliers = scored[
+                    scored["zscore"] >= 1.75
+                ].copy()
+
+                if outliers.empty:
+
                     context["outliers"] = []
-                    context["outlier_summary"] = {}
-                    debug(context, "[OUTLIERS] std_tss invalid")
+
+                    context["outlier_summary"] = {
+
+                        "count": 0,
+
+                        "mean_tss":
+                            round(
+                                stats["tss"]["mean"],
+                                1
+                            ),
+
+                        "std_tss":
+                            round(
+                                stats["tss"]["std"],
+                                1
+                            )
+                    }
+
                 else:
 
-                    df["zscore"] = (df["icu_training_load"] - mean_tss) / std_tss
+                    outliers = outliers.sort_values(
+                        "zscore",
+                        ascending=False
+                    )
 
-                    # -----------------------------------------------------
-                    # 4️⃣ Detect + rank
-                    # -----------------------------------------------------
-                    outliers = df[df["zscore"].abs() > 1.5].copy()
+                    TOP_N = 5
 
-                    if outliers.empty:
-                        context["outliers"] = []
-                        context["outlier_summary"] = {
-                            "count": 0,
-                            "mean_tss": round(mean_tss, 1),
-                            "std_tss": round(std_tss, 1)
-                        }
-                    else:
-                        outliers["abs_z"] = outliers["zscore"].abs()
-                        outliers = outliers.sort_values("abs_z", ascending=False)
+                    outliers = outliers.head(TOP_N)
 
-                        # 🔒 keep top N
-                        TOP_N = 5
-                        outliers = outliers.head(TOP_N)
+                    formatted = []
 
-                        # -----------------------------------------------------
-                        # 5️⃣ Format (with activity_id + link)
-                        # -----------------------------------------------------
-                        formatted = []
+                    for _, o in outliers.iterrows():
 
-                        for _, o in outliers.iterrows():
+                        raw_id = (
+                            o.get("id") or
+                            o.get("activity_id")
+                        )
 
-                            raw_id = o.get("id") or o.get("activity_id")
+                        activity_id = None
+                        activity_link = None
 
-                            activity_id = None
-                            activity_link = None
+                        if pd.notna(raw_id):
 
-                            if pd.notna(raw_id):
-                                activity_id = str(raw_id)
-                                if not activity_id.startswith("i"):
-                                    activity_id = f"i{activity_id}"
+                            activity_id = str(raw_id)
 
-                                activity_link = f"https://intervals.icu/activities/{activity_id}"
+                            if not activity_id.startswith("i"):
+                                activity_id = f"i{activity_id}"
 
-                            formatted.append({
-                                "date": str(o.get("start_date_local", "?"))[:10],
-                                "title": o.get("name", "?"),
-                                "activity_id": activity_id,
-                                "activity_link": activity_link,
-                                "tss": float(o.get("icu_training_load", 0)),
-                                "load_vs_mean": round(o["icu_training_load"] / mean_tss, 2),
-                                "zscore": round(float(o.get("zscore", 0)), 2),
-                                "type": "high" if o["zscore"] > 0 else "low"
-                            })
+                            activity_link = (
+                                f"https://intervals.icu/activities/{activity_id}"
+                            )
 
-                        # -----------------------------------------------------
-                        # 6️⃣ Store in context
-                        # -----------------------------------------------------
-                        context["outliers"] = formatted
-                        context["outlier_summary"] = {
-                            "count": int(len(outliers)),
-                            "mean_tss": round(mean_tss, 1),
-                            "std_tss": round(std_tss, 1)
-                        }
+                        z = round(
+                            float(o["zscore"]),
+                            2
+                        )
 
-                        debug(context, f"[OUTLIERS] Found {len(formatted)} outliers")
+                        severity = "normal"
+
+                        if z >= 4:
+                            severity = "extreme"
+
+                        elif z >= 3:
+                            severity = "significant"
+
+                        elif z >= 2:
+                            severity = "notable"
+
+                        formatted.append({
+
+                            "date":
+                                str(
+                                    o.get(
+                                        "start_date_local",
+                                        "?"
+                                    )
+                                )[:10],
+
+                            "title":
+                                o.get("name", "?"),
+
+                            "activity_id":
+                                activity_id,
+
+                            "activity_link":
+                                activity_link,
+
+                            "sport":
+                                o.get("sport"),
+
+                            "primary_metric":
+                                o.get("primary_metric"),
+
+                            "tss":
+                                float(
+                                    o.get(
+                                        "icu_training_load",
+                                        0
+                                    )
+                                ),
+
+                            "load_vs_mean":
+                                round(
+                                    o["icu_training_load"] /
+                                    stats["tss"]["mean"],
+                                    2
+                                ),
+
+                            "zscore":
+                                z,
+
+                            "severity":
+                                severity,
+
+                            "type":
+                                o["direction"],
+
+                            "components": {
+
+                                "z_tss":
+                                    round(
+                                        float(o["z_tss"]),
+                                        2
+                                    ),
+
+                                "z_density":
+                                    round(
+                                        float(o["z_density"]),
+                                        2
+                                    ),
+
+                                "z_primary":
+                                    round(
+                                        float(o["z_primary"]),
+                                        2
+                                    )
+                            }
+                        })
+
+                    # -------------------------------------------------
+                    # 🔟 Store
+                    # -------------------------------------------------
+                    context["outliers"] = formatted
+
+                    context["outlier_summary"] = {
+
+                        "count":
+                            int(len(outliers)),
+
+                        "mean_tss":
+                            round(
+                                stats["tss"]["mean"],
+                                1
+                            ),
+
+                        "std_tss":
+                            round(
+                                stats["tss"]["std"],
+                                1
+                            ),
+
+                        "model":
+                            "multifactor_load_order_v2"
+                    }
+
+                    debug(
+                        context,
+                        f"[OUTLIERS] "
+                        f"Found {len(formatted)} outliers"
+                    )
 
     except Exception as e:
-        debug(context, f"⚠ Outlier detection failed: {e}")
+
+        debug(
+            context,
+            f"⚠ Outlier detection failed: {e}"
+        )
+
         context["outliers"] = []
         context["outlier_summary"] = {}
-
     # ------------------------------------------------------------
     # 🔎 Defensive sanity check before qualitative mapping
     # ------------------------------------------------------------

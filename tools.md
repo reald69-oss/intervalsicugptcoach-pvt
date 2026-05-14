@@ -155,6 +155,39 @@ Used for:
 - W′ depletion analysis
 - fatigue progression
 
+Activity Power Histogram → getActivityPowerHistogramV1 → params: activity_id*, athleteID? → power distribution histogram for a single activity
+
+Used for:
+- time-in-zone analysis
+- stochasticity profiling
+- pacing distribution
+- workload density
+- endurance vs anaerobic distribution
+
+Activity Pace Histogram → getActivityPaceHistogramV1 → params: activity_id*, athleteID? → pace distribution histogram for a single activity
+
+Used for:
+- running pace distribution
+- terrain pacing analysis
+- durability fade
+- GAP pacing distribution
+
+Activity HR Histogram → getActivityHRHistogramV1 → params: activity_id*, athleteID? → heart rate distribution histogram for a single activity
+
+Used for:
+- HR zone distribution
+- aerobic load analysis
+- cardiac drift patterns
+- intensity distribution
+
+Activity GAP Histogram → getActivityGAPHistogramV1 → params: activity_id*, athleteID? → grade-adjusted pace (GAP) distribution histogram for a single activity
+
+Used for:
+- terrain-normalized pacing analysis
+- climbing pace consistency
+- durability independent of elevation
+- normalized running intensity distribution
+
 MMP Model → getMMPModelV1 → params: type?, athleteID? → best sustainable power model across durations
 
 ---
