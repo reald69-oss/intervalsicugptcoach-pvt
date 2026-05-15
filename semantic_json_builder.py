@@ -1539,9 +1539,12 @@ def build_semantic_json(context):
             g = match_group([activity_type])
             if not g:
                 continue
-            load = row.get("icu_training_load", 0) or 0
-            load_by_group[g] = load_by_group.get(g, 0) + load
+            load = row.get("icu_training_load", 0)
 
+            if pd.isna(load):
+                load = 0
+            load_by_group[g] = load_by_group.get(g, 0) + load
+    debug(context, f"[SPORT-LOAD] load_by_group={load_by_group}")
     dominant_sport_label = (
         max(load_by_group, key=load_by_group.get).lower()
         if load_by_group else None
@@ -3845,24 +3848,46 @@ def build_semantic_json(context):
                             if pd.isna(paired_id):
                                 continue
 
-                            actual = float(row.get("icu_training_load", 0) or 0)
+                            # -------------------------------------------------
+                            # safe actual load
+                            # -------------------------------------------------
+                            actual = pd.to_numeric(
+                                row.get("icu_training_load"),
+                                errors="coerce"
+                            )
 
+                            if pd.isna(actual):
+                                actual = 0.0
+                            else:
+                                actual = float(actual)
+
+                            # -------------------------------------------------
+                            # safe compliance
+                            # -------------------------------------------------
                             compliance = row.get("compliance")
 
-                            try:
-                                compliance_val = float(compliance)
-                            except Exception:
-                                compliance_val = None
+                            compliance_val = pd.to_numeric(
+                                compliance,
+                                errors="coerce"
+                            )
 
-                            if compliance_val and compliance_val > 0:
+                            if pd.notna(compliance_val) and compliance_val > 0:
 
-                                planned_equivalent = actual / (compliance_val / 100.0)
+                                planned_equivalent = (
+                                    actual / (float(compliance_val) / 100.0)
+                                )
 
                             else:
                                 planned_equivalent = actual
 
+                            # -------------------------------------------------
+                            # final NaN guard
+                            # -------------------------------------------------
+                            if pd.isna(planned_equivalent):
+                                planned_equivalent = 0.0
+
                             weekly_target += planned_equivalent
-                            weekly_target = round(weekly_target,1)
+                            weekly_target = round(float(weekly_target), 1)
 
                     # -------------------------------------------------
                     # 4️⃣ Projection + Delta
