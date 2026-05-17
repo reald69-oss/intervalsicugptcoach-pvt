@@ -1774,7 +1774,9 @@ def run_tier1_controller(df_master, wellness, context):
                         safe_stats(df["average_heartrate"]),
 
                     "pace":
-                        safe_stats(df["average_speed"])
+                        safe_stats(
+                            df.get("pace", df.get("average_speed"))
+                        )
                 }
 
                 debug(
@@ -1864,7 +1866,7 @@ def run_tier1_controller(df_master, wellness, context):
                     )
 
                     pace_val = pd.to_numeric(
-                        o["average_speed"],
+                        o.get("pace", o.get("average_speed")),
                         errors="coerce"
                     )
 
