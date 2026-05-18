@@ -95,6 +95,7 @@ REPORT_CONTRACT = {
         "physiology",
         "phases_summary",
         #"phases",
+        #"weekly_phases",
         "phases_future",
         
         # 🎯 ADAPTIVE DECISIONS

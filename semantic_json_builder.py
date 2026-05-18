@@ -872,20 +872,6 @@ def build_semantic_json(context):
     )
     method = "physiological" if zones_source == "lactate_test" else "ftp_based"
 
-    # ------------------------------------------------------------------
-    # 🧭 Phase Detection (Base → Build → Peak → Taper → Recovery)
-    # ------------------------------------------------------------------
-#    try:
-#        from audit_core.tier2_actions import detect_phases
-#        if not context.get("phases"):
-#            events = context.get("activities_full") or context.get("df_events") or []
-#            if isinstance(events, pd.DataFrame):
-#                events = events.to_dict(orient="records")
-#            context = detect_phases(context, events)
-#            debug(context, f"[SEMANTIC] Injected detected phases → {len(context.get('phases', []))}")
-#    except Exception as e:
-#        debug(context, f"[SEMANTIC] ⚠️ Phase detection failed: {e}")
-
     # ---------------------------------------------------------
     # BASE SEMANTIC STRUCTURE
     # ---------------------------------------------------------
@@ -1934,19 +1920,32 @@ def build_semantic_json(context):
         if (
             "df_light" in context
             and isinstance(context["df_light"], pd.DataFrame)
-            and len(context["df_light"]) > 100
+            and not context["df_light"].empty
         ):
             df_ref = context["df_light"]
-            debug(context, f"[SEMANTIC-OVERRIDE] Using df_light ({len(df_ref)} rows) for summary/season instead of short _df_scope_full")
+            debug(
+                context,
+                f"[SEMANTIC-OVERRIDE] Using df_light ({len(df_ref)} rows) "
+                f"for summary/season instead of short _df_scope_full"
+            )
+
         elif (
             "_df_scope_full" in context
             and isinstance(context["_df_scope_full"], pd.DataFrame)
-            and len(context["_df_scope_full"]) > 100
+            and not context["_df_scope_full"].empty
         ):
             df_ref = context["_df_scope_full"]
-            debug(context, f"[SEMANTIC-OVERRIDE] Using _df_scope_full ({len(df_ref)} rows) for summary/season")
+            debug(
+                context,
+                f"[SEMANTIC-OVERRIDE] Using _df_scope_full ({len(df_ref)} rows) "
+                f"for summary/season"
+            )
+
         else:
-            debug(context, "[SEMANTIC-OVERRIDE] No valid long-frame dataset found — fallback to df_master")
+            debug(
+                context,
+                "[SEMANTIC-OVERRIDE] No usable season/summary dataset found — keeping existing df_ref"
+            )
 
 
 
@@ -1986,21 +1985,35 @@ def build_semantic_json(context):
         else:
             debug(context, "⚠️ [DATASET-DIAG] df_ref not resolved or empty.")
 
-
-
     # ---------------------------------------------------------
     # 🪜 Weekly Phases Summary (URF v5.2 canonical)
     # ---------------------------------------------------------
     if semantic["meta"]["report_type"] in ("season", "summary", "weekly"):
 
-        # --- Force authoritative dataset for season/summary totals ---
-        if "df_light" in context and isinstance(context["df_light"], pd.DataFrame) and len(context["df_light"]) > 100:
-            df_ref = context["df_light"]
-            debug(context, f"[FORCE] Overriding df_ref with df_light ({len(df_ref)} rows) for totals aggregation")
-        elif isinstance(context.get("activities_light"), list) and len(context["activities_light"]) > 0:
-            df_ref = pd.DataFrame(context["activities_light"])
-            debug(context, f"[FORCE] Overriding df_ref with activities_light ({len(df_ref)} rows) for totals aggregation)")
+        # --- Force authoritative dataset for season/summary totals + phase aggregation ---
+        if semantic["meta"]["report_type"] in ("season", "summary"):
+            if (
+                "df_light" in context
+                and isinstance(context["df_light"], pd.DataFrame)
+                and not context["df_light"].empty
+            ):
+                df_ref = context["df_light"]
+                debug(
+                    context,
+                    f"[FORCE] Overriding df_ref with df_light ({len(df_ref)} rows) "
+                    f"for totals/phase aggregation"
+                )
 
+            elif (
+                isinstance(context.get("activities_light"), list)
+                and len(context["activities_light"]) > 0
+            ):
+                df_ref = pd.DataFrame(context["activities_light"])
+                debug(
+                    context,
+                    f"[FORCE] Overriding df_ref with activities_light ({len(df_ref)} rows) "
+                    f"for totals/phase aggregation"
+                )
         df_src = None
         if "df_ref" in locals() and isinstance(df_ref, pd.DataFrame) and not df_ref.empty:
             df_src = df_ref.copy()
@@ -4051,6 +4064,8 @@ def build_semantic_json(context):
     # 🌍 Season / Summary / Weekly → full weekly + roll-up
     # ---------------------------------------------------------
     if report_type in ("season", "summary", "weekly"):
+        debug(context, f"[PHASES] raw weekly_phases rows BEFORE normalisation = {len(semantic.get('weekly_phases', []))}")
+        debug(context, f"[PHASES] context phases blocks = {len(context.get('phases', []))}")
         raw_weeks = semantic.get("weekly_phases", [])
         if not raw_weeks:
             debug(context, "[PHASES] ⚠️ No weekly data; skipping normalisation")
@@ -4327,6 +4342,12 @@ def build_semantic_json(context):
             # -----------------------------------------------------
             # 🔒 CLIP TO ISO WINDOW (REPORT-SPECIFIC)
             # -----------------------------------------------------
+
+            debug(
+                context,
+                "[DEBUG] df_weeks pre-clip:",
+                df_weeks[["week","start","end","phase"]].to_dict(orient="records")
+            )
             report_type = semantic.get("meta", {}).get("report_type")
 
             if report_type in ("weekly", "season"):

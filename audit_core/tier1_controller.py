@@ -908,7 +908,13 @@ def run_tier1_controller(df_master, wellness, context):
             hrv_latest = float(dfw["hrv"].iloc[-1])
             hrv_mean = float(dfw["hrv"].mean())
 
-        if hrv_mean is not None and hrv_latest is not None:
+        if (
+            hrv_mean is not None
+            and hrv_latest is not None
+            and pd.notna(hrv_mean)
+            and pd.notna(hrv_latest)
+            and float(hrv_mean) > 0
+        ):
             hrv_mean = float(hrv_mean)
             hrv_latest = float(hrv_latest)
 
