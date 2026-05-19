@@ -2537,28 +2537,24 @@ def build_semantic_json(context):
                 )
             }
         }
-
         def estimate_event_ctl_atl_from_calendar_ewma(context, event_date):
             """
-            Estimate target-event CTL / ATL using calendar-derived daily EWMA.
+            Estimate target-event SUNRISE CTL / ATL using calendar-derived daily EWMA.
 
             Rules:
-            - Use calendar rows only.
-            - Find the earliest valid CTL/ATL seed needed for the projection.
-            - Walk day-by-day to the target event date.
-            - Apply planned daily load using Intervals-style EWMA:
+            - Event readiness must use SUNRISE state, not Intervals race-day sunset state.
+            - Seed from the latest valid calendar CTL/ATL row strictly BEFORE the event date.
+            - If no seeded calendar physiology exists, fall back to current authoritative CTL/ATL.
+            - Apply planned load on intervening days only.
+            - Do NOT apply target event day load.
+            - Advance one final zero-load EWMA step into event-day sunrise.
+
+            Daily EWMA:
                 CTL = CTL + (load - CTL) / 42
                 ATL = ATL + (load - ATL) / 7
-            - If a later calendar row contains authoritative Intervals icu_ctl/icu_atl,
-            re-anchor to those exact values for that day.
-            - Target event day load is included only if it has load; for your null-load
-            race note, it contributes zero.
             """
 
             calendar = context.get("calendar") or []
-
-            if not isinstance(calendar, list) or not calendar:
-                return {"ctl": None, "atl": None}
 
             try:
                 target_day = pd.to_datetime(event_date).date()
@@ -2580,7 +2576,8 @@ def build_semantic_json(context):
                 except Exception:
                     continue
 
-                if day > target_day:
+                # Rows after the target event cannot affect its sunrise state
+                if day >= target_day:
                     continue
 
                 ctl = pd.to_numeric(ev.get("icu_ctl"), errors="coerce")
@@ -2599,89 +2596,38 @@ def build_semantic_json(context):
                     "load": 0.0 if pd.isna(load) else float(load),
                 })
 
-            if not rows:
-                return {"ctl": None, "atl": None}
-
-            df = pd.DataFrame(rows).sort_values("date")
-
-            # ---------------------------------------------------------
-            # Daily planned load across all events on the same date
-            # ---------------------------------------------------------
-            load_by_day = (
-                df.groupby("date", as_index=True)["load"]
-                .sum()
-                .to_dict()
+            df = pd.DataFrame(rows).sort_values("date") if rows else pd.DataFrame(
+                columns=["date", "ctl", "atl", "load"]
             )
 
             # ---------------------------------------------------------
-            # Authoritative Intervals CTL/ATL checkpoints
-            # Keep the LAST valid calendar row per date
+            # 1. Resolve seed:
+            #    latest Intervals calendar CTL/ATL strictly before event
             # ---------------------------------------------------------
             state_rows = df[
                 df["ctl"].notna() &
                 df["atl"].notna()
             ].copy()
 
-            # ---------------------------------------------------------
-            # DEBUG — inspect available seeded calendar physiology rows
-            # ---------------------------------------------------------
-            try:
+            if not state_rows.empty:
+                seed = state_rows.sort_values("date").iloc[-1]
+
+                seed_day = seed["date"]
+                ctl = float(seed["ctl"])
+                atl = float(seed["atl"])
+
                 debug(
                     context,
-                    f"[EVENT-EWMA] target_day={target_day} "
-                    f"calendar_rows={len(df)} "
-                    f"seeded_state_rows={len(state_rows)}"
+                    f"[EVENT-SUNRISE] Calendar seed → "
+                    f"event={target_day} seed_day={seed_day} "
+                    f"ctl={ctl:.2f} atl={atl:.2f}"
                 )
 
-                if not state_rows.empty:
-                    debug(
-                        context,
-                        "[EVENT-EWMA] Seeded CTL/ATL calendar rows up to target:\n"
-                        + state_rows[
-                            ["date", "ctl", "atl", "load"]
-                        ]
-                        .sort_values("date")
-                        .tail(20)
-                        .to_string(index=False)
-                    )
-
-                    last_seed = (
-                        state_rows[
-                            state_rows["date"] <= target_day
-                        ]
-                        .sort_values("date")
-                        .tail(1)
-                    )
-
-                    if not last_seed.empty:
-                        r = last_seed.iloc[0]
-                        debug(
-                            context,
-                            f"[EVENT-EWMA] LAST SEED BEFORE TARGET → "
-                            f"date={r['date']} ctl={r['ctl']} atl={r['atl']} load={r['load']}"
-                        )
-                    else:
-                        debug(
-                            context,
-                            "[EVENT-EWMA] No seeded CTL/ATL row exists before target"
-                        )
-
-                else:
-                    debug(
-                        context,
-                        "[EVENT-EWMA] No seeded CTL/ATL rows found at all"
-                    )
-
-            except Exception as dbg_err:
-                debug(context, f"[EVENT-EWMA] DEBUG FAILED → {dbg_err}")
-
-
-            # ---------------------------------------------------------
-            # No seeded future calendar physiology
-            # → fallback to current authoritative state
-            # ---------------------------------------------------------
-            if state_rows.empty:
-
+            else:
+                # -----------------------------------------------------
+                # No seeded calendar physiology
+                # → fallback to current authoritative CTL / ATL
+                # -----------------------------------------------------
                 ctl = (
                     context.get("ctl")
                     or ((context.get("wellness_summary") or {}).get("ctl"))
@@ -2696,67 +2642,78 @@ def build_semantic_json(context):
                     ctl = float(ctl)
                     atl = float(atl)
                 except Exception:
+                    debug(
+                        context,
+                        f"[EVENT-SUNRISE] No usable CTL/ATL seed for event={target_day}"
+                    )
                     return {"ctl": None, "atl": None}
 
-                state_by_day = {
-                    target_day: {
-                        "ctl": ctl,
-                        "atl": atl
-                    }
-                }
+                today_raw = context.get("athlete_today")
+                if today_raw is None:
+                    return {"ctl": None, "atl": None}
 
-                start_day = target_day
+                try:
+                    seed_day = pd.to_datetime(today_raw).date()
+                except Exception:
+                    return {"ctl": None, "atl": None}
 
-            state_by_day = (
-                state_rows
-                .sort_values("date")
-                .groupby("date", as_index=True)
-                .tail(1)
-                .set_index("date")[["ctl", "atl"]]
-                .to_dict(orient="index")
-            )
+                debug(
+                    context,
+                    f"[EVENT-SUNRISE] Current-state fallback seed → "
+                    f"event={target_day} seed_day={seed_day} "
+                    f"ctl={ctl:.2f} atl={atl:.2f}"
+                )
 
             # ---------------------------------------------------------
-            # Projection start:
-            # latest known Intervals state on/before target date
-            # BUT we need to replay from the earliest relevant seed
-            # so later authoritative checkpoints can override correctly.
+            # 2. Aggregate planned load AFTER seed and BEFORE event
             # ---------------------------------------------------------
-            seed_days = sorted(state_by_day.keys())
-
-            if not seed_days:
-                return {"ctl": None, "atl": None}
-
-            start_day = seed_days[0]
-            ctl = float(state_by_day[start_day]["ctl"])
-            atl = float(state_by_day[start_day]["atl"])
-
-            current_day = start_day
+            if not df.empty:
+                load_by_day = (
+                    df[
+                        (df["date"] > seed_day) &
+                        (df["date"] < target_day)
+                    ]
+                    .groupby("date", as_index=True)["load"]
+                    .sum()
+                    .to_dict()
+                )
+            else:
+                load_by_day = {}
 
             # ---------------------------------------------------------
-            # Walk forward one day at a time to the target day
+            # 3. Walk from seed sunset → event-day sunrise
+            #
+            #    seed_day CTL/ATL = seeded sunset state
+            #    next day load step = that day's sunset state
+            #    event day forced zero = sunrise readiness state
             # ---------------------------------------------------------
+            current_day = seed_day
+
             while current_day < target_day:
-                current_day = current_day + pd.Timedelta(days=1)
-                current_day = current_day.date() if hasattr(current_day, "date") else current_day
+                current_day = current_day + timedelta(days=1)
 
-                # If Intervals already supplied state for this day,
-                # take it as authoritative and DO NOT recompute it.
-                checkpoint = state_by_day.get(current_day)
-                if checkpoint:
-                    ctl = float(checkpoint["ctl"])
-                    atl = float(checkpoint["atl"])
-                    continue
-
-                daily_load = float(load_by_day.get(current_day, 0.0))
+                # Intervening planned load applies.
+                # Event day itself must use zero load: SUNRISE, not sunset.
+                daily_load = (
+                    0.0
+                    if current_day == target_day
+                    else float(load_by_day.get(current_day, 0.0))
+                )
 
                 ctl = ctl + ((daily_load - ctl) / 42.0)
                 atl = atl + ((daily_load - atl) / 7.0)
+
+            debug(
+                context,
+                f"[EVENT-SUNRISE] Result → "
+                f"event={target_day} ctl={ctl:.2f} atl={atl:.2f}"
+            )
 
             return {
                 "ctl": round(ctl, 2),
                 "atl": round(atl, 2),
             }
+
         # ---------------------------------------------------------
         # 🎯 EVENT TARGETS (COMPRESSED FOR LLM) + RACE CLASSIFICATION
         # ---------------------------------------------------------
@@ -2967,20 +2924,13 @@ def build_semantic_json(context):
                         taper_state = "pre_taper"
 
 
-            event_ctl = e.get("icu_ctl")
-            event_atl = e.get("icu_atl")
+            estimated = estimate_event_ctl_atl_from_calendar_ewma(
+                context=context,
+                event_date=dt
+            )
 
-            if event_ctl is None or event_atl is None:
-                estimated = estimate_event_ctl_atl_from_calendar_ewma(
-                    context=context,
-                    event_date=dt
-                )
-
-                if event_ctl is None:
-                    event_ctl = estimated["ctl"]
-
-                if event_atl is None:
-                    event_atl = estimated["atl"]
+            event_ctl = estimated["ctl"]
+            event_atl = estimated["atl"]
 
             candidates.append({
                 "id": e.get("id"),
