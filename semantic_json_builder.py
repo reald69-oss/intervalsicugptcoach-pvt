@@ -1809,8 +1809,8 @@ def build_semantic_json(context):
                 link_id = clean_id if clean_id.startswith("i") else f"i{clean_id}"
                 if report_type != "season":
                     ev["activity_link"] = f"https://intervals.icu/activities/{link_id}"
-                else:
-                    ev["activity_id"] = None
+            else:
+                ev["activity_id"] = None
 
             # ---------------------------------------------------------
             # 3️⃣ Core render fields (SAFE)
