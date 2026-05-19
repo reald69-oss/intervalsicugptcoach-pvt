@@ -1882,21 +1882,27 @@ def build_semantic_json(context):
             # ---------------------------------------------------------
             # 7️⃣ Flags (for icons only)
             # ---------------------------------------------------------
-            flags = []
 
-            wbal = classify_wbal_pattern(row)
-            if wbal.get("wbal_pattern") == "repeated":
-                flags.append("repeated")
+            report_type = str(context.get("report_type", "")).lower()
 
-            eff = classify_event_efficiency(row)
-            if eff.get("event_efficiency") == "efficient":
-                flags.append("efficient")
+            # season → suppress flags entirely
+            if report_type != "season":
 
-            if pd.notna(hrr):
-                flags.append("hrr")
+                flags = []
 
-            if flags:
-                ev["flags"] = flags
+                wbal = classify_wbal_pattern(row)
+                if wbal.get("wbal_pattern") == "repeated":
+                    flags.append("repeated")
+
+                eff = classify_event_efficiency(row)
+                if eff.get("event_efficiency") == "efficient":
+                    flags.append("efficient")
+
+                if pd.notna(hrr):
+                    flags.append("hrr")
+
+                if flags:
+                    ev["flags"] = flags
 
             # ---------------------------------------------------------
             # Append
