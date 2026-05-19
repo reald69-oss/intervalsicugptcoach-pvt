@@ -1759,7 +1759,11 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     # EVENTS (canonical → render-optimised)
     # ---------------------------------------------------------
-    df_events = context["_df_scope_full"]
+    df_events = (
+        context.get("_df_light_90d")
+        if context.get("report_type") == "season"
+        else context.get("_df_scope_full")
+    )
 
     if isinstance(df_events, pd.DataFrame) and not df_events.empty:
 
@@ -1803,9 +1807,10 @@ def build_semantic_json(context):
 
                 # link ID (with 'i' prefix)
                 link_id = clean_id if clean_id.startswith("i") else f"i{clean_id}"
-                ev["activity_link"] = f"https://intervals.icu/activities/{link_id}"
-            else:
-                ev["activity_id"] = None
+                if report_type != "season":
+                    ev["activity_link"] = f"https://intervals.icu/activities/{link_id}"
+                else:
+                    ev["activity_id"] = None
 
             # ---------------------------------------------------------
             # 3️⃣ Core render fields (SAFE)

@@ -79,6 +79,7 @@ REPORT_CONTRACT = {
         # 🧭 TRAINING LOAD
         "training_volume",
         "metrics_groups",
+        "events",
         "trend_metrics",
 
         # 🫀 PHYSIOLOGY RESPONSE
