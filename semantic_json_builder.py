@@ -2538,6 +2538,200 @@ def build_semantic_json(context):
             }
         }
 
+        def estimate_event_ctl_atl_from_calendar_ewma(context, event_date):
+            """
+            Estimate target-event CTL / ATL using calendar-derived daily EWMA.
+
+            Rules:
+            - Use calendar rows only.
+            - Find the earliest valid CTL/ATL seed needed for the projection.
+            - Walk day-by-day to the target event date.
+            - Apply planned daily load using Intervals-style EWMA:
+                CTL = CTL + (load - CTL) / 42
+                ATL = ATL + (load - ATL) / 7
+            - If a later calendar row contains authoritative Intervals icu_ctl/icu_atl,
+            re-anchor to those exact values for that day.
+            - Target event day load is included only if it has load; for your null-load
+            race note, it contributes zero.
+            """
+
+            import pandas as pd
+            import numpy as np
+
+            calendar = context.get("calendar") or []
+
+            if not isinstance(calendar, list) or not calendar:
+                return {"ctl": None, "atl": None}
+
+            try:
+                target_day = pd.to_datetime(event_date).date()
+            except Exception:
+                return {"ctl": None, "atl": None}
+
+            rows = []
+
+            for ev in calendar:
+                if not isinstance(ev, dict):
+                    continue
+
+                date_raw = ev.get("start_date_local") or ev.get("date")
+                if not date_raw:
+                    continue
+
+                try:
+                    day = pd.to_datetime(str(date_raw)[:10], errors="coerce").date()
+                except Exception:
+                    continue
+
+                if day > target_day:
+                    continue
+
+                ctl = pd.to_numeric(ev.get("icu_ctl"), errors="coerce")
+                atl = pd.to_numeric(ev.get("icu_atl"), errors="coerce")
+                load = pd.to_numeric(
+                    ev.get("icu_training_load")
+                    if ev.get("icu_training_load") is not None
+                    else ev.get("tss"),
+                    errors="coerce"
+                )
+
+                rows.append({
+                    "date": day,
+                    "ctl": None if pd.isna(ctl) else float(ctl),
+                    "atl": None if pd.isna(atl) else float(atl),
+                    "load": 0.0 if pd.isna(load) else float(load),
+                })
+
+            if not rows:
+                return {"ctl": None, "atl": None}
+
+            df = pd.DataFrame(rows).sort_values("date")
+
+            # ---------------------------------------------------------
+            # Daily planned load across all events on the same date
+            # ---------------------------------------------------------
+            load_by_day = (
+                df.groupby("date", as_index=True)["load"]
+                .sum()
+                .to_dict()
+            )
+
+            # ---------------------------------------------------------
+            # Authoritative Intervals CTL/ATL checkpoints
+            # Keep the LAST valid calendar row per date
+            # ---------------------------------------------------------
+            state_rows = df[
+                df["ctl"].notna() &
+                df["atl"].notna()
+            ].copy()
+
+            # ---------------------------------------------------------
+            # DEBUG — inspect available seeded calendar physiology rows
+            # ---------------------------------------------------------
+            try:
+                debug(
+                    context,
+                    f"[EVENT-EWMA] target_day={target_day} "
+                    f"calendar_rows={len(df)} "
+                    f"seeded_state_rows={len(state_rows)}"
+                )
+
+                if not state_rows.empty:
+                    debug(
+                        context,
+                        "[EVENT-EWMA] Seeded CTL/ATL calendar rows up to target:\n"
+                        + state_rows[
+                            ["date", "ctl", "atl", "load"]
+                        ]
+                        .sort_values("date")
+                        .tail(20)
+                        .to_string(index=False)
+                    )
+
+                    last_seed = (
+                        state_rows[
+                            state_rows["date"] <= target_day
+                        ]
+                        .sort_values("date")
+                        .tail(1)
+                    )
+
+                    if not last_seed.empty:
+                        r = last_seed.iloc[0]
+                        debug(
+                            context,
+                            f"[EVENT-EWMA] LAST SEED BEFORE TARGET → "
+                            f"date={r['date']} ctl={r['ctl']} atl={r['atl']} load={r['load']}"
+                        )
+                    else:
+                        debug(
+                            context,
+                            "[EVENT-EWMA] No seeded CTL/ATL row exists before target"
+                        )
+
+                else:
+                    debug(
+                        context,
+                        "[EVENT-EWMA] No seeded CTL/ATL rows found at all"
+                    )
+
+            except Exception as dbg_err:
+                debug(context, f"[EVENT-EWMA] DEBUG FAILED → {dbg_err}")
+
+
+            if state_rows.empty:
+                return {"ctl": None, "atl": None}
+
+            state_by_day = (
+                state_rows
+                .sort_values("date")
+                .groupby("date", as_index=True)
+                .tail(1)
+                .set_index("date")[["ctl", "atl"]]
+                .to_dict(orient="index")
+            )
+
+            # ---------------------------------------------------------
+            # Projection start:
+            # latest known Intervals state on/before target date
+            # BUT we need to replay from the earliest relevant seed
+            # so later authoritative checkpoints can override correctly.
+            # ---------------------------------------------------------
+            seed_days = sorted(state_by_day.keys())
+
+            if not seed_days:
+                return {"ctl": None, "atl": None}
+
+            start_day = seed_days[0]
+            ctl = float(state_by_day[start_day]["ctl"])
+            atl = float(state_by_day[start_day]["atl"])
+
+            current_day = start_day
+
+            # ---------------------------------------------------------
+            # Walk forward one day at a time to the target day
+            # ---------------------------------------------------------
+            while current_day < target_day:
+                current_day = current_day + pd.Timedelta(days=1)
+                current_day = current_day.date() if hasattr(current_day, "date") else current_day
+
+                # If Intervals already supplied state for this day,
+                # take it as authoritative and DO NOT recompute it.
+                checkpoint = state_by_day.get(current_day)
+                if checkpoint:
+                    ctl = float(checkpoint["ctl"])
+                    atl = float(checkpoint["atl"])
+                    continue
+
+                daily_load = float(load_by_day.get(current_day, 0.0))
+
+                ctl = ctl + ((daily_load - ctl) / 42.0)
+                atl = atl + ((daily_load - atl) / 7.0)
+
+            return {
+                "ctl": round(ctl, 2),
+                "atl": round(atl, 2),
+            }
         # ---------------------------------------------------------
         # 🎯 EVENT TARGETS (COMPRESSED FOR LLM) + RACE CLASSIFICATION
         # ---------------------------------------------------------
@@ -2545,43 +2739,71 @@ def build_semantic_json(context):
         def classify_race_type(e, name):
 
             sport = str(e.get("type") or "").lower()
-            duration_h = (e.get("moving_time") or 0) / 3600
-            distance_km = (e.get("distance") or 0) / 1000
+
+            moving_time = e.get("moving_time")
+            distance = e.get("distance")
+
+            duration_h = (
+                float(moving_time) / 3600
+                if moving_time is not None
+                else None
+            )
+
+            distance_km = (
+                float(distance) / 1000
+                if distance is not None
+                else None
+            )
 
             # -----------------------------
             # 🚴 RIDING
             # -----------------------------
             if "ride" in sport:
 
-                # ✅ FIRST: explicit intent (strongest signal)
+                # Explicit intent — strongest signal
                 if any(k in name for k in ["tt", "time trial"]):
                     return "tt"
 
                 if any(k in name for k in ["crit", "circuit", "loop"]):
                     return "crit"
 
-                # ✅ THEN: duration fallback
-                if duration_h >= 3.5:
+                if any(k in name for k in [
+                    "fondo",
+                    "gran fondo",
+                    "sportive",
+                    "etape",
+                    "étape"
+                ]):
                     return "fondo"
 
-                if duration_h <= 1.5:
-                    return "short_ride"
+                # Structured duration fallback — only when duration exists
+                if duration_h is not None:
+                    if duration_h >= 3.5:
+                        return "fondo"
 
-                return "tt"  # default mid-duration
+                    if duration_h <= 1.5:
+                        return "short_ride"
+
+                    return "tt"
+
+                # No race-shape evidence
+                return "ride_general"
 
             # -----------------------------
             # 🏃 RUNNING
             # -----------------------------
             if "run" in sport:
 
-                if distance_km >= 30:
-                    return "run_marathon"
-                if distance_km >= 18:
-                    return "run_half"
-                if distance_km <= 6:
-                    return "run_5k"
-                if distance_km <= 12:
-                    return "run_10k"
+                # Distance classification only when distance exists
+                if distance_km is not None:
+                    if distance_km >= 30:
+                        return "run_marathon"
+                    if distance_km >= 18:
+                        return "run_half"
+                    if distance_km <= 6:
+                        return "run_5k"
+                    if distance_km <= 12:
+                        return "run_10k"
 
                 return "run_general"
 
@@ -2719,13 +2941,29 @@ def build_semantic_json(context):
                     elif days_to_event <= 10:
                         taper_state = "pre_taper"
 
+
+            event_ctl = e.get("icu_ctl")
+            event_atl = e.get("icu_atl")
+
+            if event_ctl is None or event_atl is None:
+                estimated = estimate_event_ctl_atl_from_calendar_ewma(
+                    context=context,
+                    event_date=dt
+                )
+
+                if event_ctl is None:
+                    event_ctl = estimated["ctl"]
+
+                if event_atl is None:
+                    event_atl = estimated["atl"]
+
             candidates.append({
                 "id": e.get("id"),
                 "name": name_raw,
                 "category": e.get("category"),
                 "priority": priority,
-                "icu_atl": e.get("icu_atl"),
-                "icu_ctl": e.get("icu_ctl"),
+                "icu_atl": event_atl,
+                "icu_ctl": event_ctl,
                 "type": e.get("type"),
                 "load": e.get("icu_training_load"),
                 "intensity": e.get("icu_intensity"),
