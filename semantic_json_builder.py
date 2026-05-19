@@ -2555,9 +2555,6 @@ def build_semantic_json(context):
             race note, it contributes zero.
             """
 
-            import pandas as pd
-            import numpy as np
-
             calendar = context.get("calendar") or []
 
             if not isinstance(calendar, list) or not calendar:
@@ -2679,8 +2676,36 @@ def build_semantic_json(context):
                 debug(context, f"[EVENT-EWMA] DEBUG FAILED → {dbg_err}")
 
 
+            # ---------------------------------------------------------
+            # No seeded future calendar physiology
+            # → fallback to current authoritative state
+            # ---------------------------------------------------------
             if state_rows.empty:
-                return {"ctl": None, "atl": None}
+
+                ctl = (
+                    context.get("ctl")
+                    or ((context.get("wellness_summary") or {}).get("ctl"))
+                )
+
+                atl = (
+                    context.get("atl")
+                    or ((context.get("wellness_summary") or {}).get("atl"))
+                )
+
+                try:
+                    ctl = float(ctl)
+                    atl = float(atl)
+                except Exception:
+                    return {"ctl": None, "atl": None}
+
+                state_by_day = {
+                    target_day: {
+                        "ctl": ctl,
+                        "atl": atl
+                    }
+                }
+
+                start_day = target_day
 
             state_by_day = (
                 state_rows
