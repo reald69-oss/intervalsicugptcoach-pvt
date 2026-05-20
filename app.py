@@ -658,6 +658,13 @@ def _run_full_audit(
 def root():
     return {"message": "Montis.icu Coach Railway API 🧠 Running"}
 
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "service": "railway-backend",
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
 @app.get("/run")
 def run_audit():
