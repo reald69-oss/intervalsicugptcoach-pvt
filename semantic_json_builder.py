@@ -2448,6 +2448,7 @@ def build_semantic_json(context):
                 "load_target": e.get("load_target"),
                 "time_target": e.get("time_target"),
                 "distance_target": e.get("distance_target"),
+                "icu_intensity": e.get("icu_intensity"),
                 "strain_score": e.get("strain_score"),
                 "plan_name": e.get("plan_name"),
                 "plan_workout_id": e.get("plan_workout_id"),
