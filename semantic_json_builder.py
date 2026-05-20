@@ -2437,6 +2437,7 @@ def build_semantic_json(context):
                 "uid": e.get("uid"),
                 "date": start,
                 "category": e.get("category", "OTHER"),
+                "type": e.get("type"),
                 "name": e.get("name") or e.get("title") or "Untitled",
                 "description": e.get("description") or e.get("notes") or "",
                 "start_date_local": e.get("start_date_local"),
