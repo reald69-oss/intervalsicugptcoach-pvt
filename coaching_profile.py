@@ -166,6 +166,7 @@ REPORT_CONTRACT = {
 
         # 🫀 PHYSIOLOGY RESPONSE
         "wellness",
+        "wellness_summary",
         "insights",
         "insight_view",
 

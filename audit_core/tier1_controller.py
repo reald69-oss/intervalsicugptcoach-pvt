@@ -1170,11 +1170,20 @@ def run_tier1_controller(df_master, wellness, context):
         # --- 🩵 HRV summary (vendor-agnostic, uses Tier-2 derived metrics normalization) ---
         if "df_wellness" in context and not context["df_wellness"].empty:
             dfw = context["df_wellness"]
+
             if "hrv" in dfw.columns:
                 vals = pd.to_numeric(dfw["hrv"], errors="coerce").dropna()
+
                 if len(vals) > 0:
                     context["hrv_mean"] = round(vals.mean(), 1)
                     context["hrv_latest"] = round(vals.iloc[-1], 1)
+
+                    hrv_ratio = (
+                        round(float(context["hrv_latest"]) / float(context["hrv_mean"]), 2)
+                        if context["hrv_mean"] not in (None, 0)
+                        else None
+                    )
+
                     if len(vals) >= 90:
                         trend = vals.tail(30).mean() - vals.head(30).mean()
                     elif len(vals) >= 28:
@@ -1185,16 +1194,33 @@ def run_tier1_controller(df_master, wellness, context):
                         trend = None
 
                     context["hrv_trend_7d"] = round(trend, 1) if trend is not None else None
+
+                    # ✅ Preserve for PI + semantic wellness
+                    existing_ws = context.get("wellness_summary", {}) or {}
+
+                    context["wellness_summary"] = {
+                        **existing_ws,
+                        "hrv_ratio": hrv_ratio,
+                        "hrv_trend": context["hrv_trend_7d"],
+                    }
+
                     debug(
                         context,
                         f"[T1] HRV summary → mean={context['hrv_mean']}, "
-                        f"latest={context['hrv_latest']}, trend_7d={context['hrv_trend_7d']}, "
+                        f"latest={context['hrv_latest']}, ratio={hrv_ratio}, "
+                        f"trend_7d={context['hrv_trend_7d']}, "
                         f"source={context.get('hrv_source', 'unknown')}"
                     )
+
                 else:
-                    context["hrv_mean"] = context["hrv_latest"] = context["hrv_trend_7d"] = None
+                    context["hrv_mean"] = None
+                    context["hrv_latest"] = None
+                    context["hrv_trend_7d"] = None
+
             else:
-                context["hrv_mean"] = context["hrv_latest"] = context["hrv_trend_7d"] = None
+                context["hrv_mean"] = None
+                context["hrv_latest"] = None
+                context["hrv_trend_7d"] = None
 
         daily_summary = df_well.copy()
         context["df_wellness"] = df_well
@@ -1203,7 +1229,12 @@ def run_tier1_controller(df_master, wellness, context):
             "rest_hr": np.nan, "hrv_trend": np.nan,
             "rest_days": 0, "fatigue": np.nan, "stress": np.nan, "readiness": np.nan,
         }
-        context["wellness_summary"] = context["wellness_metrics"]
+        existing_ws = context.get("wellness_summary", {}) or {}
+
+        context["wellness_summary"] = {
+            **existing_ws,
+            **context.get("wellness_metrics", {})
+        }
 
     context["dailyMerged"] = daily_summary
 
@@ -1381,9 +1412,10 @@ def run_tier1_controller(df_master, wellness, context):
             "tsb": context["tsb"],
         }
 
-        existing = context.get("wellness_summary", {})
+        existing_ws = context.get("wellness_summary", {}) or {}
+
         context["wellness_summary"] = {
-            **existing,
+            **existing_ws,
             **load_snapshot
         }
 

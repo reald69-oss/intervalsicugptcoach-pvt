@@ -494,7 +494,21 @@ def resolve_physiology_state(wellness, cheat_sheet):
             return None
 
     hrv_ratio = num(wellness.get("hrv_ratio"))
-    hrv_trend = num(wellness.get("hrv_trend"))
+
+    # Fallback: derive from nested wellness.hrv block if flat hrv_ratio is missing
+    if hrv_ratio is None:
+        hrv_block = wellness.get("hrv", {}) or {}
+        hrv_mean = num(hrv_block.get("mean"))
+        hrv_latest = num(hrv_block.get("latest"))
+
+        if hrv_mean not in (None, 0) and hrv_latest is not None:
+            hrv_ratio = round(hrv_latest / hrv_mean, 2)
+
+    hrv_trend = num(
+        wellness.get("hrv_trend")
+        or wellness.get("hrv_trend_7d")
+        or wellness.get("hrv", {}).get("trend_7d")
+    )
     def first_present(*vals):
         for v in vals:
             if v is not None:
