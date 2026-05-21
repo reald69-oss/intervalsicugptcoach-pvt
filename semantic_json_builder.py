@@ -448,7 +448,7 @@ def resolve_training_load_pattern(metrics_groups, cheat_sheet):
         state_key = "balanced_load"
     else:
         state_key = "balanced_load"
-        
+
     cfg = cheat_sheet.get("training_load_pattern", {})
     meta = cfg.get("meta", {})
     states = cfg.get("states", {})
@@ -475,6 +475,133 @@ def resolve_training_load_pattern(metrics_groups, cheat_sheet):
         ],
 
         "inputs": values
+    }
+
+def resolve_physiology_state(wellness, cheat_sheet):
+    """
+    Resolve wellness-only physiology state.
+    Does NOT override Training Load, PI training_state, or ADE.
+    """
+
+    cfg = cheat_sheet.get("physiology_state", {})
+    meta = cfg.get("meta", {})
+    states = cfg.get("states", {})
+
+    def num(v):
+        try:
+            return float(v) if v is not None else None
+        except Exception:
+            return None
+
+    hrv_ratio = num(wellness.get("hrv_ratio"))
+    hrv_trend = num(wellness.get("hrv_trend"))
+    def first_present(*vals):
+        for v in vals:
+            if v is not None:
+                return v
+        return None
+
+    rest_delta = num(first_present(
+        wellness.get("resting_hr_delta"),
+        wellness.get("cardiac", {}).get("resting_hr_delta")
+    ))
+
+    sleep_score = num(first_present(
+        wellness.get("sleep_score"),
+        wellness.get("sleep", {}).get("average_score")
+    ))
+    tsb = num(wellness.get("tsb"))
+
+    subjective = wellness.get("subjective", {}) or {}
+    fatigue_label = (
+        subjective.get("fatigue", {}).get("label")
+        if isinstance(subjective.get("fatigue"), dict)
+        else None
+    )
+    stress_label = (
+        subjective.get("stress", {}).get("label")
+        if isinstance(subjective.get("stress"), dict)
+        else None
+    )
+    soreness_label = (
+        subjective.get("soreness", {}).get("label")
+        if isinstance(subjective.get("soreness"), dict)
+        else None
+    )
+
+    inputs = {
+        "hrv_ratio": hrv_ratio,
+        "hrv_trend": hrv_trend,
+        "resting_hr_delta": rest_delta,
+        "sleep_score": sleep_score,
+        "tsb": tsb,
+        "subjective_fatigue": fatigue_label,
+        "subjective_stress": stress_label,
+        "subjective_soreness": soreness_label,
+    }
+
+    required = [hrv_ratio, rest_delta, sleep_score, tsb]
+    if all(v is None for v in required):
+        state_key = "unknown"
+
+    elif (
+        hrv_ratio is not None and hrv_ratio >= 1.05
+        and (rest_delta is None or rest_delta <= 2)
+        and (sleep_score is None or sleep_score >= 75)
+        and (tsb is None or tsb >= 0)
+        and fatigue_label in (None, "low")
+        and stress_label in (None, "low")
+    ):
+        state_key = "fresh_stable"
+
+    elif (
+        hrv_ratio is not None and hrv_ratio < 0.92
+        and (rest_delta is not None and rest_delta >= 5)
+    ):
+        state_key = "suppressed"
+
+    elif (
+        (hrv_ratio is not None and hrv_ratio < 0.97)
+        or (rest_delta is not None and rest_delta >= 3)
+        or (sleep_score is not None and sleep_score < 70)
+        or fatigue_label in ("high", "very_high")
+        or stress_label in ("high", "very_high")
+        or soreness_label in ("high", "very_high")
+    ):
+        state_key = "watch"
+
+    elif (
+        tsb is not None and tsb < -10
+        and (
+            (hrv_ratio is not None and hrv_ratio < 1.0)
+            or (sleep_score is not None and sleep_score < 75)
+            or (rest_delta is not None and rest_delta > 2)
+        )
+    ):
+        state_key = "strained"
+
+    else:
+        state_key = "stable"
+
+    state = states.get(state_key, states.get("unknown", {}))
+
+    return {
+        "key": state_key,
+        "label": state.get("label", "UNKNOWN"),
+        "status": state.get("status", "unknown"),
+        "meaning": state.get("meaning"),
+        "basis": "HRV ratio + resting HR delta + sleep + TSB + subjective signals",
+        "scope": meta.get("scope", "wellness_physiology_only"),
+        "context_window": meta.get("context_window", "42d wellness with current load state"),
+        "description": meta.get("description"),
+        "does_not_override": [
+            "training_volume.load_pattern",
+            "performance_intelligence.training_state",
+            "actions.adaptive_summary",
+            "training_guidance"
+        ],
+        "inputs": inputs,
+        "confidence": "high" if state_key != "unknown" else "low"
     }
 
 # ---------------------------------------------------------
@@ -1457,7 +1584,6 @@ def build_semantic_json(context):
         context,
         f"[SEMANTIC] Wellness subjective markers → keys={list(semantic['wellness']['subjective'].keys())}"
     )
-
 
     # ---------------------------------------------------------
     # AUTHORITATIVE TOTALS (Tier-2 ONLY)
@@ -3953,6 +4079,7 @@ def build_semantic_json(context):
         if recovery_block:
             wellness["recovery_markers"] = recovery_block
 
+
         # -----------------------------------------------------
         # 5️⃣ Clean up flat fields (optional but cleaner)
         # -----------------------------------------------------
@@ -5079,6 +5206,26 @@ def build_semantic_json(context):
         **semantic,
         "phases_detail": full_phases_for_view
     })
+
+    # ---------------------------------------------------------
+    # 🫀 FINAL Physiology State resolution
+    # Must run AFTER build_insights(), because build_insights()
+    # injects resting_hr_delta and sleep_score into wellness.
+    # ---------------------------------------------------------
+    if "wellness" in semantic:
+        semantic["wellness"]["physiology_state"] = resolve_physiology_state(
+            semantic["wellness"],
+            CHEAT_SHEET
+        )
+
+        debug(
+            context,
+            f"[SEMANTIC] FINAL wellness physiology_state → "
+            f"{semantic['wellness']['physiology_state'].get('key')} / "
+            f"{semantic['wellness']['physiology_state'].get('label')} | "
+            f"rest_delta={semantic['wellness']['physiology_state']['inputs'].get('resting_hr_delta')} "
+            f"sleep={semantic['wellness']['physiology_state']['inputs'].get('sleep_score')}"
+        )
 
     
     # ---------------------------------------------------------

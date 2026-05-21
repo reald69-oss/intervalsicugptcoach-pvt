@@ -638,6 +638,59 @@ CHEAT_SHEET["training_load_pattern"] = {
     }
 }
 
+CHEAT_SHEET["physiology_state"] = {
+    "meta": {
+        "name": "Physiology State",
+        "scope": "wellness_physiology_only",
+        "context_window": "42d wellness with current load state",
+        "description": (
+            "Current physiology response resolved from autonomic, recovery, sleep, "
+            "resting HR, subjective, and load-pressure signals. This does not override "
+            "Training Load Pattern, Performance Intelligence training_state, or ADE directives."
+        ),
+        "inputs": {
+            "hrv_ratio": "latest HRV divided by 42-day HRV mean",
+            "hrv_trend": "recent HRV direction",
+            "resting_hr_delta": "recent resting HR versus baseline",
+            "sleep_score": "recent sleep quality score",
+            "tsb": "current training stress balance",
+            "subjective": "fatigue, stress, soreness, mood, motivation when available"
+        }
+    },
+
+    "states": {
+        "fresh_stable": {
+            "label": "FRESH / STABLE",
+            "status": "positive",
+            "meaning": "Autonomic markers are favourable and load pressure is low."
+        },
+        "stable": {
+            "label": "STABLE",
+            "status": "neutral",
+            "meaning": "Physiology markers are broadly normal with no clear suppression signal."
+        },
+        "watch": {
+            "label": "WATCH",
+            "status": "watch",
+            "meaning": "One or more physiology markers show mild strain or recovery inconsistency."
+        },
+        "suppressed": {
+            "label": "SUPPRESSED",
+            "status": "risk",
+            "meaning": "Autonomic or recovery markers suggest suppressed physiology under load."
+        },
+        "strained": {
+            "label": "STRAINED",
+            "status": "strain",
+            "meaning": "Recovery markers and load pressure indicate elevated physiological strain."
+        },
+        "unknown": {
+            "label": "UNKNOWN",
+            "status": "unknown",
+            "meaning": "Insufficient wellness data to resolve physiology state."
+        }
+    }
+}
 
 CHEAT_SHEET["metric_groups"] = {
     # --- WDRM ---
