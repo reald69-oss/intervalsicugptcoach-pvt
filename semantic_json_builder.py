@@ -407,6 +407,65 @@ def resolve_planned_duration_minutes(e: dict):
 
     return None
 
+def resolve_training_load_pattern(metrics_groups, cheat_sheet):
+    """
+    Resolve a UI-safe Training Load pattern.
+    This is NOT Training State and does NOT override PI/ADE.
+    It only summarises the load diagnostics block.
+    """
+
+    def val(group, key):
+        try:
+            return metrics_groups.get(group, {}).get(key, {}).get("value")
+        except Exception:
+            return None
+
+    acwr = val("load", "ACWR")
+    strain = val("load", "Strain")
+    fatigue = val("load", "FatigueTrend")
+    stress = val("capacity", "StressTolerance")
+
+    values = {
+        "ACWR": acwr,
+        "StressTolerance": stress,
+        "Strain": strain,
+        "FatigueTrend": fatigue,
+    }
+
+    if any(v is None for v in values.values()):
+        state_key = "load_unknown"
+    elif acwr > 1.5 or stress > 1.4 or strain > 4000 or fatigue > 40:
+        state_key = "overload_risk"
+    elif acwr > 1.3 or stress > 1.2 or strain > 3000 or fatigue > 20:
+        state_key = "high_strain"
+    elif acwr < 0.8 and fatigue < -20:
+        state_key = "under_stimulus"
+    elif 0.8 <= acwr <= 1.3 and 0.8 <= stress <= 1.2 and fatigue <= -10:
+        state_key = "controlled_unload"
+    elif 0.8 <= acwr <= 1.3 and 10 <= fatigue <= 20:
+        state_key = "building_load"
+    elif 0.8 <= acwr <= 1.3 and 0.8 <= stress <= 1.2 and strain < 2500 and -10 <= fatigue <= 10:
+        state_key = "balanced_load"
+    else:
+        state_key = "balanced_load"
+
+    states = cheat_sheet.get("training_load_pattern", {}).get("states", {})
+    state = states.get(state_key, states.get("load_unknown", {}))
+
+    return {
+        "key": state_key,
+        "label": state.get("label", "LOAD UNKNOWN"),
+        "status": state.get("status", "unknown"),
+        "meaning": state.get("meaning"),
+        "basis": "metrics_groups.load + metrics_groups.capacity",
+        "scope": "training_load_only",
+        "does_not_override": [
+            "performance_intelligence.training_state",
+            "actions.adaptive_summary",
+            "training_guidance"
+        ],
+        "inputs": values
+    }
 
 # ---------------------------------------------------------
 # Insights Builder
@@ -3268,11 +3327,26 @@ def build_semantic_json(context):
     # 🧮 CTL / ATL / TSB RESOLUTION (AUTHORITATIVE + FALLBACK)
     # ---------------------------------------------------------
     semantic.setdefault("wellness", {})
-    ws = context.get("wellness_summary", {})
-    semantic["training_volume"]["CTL"] = round(ws.get("ctl"),2)
-    semantic["training_volume"]["ATL"] = round(ws.get("atl"),2)
-    semantic["training_volume"]["TSB"] = round(ws.get("tsb"),2)
+    semantic.setdefault("training_volume", {})
+
+    ws = context.get("wellness_summary", {}) or {}
+
+    def _round_or_none(v, ndigits=2):
+        try:
+            return round(float(v), ndigits) if v is not None else None
+        except Exception:
+            return None
+
+    semantic["training_volume"]["CTL"] = _round_or_none(ws.get("ctl"), 2)
+    semantic["training_volume"]["ATL"] = _round_or_none(ws.get("atl"), 2)
+    semantic["training_volume"]["TSB"] = _round_or_none(ws.get("tsb"), 2)
     semantic["training_volume"]["load_state"] = context.get("load_state", {})
+
+    semantic["training_volume"]["load_pattern"] = resolve_training_load_pattern(
+        semantic.get("metrics_groups", {}),
+        CHEAT_SHEET
+    )
+
     debug(context, "[SEM] CTL/ATL/TSB sourced from wellness_summary fallback")
 
     # ---------------------------------------------------------

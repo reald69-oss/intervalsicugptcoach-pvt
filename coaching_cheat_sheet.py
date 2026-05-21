@@ -499,8 +499,90 @@ CHEAT_SHEET["thresholds"] = {
     }
 }
 
-
-
+CHEAT_SHEET["training_load_pattern"] = {
+    "states": {
+        "balanced_load": {
+            "label": "BALANCED LOAD",
+            "status": "balanced",
+            "meaning": "Load is stable against current capacity and recent baseline."
+        },
+        "controlled_unload": {
+            "label": "CONTROLLED UNLOAD",
+            "status": "unloading",
+            "meaning": "Recent load is below the prior baseline while load ratios remain safe."
+        },
+        "building_load": {
+            "label": "BUILDING LOAD",
+            "status": "building",
+            "meaning": "Recent load is rising while acute/chronic balance remains controlled."
+        },
+        "high_strain": {
+            "label": "HIGH STRAIN",
+            "status": "strain",
+            "meaning": "Load pattern is elevated and should be monitored."
+        },
+        "overload_risk": {
+            "label": "OVERLOAD RISK",
+            "status": "risk",
+            "meaning": "Load exceeds safe acute, capacity, strain, or trend limits."
+        },
+        "under_stimulus": {
+            "label": "UNDER-STIMULUS",
+            "status": "low",
+            "meaning": "Recent load is low relative to chronic baseline and prior trend."
+        },
+        "load_unknown": {
+            "label": "LOAD UNKNOWN",
+            "status": "unknown",
+            "meaning": "Insufficient load diagnostics to resolve pattern."
+        }
+    },
+    "rules": {
+        "overload_risk": {
+            "any": {
+                "ACWR_gt": 1.5,
+                "StressTolerance_gt": 1.4,
+                "Strain_gt": 4000,
+                "FatigueTrend_gt": 40
+            }
+        },
+        "high_strain": {
+            "any": {
+                "ACWR_gt": 1.3,
+                "StressTolerance_gt": 1.2,
+                "Strain_gt": 3000,
+                "FatigueTrend_gt": 20
+            }
+        },
+        "under_stimulus": {
+            "all": {
+                "ACWR_lt": 0.8,
+                "FatigueTrend_lt": -20
+            }
+        },
+        "controlled_unload": {
+            "all": {
+                "ACWR_between": [0.8, 1.3],
+                "StressTolerance_between": [0.8, 1.2],
+                "FatigueTrend_lte": -10
+            }
+        },
+        "building_load": {
+            "all": {
+                "ACWR_between": [0.8, 1.3],
+                "FatigueTrend_between": [10, 20]
+            }
+        },
+        "balanced_load": {
+            "all": {
+                "ACWR_between": [0.8, 1.3],
+                "StressTolerance_between": [0.8, 1.2],
+                "Strain_lt": 2500,
+                "FatigueTrend_between": [-10, 10]
+            }
+        }
+    }
+}
 
 
 CHEAT_SHEET["metric_groups"] = {
