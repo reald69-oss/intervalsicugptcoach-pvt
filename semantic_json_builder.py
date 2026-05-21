@@ -448,8 +448,11 @@ def resolve_training_load_pattern(metrics_groups, cheat_sheet):
         state_key = "balanced_load"
     else:
         state_key = "balanced_load"
+        
+    cfg = cheat_sheet.get("training_load_pattern", {})
+    meta = cfg.get("meta", {})
+    states = cfg.get("states", {})
 
-    states = cheat_sheet.get("training_load_pattern", {}).get("states", {})
     state = states.get(state_key, states.get("load_unknown", {}))
 
     return {
@@ -458,12 +461,19 @@ def resolve_training_load_pattern(metrics_groups, cheat_sheet):
         "status": state.get("status", "unknown"),
         "meaning": state.get("meaning"),
         "basis": "metrics_groups.load + metrics_groups.capacity",
-        "scope": "training_load_only",
+
+        # from cheat sheet meta
+        "scope": meta.get("scope", "training_load_only"),
+        "context_window": meta.get("context_window", "7d_with_21_28d_baseline"),
+        "description": meta.get("description"),
+
+        # explicit non-conflict contract
         "does_not_override": [
             "performance_intelligence.training_state",
             "actions.adaptive_summary",
             "training_guidance"
         ],
+
         "inputs": values
     }
 

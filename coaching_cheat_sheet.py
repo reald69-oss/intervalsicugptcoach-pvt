@@ -500,45 +500,88 @@ CHEAT_SHEET["thresholds"] = {
 }
 
 CHEAT_SHEET["training_load_pattern"] = {
+    "meta": {
+        "name": "Training Load Pattern",
+        "scope": "training_load_only",
+        "context_window": "7d_with_21_28d_baseline",
+        "description": (
+            "Current 7-day training-load pattern resolved against recent "
+            "baseline and CTL-based capacity metrics. This does not override "
+            "Performance Intelligence training_state or ADE directives."
+        ),
+        "inputs": {
+            "ACWR": "EWMA acute/chronic load ratio, usually 7d vs 28d",
+            "StressTolerance": "7d weekly load relative to CTL capacity",
+            "Strain": "7d load multiplied by 7d monotony",
+            "FatigueTrend": "recent 7d daily load average vs prior 21d daily baseline"
+        }
+    },
+
     "states": {
         "balanced_load": {
             "label": "BALANCED LOAD",
             "status": "balanced",
-            "meaning": "Load is stable against current capacity and recent baseline."
+            "meaning": (
+                "Current 7-day load is stable against recent baseline "
+                "and current capacity."
+            )
         },
+
         "controlled_unload": {
             "label": "CONTROLLED UNLOAD",
             "status": "unloading",
-            "meaning": "Recent load is below the prior baseline while load ratios remain safe."
+            "meaning": (
+                "Current 7-day load is below the prior 21-day baseline "
+                "while acute/chronic and capacity ratios remain safe."
+            )
         },
+
         "building_load": {
             "label": "BUILDING LOAD",
             "status": "building",
-            "meaning": "Recent load is rising while acute/chronic balance remains controlled."
+            "meaning": (
+                "Current 7-day load is rising above the prior 21-day baseline "
+                "while acute/chronic balance remains controlled."
+            )
         },
+
         "high_strain": {
             "label": "HIGH STRAIN",
             "status": "strain",
-            "meaning": "Load pattern is elevated and should be monitored."
+            "meaning": (
+                "Current 7-day load pattern is elevated through acute load, "
+                "capacity pressure, strain, or recent load trend."
+            )
         },
+
         "overload_risk": {
             "label": "OVERLOAD RISK",
             "status": "risk",
-            "meaning": "Load exceeds safe acute, capacity, strain, or trend limits."
+            "meaning": (
+                "Current load exceeds safe acute, capacity, strain, "
+                "or recent trend limits."
+            )
         },
+
         "under_stimulus": {
             "label": "UNDER-STIMULUS",
             "status": "low",
-            "meaning": "Recent load is low relative to chronic baseline and prior trend."
+            "meaning": (
+                "Current 7-day load is low relative to chronic baseline "
+                "and prior 21-day trend."
+            )
         },
+
         "load_unknown": {
             "label": "LOAD UNKNOWN",
             "status": "unknown",
             "meaning": "Insufficient load diagnostics to resolve pattern."
         }
     },
+
     "rules": {
         "overload_risk": {
+            "priority": 1,
             "any": {
                 "ACWR_gt": 1.5,
                 "StressTolerance_gt": 1.4,
@@ -546,7 +589,9 @@ CHEAT_SHEET["training_load_pattern"] = {
                 "FatigueTrend_gt": 40
             }
         },
+
         "high_strain": {
+            "priority": 2,
             "any": {
                 "ACWR_gt": 1.3,
                 "StressTolerance_gt": 1.2,
@@ -554,26 +599,35 @@ CHEAT_SHEET["training_load_pattern"] = {
                 "FatigueTrend_gt": 20
             }
         },
+
         "under_stimulus": {
+            "priority": 3,
             "all": {
                 "ACWR_lt": 0.8,
                 "FatigueTrend_lt": -20
             }
         },
+
         "controlled_unload": {
+            "priority": 4,
             "all": {
                 "ACWR_between": [0.8, 1.3],
                 "StressTolerance_between": [0.8, 1.2],
                 "FatigueTrend_lte": -10
             }
         },
+
         "building_load": {
+            "priority": 5,
             "all": {
                 "ACWR_between": [0.8, 1.3],
+                "StressTolerance_between": [0.8, 1.2],
                 "FatigueTrend_between": [10, 20]
             }
         },
+
         "balanced_load": {
+            "priority": 6,
             "all": {
                 "ACWR_between": [0.8, 1.3],
                 "StressTolerance_between": [0.8, 1.2],
