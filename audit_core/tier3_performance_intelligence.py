@@ -1025,7 +1025,7 @@ def interpret_training_state(context):
             "tsb": tsb,
             "load_pressure": load_pressure
         },
-        "physiological_state": load_recovery_state,
+        "load_recovery_state": load_recovery_state,
         "operational_state": operational_state,
         "decision_logic": (
             "recovery_priority when fatigue or load exceeds recovery capacity; "
