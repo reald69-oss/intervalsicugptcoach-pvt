@@ -1305,8 +1305,8 @@ COACH_PROFILE = {
         },
 
         "FatigueTrend": {
-            "framework": "Banister EWMA Delta",
-            "formula": "(Mean_7d - Mean_28d) / Mean_28d × 100",
+            "framework": "7d vs prior 21d Load Delta",
+            "formula": "(Mean_recent_7d - Mean_prior_21d) / Mean_prior_21d × 100",
             "criteria": {
                 "balanced": "-10–10",
                 "moderate_low": "-20–-10",

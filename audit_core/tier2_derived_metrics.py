@@ -541,45 +541,68 @@ def compute_derived_metrics(df_events, context):
 
         debug(context, f"[T2] Fallback: zero variance → Monotony=1.0, Strain={strain}")
         
-    # --- ✅ 7. FatigueTrend (Banister-aligned 7d–28d delta) ---
-    # --- FatigueTrend (use ACWR 28d context if available) ---
+    # --- ✅ 7. FatigueTrend (90d light daily: recent 7d vs prior 21d) ---
     try:
-        # Prefer df_light from context (Tier-0 lightweight 28d dataset)
-        if "df_light" in context and not context["df_light"].empty:
-            load_series = (
-                context["df_light"]["icu_training_load"]
-                .fillna(0)
-                .astype(float)
+        trend_df = context.get("df_light")
+
+        if isinstance(trend_df, pd.DataFrame) and not trend_df.empty:
+            dft = trend_df.copy()
+
+            dft["date"] = pd.to_datetime(
+                dft["start_date_local"],
+                errors="coerce",
+                unit="ms" if pd.api.types.is_numeric_dtype(dft["start_date_local"]) else None
+            ).dt.tz_localize(None).dt.normalize()
+
+            dft["icu_training_load"] = pd.to_numeric(
+                dft["icu_training_load"],
+                errors="coerce"
+            ).fillna(0)
+
+            daily = (
+                dft.dropna(subset=["date"])
+                .groupby("date")["icu_training_load"]
+                .sum()
+                .sort_index()
             )
-            debug(context, f"[T2] FatigueTrend using df_light (len={len(load_series)})")
+
+            full_range = pd.date_range(daily.index.min(), daily.index.max(), freq="D")
+            load_series = daily.reindex(full_range, fill_value=0).astype(float)
+
+            src_base = "df_light"
         else:
-            load_series = df_daily["icu_training_load"].fillna(0)
-            debug(context, f"[T2] FatigueTrend fallback to df_daily (len={len(load_series)})")
+            load_series = df_ref.set_index("date")["icu_training_load"].fillna(0).astype(float)
+            src_base = "df_ref_fallback"
 
-        n = len(load_series)
-        if n >= 28:
-            mean_7d = load_series[-7:].mean()
-            mean_28d = load_series[-28:].mean()
+        if len(load_series) >= 28:
+            recent_7d = load_series.tail(7)
+            prior_21d = load_series.tail(28).head(21)
 
-            # Update the fatigue trend calculation to show percentage difference
-            fatigue_trend = round((mean_7d - mean_28d) / (mean_28d + 1e-6) * 100, 1)
-            src = "28d ACWR-aligned"
+            recent_mean = recent_7d.mean()
+            baseline_mean = prior_21d.mean()
 
-        elif n >= 14:
-            # Fall back to EMA-based calculation if there aren't enough days for a full 28-day trend
-            ema7 = load_series.ewm(span=7).mean().iloc[-1]
-            ema14 = load_series.ewm(span=14).mean().iloc[-1]
-            fatigue_trend = round((ema7 - ema14) / (ema14 + 1e-6) * 100, 1)
-            src = "EWMA fallback"
+            fatigue_trend = (
+                round(((recent_mean - baseline_mean) / baseline_mean) * 100, 1)
+                if baseline_mean > 0 else None
+            )
+
+            src = f"{src_base}_recent7_vs_prior21"
         else:
             fatigue_trend = None
-            src = "insufficient data"
+            src = f"{src_base}_insufficient"
 
-        debug(context, f"[T2] FatigueTrend computed ({src}): Δ={fatigue_trend:+.1f}%")
+        debug(
+            context,
+            f"[T2] FatigueTrend ({src}) → "
+            f"days={len(load_series)}, "
+            f"recent7_sum={recent_7d.sum() if 'recent_7d' in locals() else None}, "
+            f"prior21_sum={prior_21d.sum() if 'prior_21d' in locals() else None}, "
+            f"value={fatigue_trend}"
+        )
 
     except Exception as e:
         fatigue_trend = None
-        debug(context, f"[T2] ⚠️ FatigueTrend computation failed: {e}")
+        debug(context, f"[T2] ⚠️ FatigueTrend failed: {e}")
 
 
     # --- Stress Tolerance computation (Capacity-adjusted weekly load) ---
@@ -1106,7 +1129,7 @@ def compute_derived_metrics(df_events, context):
             "value": fatigue_trend,
             "classification": classified["FatigueTrend"]["state"],
             "icon": classified["FatigueTrend"]["icon"],
-            "desc": "7d vs 28d load delta",
+            "desc": "Recent 7d vs prior 21d daily load delta",
         },
         "ZQI": {
             "value": zqi,

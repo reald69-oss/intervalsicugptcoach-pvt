@@ -25,9 +25,9 @@ CHEAT_SHEET["thresholds"] = {
         "red": (4000, 8000)
     },
     "FatigueTrend": {
-        "green": (-10, 10),      # balanced / stable
-        "amber": (-99, -10),     # recovering / unloading
-        "red": (10, 99),         # accumulating fatigue
+        "green": (-10, 10),      # stable / balanced
+        "amber": (-20, 20),      # moderate unload or accumulation
+        "red": (20, 99),         # strong accumulation
     },
     "StressTolerance": {
         "green": (0.8, 1.2),
@@ -782,7 +782,12 @@ CHEAT_SHEET["context"] = {
         "Values >3500 indicate elevated combined load and variability risk; "
         "interpret relative to athlete baseline."
     ),
-    "FatigueTrend": "FatigueTrend is calculated as the percentage change between the 7-day and 28-day moving averages. A 0% change indicates balance, while a positive percentage change indicates accumulating fatigue, and a negative percentage change indicates recovery.",
+    "FatigueTrend": (
+        "FatigueTrend is calculated as the percentage change between the most recent "
+        "7-day daily load average and the preceding 21-day daily load average. "
+        "A value near 0% indicates stable load, a positive value indicates recent "
+        "load accumulation, and a negative value indicates unloading."
+    ),
     "ZQI": "Zone Quality Index (%) 5-15 high-intensity time is normal <3% too easy, >20% too intense or erratic pacing.",
     "FatOxEfficiency": "0.4–0.8 means balanced fat oxidation; lower = carb dependence.",
     "FOxI": "FatOx index %; higher values mean more efficient aerobic base.",
@@ -941,11 +946,10 @@ CHEAT_SHEET["coaching_links"] = {
     "Monotony": "If Monotony > 2.5, introduce more variation in training or implement a deload week to reduce repetitive stress.",
     "Strain": "If Strain > 3000, monitor for signs of overreach and consider more rest or deloading. If Strain > 3500, consider reducing volume or intensity temporarily.",
     "FatigueTrend": (
-        "If FatigueTrend drops below -10%, recovery is dominating and training load "
-        "is decreasing relative to the 28-day baseline. Maintain controlled progression "
-        "and avoid aggressive load increases. "
-        "If FatigueTrend rises above +10%, fatigue is accumulating — consider adjusting "
-        "intensity density or inserting additional recovery to prevent overload."
+        "If FatigueTrend drops below -10%, recent 7-day load is below the prior "
+        "21-day baseline, indicating unloading or reduced training stimulus. "
+        "If FatigueTrend rises above +10%, recent load is accumulating relative "
+        "to the prior baseline — monitor recovery, intensity density, and planned load."
     ),
     "FatOxEfficiency": "If FatOxEfficiency is low (<0.6), focus on improving aerobic base with longer, low-intensity efforts.",
     "ZQI": "If ZQI > 20%, review pacing strategy; excessive high-intensity time could indicate erratic pacing or overtraining. Aim for 5-15% ZQI for balanced training.",
