@@ -190,6 +190,9 @@ Used for:
 
 MMP Model → getMMPModelV1 → params: type?, athleteID? → best sustainable power model across durations
 
+Search Activities → searchActivitiesV1 → params: query*, athleteID? → search completed activities by case-insensitive name or exact #tag
+- "search activities", "find activity", "find ride", "find run", "activity tag", "#tag" → searchActivitiesV1
+
 ---
 
 Athlete Profile → getAthleteProfileV1 → params: athleteID? → athlete profile
