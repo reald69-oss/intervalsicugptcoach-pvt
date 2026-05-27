@@ -4451,6 +4451,8 @@ def build_semantic_json(context):
     # 📊 Projected end-of-week state (from calendar truth)
     # ---------------------------------------------------------
 
+    projected_state = None
+
     try:
         cal = context.get("calendar") or context.get("prefetched", {}).get("calendar")
 
@@ -4467,14 +4469,13 @@ def build_semantic_json(context):
 
             df = pd.DataFrame(cal)
 
-            if "start_date_local" not in df.columns:
-                semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
-            else:
+            if "start_date_local" in df.columns:
+
                 df["date"] = pd.to_datetime(df["start_date_local"], errors="coerce")
                 df = df.dropna(subset=["date"]).sort_values("date")
 
-                # current ISO week
-                today = pd.Timestamp.today().normalize()
+                # Use athlete-local today, not machine-local today
+                today = pd.Timestamp(context["athlete_today"]).normalize()
                 week_start = today.to_period("W").start_time
                 week_end = week_start + pd.Timedelta(days=6)
 
@@ -4488,7 +4489,8 @@ def build_semantic_json(context):
                     and "icu_ctl" in df_week.columns
                     and "icu_atl" in df_week.columns
                 ):
-                    # Keep only rows with valid projected CTL/ATL
+                    # Keep only calendar rows with valid projected CTL/ATL.
+                    # This skips swim/hike/run placeholders or notes with no load/state.
                     df_week["_ctl_valid"] = df_week["icu_ctl"].apply(_finite_float)
                     df_week["_atl_valid"] = df_week["icu_atl"].apply(_finite_float)
 
@@ -4500,31 +4502,35 @@ def build_semantic_json(context):
                         ctl = _finite_float(last.get("_ctl_valid"))
                         atl = _finite_float(last.get("_atl_valid"))
 
-                        semantic["current_ISO_weekly_microcycle"]["projected_state"] = {
-                            "ctl": round(ctl, 2),
-                            "atl": round(atl, 2),
-                            "tsb": round(ctl - atl, 2),
-                            "source": "calendar"
-                        }
+                        if ctl is not None and atl is not None:
+                            projected_state = {
+                                "ctl": round(ctl, 2),
+                                "atl": round(atl, 2),
+                                "tsb": round(ctl - atl, 2),
+                                "source": "calendar"
+                            }
 
+                            debug(
+                                context,
+                                f"[WEEK_PROJECTION] calendar projected_state "
+                                f"CTL={ctl:.2f} ATL={atl:.2f} TSB={ctl - atl:.2f}"
+                            )
+                    else:
                         debug(
                             context,
-                            f"[WEEK_PROJECTION] calendar projected_state "
-                            f"CTL={ctl:.2f} ATL={atl:.2f} TSB={ctl - atl:.2f}"
+                            "[WEEK_PROJECTION] no valid calendar CTL/ATL rows in current week"
                         )
-                    else:
-                        semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
-                        debug(context, "[WEEK_PROJECTION] no valid calendar CTL/ATL rows in current week")
-
-                else:
-                    semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
-
-        else:
-            semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
 
     except Exception as e:
         debug(context, f"[WEEK_PROJECTION] ⚠️ {e}")
-        semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
+
+    # Store for debug / downstream fallback
+    context["_week_projected_state"] = projected_state
+
+    # Attach to microcycle only if it already exists.
+    # This avoids KeyError and avoids creating a fake empty microcycle.
+    if isinstance(semantic.get("current_ISO_weekly_microcycle"), dict):
+        semantic["current_ISO_weekly_microcycle"]["projected_state"] = projected_state
 
     # ---------------------------------------------------------
     # 🧭 Phase Structure Normalisation (URF v5.1 — Science-Aligned)
