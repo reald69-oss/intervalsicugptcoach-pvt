@@ -506,8 +506,7 @@ CHEAT_SHEET["training_load_pattern"] = {
         "context_window": "7d_with_21_28d_baseline",
         "description": (
             "Current 7-day training-load pattern resolved against recent "
-            "baseline and CTL-based capacity metrics. This does not override "
-            "Performance Intelligence training_state or ADE directives."
+            "baseline and CTL-based capacity metrics."
         ),
         "inputs": {
             "ACWR": "EWMA acute/chronic load ratio, usually 7d vs 28d",
@@ -645,8 +644,7 @@ CHEAT_SHEET["physiology_state"] = {
         "context_window": "42d wellness with current load state",
         "description": (
             "Current physiology response resolved from autonomic, recovery, sleep, "
-            "resting HR, subjective, and load-pressure signals. This does not override "
-            "Training Load Pattern, Performance Intelligence training_state, or ADE directives."
+            "resting HR, subjective, and load-pressure signals."
         ),
         "inputs": {
             "hrv_ratio": "latest HRV divided by 42-day HRV mean",
