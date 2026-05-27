@@ -4454,44 +4454,77 @@ def build_semantic_json(context):
     try:
         cal = context.get("calendar") or context.get("prefetched", {}).get("calendar")
 
+        def _finite_float(v):
+            try:
+                f = float(v)
+                if pd.isna(f) or not np.isfinite(f):
+                    return None
+                return f
+            except Exception:
+                return None
+
         if isinstance(cal, list) and len(cal) > 0:
 
             df = pd.DataFrame(cal)
-            df["date"] = pd.to_datetime(df["start_date_local"], errors="coerce")
-            df = df.dropna(subset=["date"]).sort_values("date")
 
-            # current ISO week
-            today = pd.Timestamp.today().normalize()
-            week_start = today.to_period("W").start_time
-            week_end = week_start + pd.Timedelta(days=6)
-
-            df_week = df[
-                (df["date"] >= week_start) &
-                (df["date"] <= week_end)
-            ]
-
-            if not df_week.empty and "icu_ctl" in df_week.columns:
-
-                last = df_week.iloc[-1]
-
-                ctl = float(last.get("icu_ctl") or 0)
-                atl = float(last.get("icu_atl") or 0)
-
-                semantic["current_ISO_weekly_microcycle"]["projected_state"] = {
-                    "ctl": round(ctl, 2),
-                    "atl": round(atl, 2),
-                    "tsb": round(ctl - atl, 2),
-                    "source": "calendar"
-                }
-
-            else:
+            if "start_date_local" not in df.columns:
                 semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
+            else:
+                df["date"] = pd.to_datetime(df["start_date_local"], errors="coerce")
+                df = df.dropna(subset=["date"]).sort_values("date")
+
+                # current ISO week
+                today = pd.Timestamp.today().normalize()
+                week_start = today.to_period("W").start_time
+                week_end = week_start + pd.Timedelta(days=6)
+
+                df_week = df[
+                    (df["date"] >= week_start) &
+                    (df["date"] <= week_end)
+                ].copy()
+
+                if (
+                    not df_week.empty
+                    and "icu_ctl" in df_week.columns
+                    and "icu_atl" in df_week.columns
+                ):
+                    # Keep only rows with valid projected CTL/ATL
+                    df_week["_ctl_valid"] = df_week["icu_ctl"].apply(_finite_float)
+                    df_week["_atl_valid"] = df_week["icu_atl"].apply(_finite_float)
+
+                    df_valid = df_week.dropna(subset=["_ctl_valid", "_atl_valid"])
+
+                    if not df_valid.empty:
+                        last = df_valid.iloc[-1]
+
+                        ctl = _finite_float(last.get("_ctl_valid"))
+                        atl = _finite_float(last.get("_atl_valid"))
+
+                        semantic["current_ISO_weekly_microcycle"]["projected_state"] = {
+                            "ctl": round(ctl, 2),
+                            "atl": round(atl, 2),
+                            "tsb": round(ctl - atl, 2),
+                            "source": "calendar"
+                        }
+
+                        debug(
+                            context,
+                            f"[WEEK_PROJECTION] calendar projected_state "
+                            f"CTL={ctl:.2f} ATL={atl:.2f} TSB={ctl - atl:.2f}"
+                        )
+                    else:
+                        semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
+                        debug(context, "[WEEK_PROJECTION] no valid calendar CTL/ATL rows in current week")
+
+                else:
+                    semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
 
         else:
             semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
 
     except Exception as e:
         debug(context, f"[WEEK_PROJECTION] ⚠️ {e}")
+        semantic["current_ISO_weekly_microcycle"]["projected_state"] = None
 
     # ---------------------------------------------------------
     # 🧭 Phase Structure Normalisation (URF v5.1 — Science-Aligned)
