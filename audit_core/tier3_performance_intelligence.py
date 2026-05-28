@@ -1088,9 +1088,6 @@ def compute_external_load_context(context, df_full):
         context["performance_intelligence"]["external_load_context"]
     """
 
-    import numpy as np
-    import pandas as pd
-
     if df_full is None or getattr(df_full, "empty", True):
         return {}
 
