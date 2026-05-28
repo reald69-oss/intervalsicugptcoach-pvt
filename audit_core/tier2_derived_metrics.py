@@ -929,8 +929,9 @@ def compute_derived_metrics(df_events, context):
     # -------------------------------------------------
     # 4️⃣ Treff Polarization-Index (2019)
     # PI = log10( Z1 / (Z2 × Z3) × 100 )
+    # Requires all 3 collapsed zones to be positive.
     # -------------------------------------------------
-    if z2 > 0 and z3 > 0:
+    if z1 > 0 and z2 > 0 and z3 > 0:
         polarisation_index = round(
             float(np.log10((z1 / (z2 * z3)) * 100)),
             3
@@ -938,7 +939,11 @@ def compute_derived_metrics(df_events, context):
         debug(context, f"[POL] Treff PI → {polarisation_index}")
     else:
         polarisation_index = 0.0
-        debug(context, "[POL] Treff PI fallback → invalid zone proportions")
+        debug(
+            context,
+            f"[POL] Treff PI fallback → invalid zone proportions "
+            f"Z1={z1:.3f} Z2={z2:.3f} Z3={z3:.3f}"
+        )
 
     # 5️⃣ Register
     context["Polarisation"] = polarisation
