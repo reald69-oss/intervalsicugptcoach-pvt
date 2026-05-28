@@ -43,12 +43,12 @@ else:
     print("[BOOT] ICU_OAUTH relying on passed ICU_OAUTH")
 
 app = FastAPI(title="Montis.icu GPT Coach Railway API", version="2.0")
-
 # ============================================================
 # 🧹 SANITIZER
 # ============================================================
 def sanitize(obj, seen=None):
     import pandas as pd, numpy as np, math
+    from datetime import datetime, date
 
     if isinstance(obj, (str, int, float, bool)) or obj is None:
         if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
@@ -70,12 +70,6 @@ def sanitize(obj, seen=None):
     if seen is None:
         seen = set()
 
-    if isinstance(obj, (dict, list, tuple, pd.DataFrame, pd.Series)):
-        oid = id(obj)
-        if oid in seen:
-            return None
-        seen.add(oid)
-
     if isinstance(obj, pd.DataFrame):
         return sanitize(obj.to_dict(orient="records"), seen)
 
@@ -83,16 +77,34 @@ def sanitize(obj, seen=None):
         return sanitize(obj.to_dict(), seen)
 
     if isinstance(obj, dict):
-        return {
+        oid = id(obj)
+        if oid in seen:
+            return None
+
+        seen.add(oid)
+
+        out = {
             str(sanitize(k, seen)): sanitize(v, seen)
             for k, v in obj.items()
         }
 
+        seen.remove(oid)
+        return out
+
     if isinstance(obj, (list, tuple)):
-        return [sanitize(i, seen) for i in obj]
+        oid = id(obj)
+        if oid in seen:
+            return None
+
+        seen.add(oid)
+
+        out = [sanitize(i, seen) for i in obj]
+
+        seen.remove(oid)
+        return out
 
     return str(obj)
-
+    
 # ============================================================
 # 🧩 NORMALIZER — replicate Tier-0 Pre-Audit
 # ============================================================
