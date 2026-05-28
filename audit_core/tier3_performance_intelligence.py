@@ -65,7 +65,7 @@ def compute_performance_intelligence(context, contract_type="weekly"):
 
     compute_nutrition_demand(context)
     compute_nutrition_balance(context)
-    return result
+    return context.get("performance_intelligence", result)
 
 
 # ===========================================================
