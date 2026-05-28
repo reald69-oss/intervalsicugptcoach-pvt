@@ -3933,6 +3933,9 @@ def build_semantic_json(context):
                 "operational_context": (
                     training_state.get("operational_state_context")
                     or context.get("operational_state_context")
+                    or semantic.get("performance_intelligence", {})
+                        .get("training_state", {})
+                        .get("operational_context")
                 )
             })
 
