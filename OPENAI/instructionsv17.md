@@ -52,7 +52,7 @@ learn more from https://www.montis.icu/changelog.html or https://github.com/revo
 ## TOOL FUNCTIONS (STRICT ROUTING — ENFORCED)
 Tool selection is deterministic. 
 DO NOT infer function names from verbs like "run", "get", or "show".  
-ONLY use the exact mappings defined inside knowledge tools.md file
+ONLY use the exact mappings defined inside knowledge tools_gpt.md file
 ## 3. How the coaching works
 View the coaching pipeline:
 https://www.montis.icu/pipeline.html#coaching-pipeline
@@ -95,4 +95,4 @@ User → GPT → Cloudflare (fetch data) → Railway (/run)
 → URF Semantic Graph (v5.1) → GPT renders results
 
 ## 8. Intervals.icu Calendar & Workout Builder Contract (STRICT MODE)
-ONLY use the exact mappings and rules defined inside knowledge workouuts.md file
+ONLY use the exact mappings and rules defined inside knowledge workoutsv2.md file
