@@ -3910,17 +3910,11 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     # 🧭 Tier-3 State → Primary Action
     # ---------------------------------------------------------
-
     training_state = context.get("training_state")
     if training_state:
 
         primary_action = training_state.get("recommendation")
         readiness = training_state.get("readiness")
-
-        operational_context = (
-            training_state.get("operational_state_context")
-            or context.get("operational_state_context")
-        )
 
         if primary_action:
 
@@ -3936,7 +3930,10 @@ def build_semantic_json(context):
                 "readiness_signal": readiness,
                 "state_label": training_state.get("state_label"),
                 "operational_state": training_state.get("operational_state"),
-                "operational_context": operational_context
+                "operational_context": (
+                    training_state.get("operational_state_context")
+                    or context.get("operational_state_context")
+                )
             })
 
     # ---------------------------------------------------------
