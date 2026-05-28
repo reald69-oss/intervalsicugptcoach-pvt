@@ -1,6 +1,6 @@
 """
 Energy System Progression Engine (ESPE)
-Version: v1.2
+Version: v1.21
 
 Stateless engine comparing two rolling power-curve windows to track energy system progression.
 
@@ -19,7 +19,7 @@ from coaching_cheat_sheet import CHEAT_SHEET
 from audit_core.utils import debug
 from coaching_profile import COACH_PROFILE
 
-ESPE_VERSION = "espe_v1.2"
+ESPE_VERSION = "espe_v1.21"
 
 # ---------------------------------------------------------------------
 # Power Anchor Helpers

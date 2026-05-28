@@ -18,7 +18,7 @@ import numpy as np
 from coaching_profile import COACH_PROFILE
 from tier3_trail_execution import run_trail_execution
 
-PI_VERSION = "PI_v1.6"
+PI_VERSION = "PI_v1.61"
 # ===========================================================
 # Public Entry
 # ===========================================================

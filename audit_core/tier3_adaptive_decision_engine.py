@@ -1,6 +1,6 @@
 #ADE V2.2
 
-ADE_VERSION = "ade_v2.2"
+ADE_VERSION = "ade_v2.21"
 
 from datetime import datetime
 from audit_core.utils import debug
