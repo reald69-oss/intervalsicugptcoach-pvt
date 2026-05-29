@@ -6,8 +6,6 @@ Builds a FULL semantic DICT coaching graph based on the Unified Reporting
 Framework v5.1, Coaching Profile, Coaching Cheat Sheet, and all Tier-2/3 modules.
 
 """
-
-
 import json, math, copy
 from datetime import datetime, date, timezone, timedelta
 import pandas as pd
@@ -618,6 +616,94 @@ def resolve_physiology_state(wellness, cheat_sheet):
         "inputs": inputs,
         "confidence": "high" if state_key != "unknown" else "low"
     }
+
+def apply_report_recency_governance(semantic: dict) -> dict:
+    """
+    Prevent stale historical weekly blocks from being interpreted
+    as current tactical coaching guidance.
+    """
+
+    meta = semantic.setdefault("meta", {})
+
+    report_type = meta.get("report_type")
+    period = meta.get("period") or meta.get("date_range")
+    generated_at = meta.get("generated_at", {})
+
+    if report_type != "weekly":
+        return semantic
+
+    # Parse report end date from "YYYY-MM-DD → YYYY-MM-DD"
+    report_end = None
+    if isinstance(period, str) and "→" in period:
+        try:
+            report_end_str = period.split("→")[-1].strip()
+            report_end = datetime.fromisoformat(report_end_str).date()
+        except Exception:
+            report_end = None
+
+    # Parse generated local date
+    generated_date = None
+    local_ts = generated_at.get("local") if isinstance(generated_at, dict) else None
+    if local_ts:
+        try:
+            generated_date = datetime.fromisoformat(local_ts).date()
+        except Exception:
+            generated_date = None
+
+    if report_end is None or generated_date is None:
+        meta["recency"] = {
+            "mode": "unknown",
+            "is_current": False,
+            "staleness_days": None,
+            "guidance_validity": "unknown"
+        }
+        return semantic
+
+    staleness_days = (generated_date - report_end).days
+
+    is_current = staleness_days <= 3
+
+    meta["recency"] = {
+        "mode": "current" if is_current else "historical",
+        "is_current": is_current,
+        "staleness_days": staleness_days,
+        "report_end": report_end.isoformat(),
+        "generated_date": generated_date.isoformat(),
+        "guidance_validity": "current_tactical" if is_current else "historical_block_review"
+    }
+
+    if is_current:
+        return semantic
+
+    # Mark future/current planning fields as unavailable for historical blocks
+    semantic["future_forecast"] = {}
+    semantic["future_actions"] = []
+    semantic["planned_events_7d"] = []
+    semantic["planned_summary_by_iso_week"] = {}
+    semantic["current_ISO_weekly_microcycle"] = None
+
+    # Downgrade ADE current directive semantics
+    actions = semantic.get("actions", [])
+    if isinstance(actions, list):
+        for action in actions:
+            if isinstance(action, dict) and action.get("type") == "adaptive_summary":
+                action["historical_context"] = True
+                action["guidance_validity"] = "historical_block_review"
+                action["directive_at_time"] = action.get("directive")
+                action["directive"] = "Historical block review — not current coaching guidance"
+                action["resolution"] = "historical_only"
+
+                action["recency_note"] = (
+                    f"This weekly block ended {staleness_days} days before report generation. "
+                    "ADE describes the historical block state only and must not be used as today's training directive."
+                )
+
+    # Replace training_guidance
+    semantic["training_guidance"] = (
+        "Historical weekly block only. Use current weekly report for today's coaching guidance."
+    )
+
+    return semantic
 
 # ---------------------------------------------------------
 # Insights Builder
@@ -5761,6 +5847,11 @@ def apply_report_type_contract(semantic: dict) -> dict:
     semantic["meta"]["report_header"] = REPORT_HEADERS.get(report_type, {})
     semantic["meta"]["resolution"] = REPORT_RESOLUTION.get(report_type, {})
     semantic["header"] = semantic["meta"]["report_header"]
+
+    # ── Recency governance
+    # Must run BEFORE contract filtering so stale weekly reports
+    # cannot expose current/live ADE guidance.
+    semantic = apply_report_recency_governance(semantic)
 
     # ── Top-level filtering (contract)
     allowed_keys = REPORT_CONTRACT.get(contract_key, semantic.keys())
