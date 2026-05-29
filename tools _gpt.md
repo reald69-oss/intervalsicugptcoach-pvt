@@ -8,11 +8,17 @@ CRITICAL:
   - runWellnessReportV2
   - runSummaryReportV2
 - Any other use of "run" is INVALID
+- "weekly overview" is NOT a separate function.
+- It MUST call runWeeklyReportV2 with render_mode=overview.
+- Do NOT combine lite=true with render_mode=overview.
+- If the user asks for a visual/compact/dashboard/Bento-style weekly report, prefer render_mode=overview.
 
 MAPPINGS:
 
 REPORTS
 - "weekly report" → runWeeklyReportV2
+- "weekly overview", "weekly dashboard", "weekly bento overview", "overview render" → runWeeklyReportV2 with render_mode=overview
+- "weekly lite" → runWeeklyReportV2 with lite=true
 - "season report" → runSeasonReportV2
 - "wellness report" → runWellnessReportV2
 - "summary report" → runSummaryReportV2
@@ -51,7 +57,11 @@ FORBIDDEN:
 
 ---
 
-Weekly Report → runWeeklyReportV2 → params: test?, lite?, start?, athleteID? → weekly performance review
+Weekly Report → runWeeklyReportV2 → params: test?, lite?, render_mode?, start?, athleteID? → weekly performance review
+
+Weekly Overview → runWeeklyReportV2 → params: render_mode=overview, test?, start?, athleteID? → compact Bento-style weekly overview for ChatGPT
+
+Weekly Lite → runWeeklyReportV2 → params: lite=true, test?, start?, athleteID? → reduced weekly report payload
 
 Season Report → runSeasonReportV2 → params: lite?, athleteID? → training block progression
 

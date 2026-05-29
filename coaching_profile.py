@@ -369,6 +369,10 @@ RENDERER_PROFILES = {
         }
     },
 
+    # ==============================================================
+    # Weekly OVERVIEW CONTRACT
+    # ==============================================================
+
     "weekly_overview": {
         "framing": {
             "intent": "bento_weekly_overview"
@@ -451,7 +455,7 @@ RENDERER_PROFILES = {
             "decision_context": "headline",
             "future_forecast": "summary"
         }
-    }
+    },
 
     # ==============================================================
     # Weekly report (FULL DETAIL, SESSION-LEVEL)
