@@ -383,15 +383,17 @@ RENDERER_PROFILES = {
         "layout": {
             "style": "compact_dashboard",
             "columns": 2,
-            "max_cards": 5,
+            "max_cards": 6,
             "card_order": [
+                "athlete_context",
                 "adaptive_decision_engine",
                 "training_load",
                 "physiology_reserve",
                 "performance_intelligence",
                 "adaptation_progression"
-            ],
+            ]
             "required_sections": [
+                "Athlete Context",
                 "Adaptive Decision Engine",
                 "Weekly Load",
                 "Physiology",
@@ -401,8 +403,17 @@ RENDERER_PROFILES = {
         },
 
         "card_rules": {
-            "adaptive_decision_engine": [
+            "athlete_context": [
                 "This card MUST be rendered first.",
+                "Use meta.athlete.identity and meta.athlete.profile.",
+                "Show athlete name, primary_sport, dominant_sport.",
+                "Show FTP, eFTP, FTP/kg, LTHR, max HR, VO2max Garmin when present.",
+                "Show lactate_mmol_l and lactate_power when present.",
+                "Preferred format: compact table.",
+                "Do not render full athlete profile, full context, platforms, equipment, or activity_scope."
+            ],
+            "adaptive_decision_engine": [
+                "This card MUST be rendered immediately after Athlete Context.",
                 "Use actions item where type == adaptive_summary; do not assume actions[0] unless it matches adaptive_summary.",
                 "Use training_guidance as the final coaching directive when present.",
                 "Do not replace the card title with taper/override text.",
@@ -465,6 +476,19 @@ RENDERER_PROFILES = {
         },
 
         "required_fields": {
+            "athlete_context": [
+                "meta.athlete.identity.name",
+                "meta.athlete.profile.primary_sport",
+                "meta.athlete.profile.dominant_sport",
+                "meta.athlete.profile.ftp",
+                "meta.athlete.profile.eftp",
+                "meta.athlete.profile.ftp_kg",
+                "meta.athlete.profile.lthr",
+                "meta.athlete.profile.max_hr",
+                "meta.athlete.profile.vo2max_garmin",
+                "meta.athlete.profile.lactate_mmol_l",
+                "meta.athlete.profile.lactate_power"
+            ],
             "adaptive_decision_engine": [
                 "adaptive_summary.ade_base_score.value",
                 "adaptive_summary.ade_base_score.label",
@@ -485,6 +509,8 @@ RENDERER_PROFILES = {
 
         "preferred_markdown_shape": [
             "Opening one-line summary.",
+            "## 👤 Athlete Context",
+            "Compact athlete table showing name, sport, FTP, eFTP, FTP/kg, LTHR, max HR, VO2max Garmin, lactate power if present.",
             "## 🎯 Adaptive Decision Engine",
             "ADE score table including score, state, resolution, required phase, alignment, forecast trend.",
             "Final guidance line using training_guidance.",
