@@ -1000,23 +1000,23 @@ async def run_audit_with_data(
                     "[EXEC-PRE] report_type=%s athlete_id=unknown",
                     report_range
                 )
-            try:
-                if overview:
-                    render_mode = "overview"
-                    lite = False
-                elif lite:
-                    render_mode = "lite"
-                else:
-                    render_mode = "full+metrics"
 
-                try:
-                    report, compliance, *_ = run_report(
-                        reportType=report_range,
-                        output_format=fmt,
-                        include_coaching_metrics=True,
-                        render_mode=render_mode,
-                        **prefetch_context
-                    )
+            if overview:
+                render_mode = "overview"
+                lite = False
+            elif lite:
+                render_mode = "lite"
+            else:
+                render_mode = "full+metrics"
+
+            try:
+                report, compliance, *_ = run_report(
+                    reportType=report_range,
+                    output_format=fmt,
+                    include_coaching_metrics=True,
+                    render_mode=render_mode,
+                    **prefetch_context
+                )
 
             except AuditHalt as e:
                 return handle_audit_halt(
