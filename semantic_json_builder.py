@@ -5475,7 +5475,15 @@ def build_semantic_json(context):
                 alignment = "aligned"
 
         else:  # build / base / peak
-            alignment = "misaligned" if planned_pattern == "reduced" else "aligned"
+
+            # Base exception:
+            # reduced load during Base is not a hard plan-governance conflict.
+            # It is a soft underload / reduced-base warning.
+            if required_phase == "base" and planned_pattern == "reduced":
+                alignment = "underload_watch"
+
+            else:
+                alignment = "misaligned" if planned_pattern == "reduced" else "aligned"
 
         # -----------------------------
         # Output FIRST (important)
