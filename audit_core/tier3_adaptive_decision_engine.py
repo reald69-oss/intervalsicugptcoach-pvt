@@ -2,8 +2,9 @@
 
 ADE_VERSION = "ade_v2.21"
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from audit_core.utils import debug
+from audit_core.event_readiness import estimate_event_ctl_atl_from_calendar_ewma
 
 def _extract_target_event(ev):
     name = (ev.get("name") or "").lower()
@@ -39,11 +40,107 @@ def _extract_target_event(ev):
     except:
         return None
 
+    race_type = "tt" if ("tt" in name or "time trial" in name) else "unknown"
+
+    tsb_target = [8, 18] if race_type == "tt" or training_bias == "ftp" else None
+
     return {
         "priority": priority,
         "training_bias": training_bias,
-        "dt": dt
+        "dt": dt,
+        "name": ev.get("name"),
+        "type": ev.get("type"),
+        "race_type": race_type,
+        # Raw calendar CTL/ATL are not safe for ADE event-form classification.
+        # ADE must use event-sunrise EWMA state, injected later.
+        "raw_calendar_ctl": ev.get("icu_ctl"),
+        "raw_calendar_atl": ev.get("icu_atl"),
+        "icu_ctl": None,
+        "icu_atl": None,
+        "target_tsb_range": tsb_target,
     }
+
+def _resolve_event_form_context(context, training_bias, target_event=None):
+    """
+    Resolve event TSB vs target range for ADE taper governance.
+
+    Priority:
+    1. context.event_targets.next_event.readiness_governance
+    2. context.event_targets.next_event icu_ctl/icu_atl + race_profile.targets.tsb
+    3. fallback FTP/TT target for A-race threshold events
+    """
+
+    event_tsb = None
+    target_tsb_range = None
+    form_status = None
+
+    next_event = (
+        (context.get("event_targets") or {})
+        .get("next_event") or {}
+    )
+
+    if not next_event and isinstance(target_event, dict):
+        next_event = target_event
+
+    gov = next_event.get("readiness_governance") or {}
+
+    if gov.get("event_tsb") is not None:
+        event_tsb = gov.get("event_tsb")
+
+    if gov.get("target_tsb_range") is not None:
+        target_tsb_range = gov.get("target_tsb_range")
+
+    if gov.get("form_status") is not None:
+        form_status = gov.get("form_status")
+
+    if event_tsb is None:
+        ctl = next_event.get("icu_ctl")
+        atl = next_event.get("icu_atl")
+
+        try:
+            if ctl is not None and atl is not None:
+                event_tsb = round(float(ctl) - float(atl), 2)
+        except Exception:
+            event_tsb = None
+
+    if target_tsb_range is None:
+        target_tsb_range = (
+            next_event.get("race_profile", {})
+            .get("targets", {})
+            .get("tsb")
+        )
+
+    if target_tsb_range is None:
+        target_tsb_range = next_event.get("target_tsb_range")
+
+    # fallback for TT / FTP race if event_targets is not available yet
+    if target_tsb_range is None and training_bias == "ftp":
+        target_tsb_range = [8, 18]
+
+    if form_status is None and isinstance(target_tsb_range, list) and len(target_tsb_range) == 2 and event_tsb is not None:
+        low, high = target_tsb_range
+
+        try:
+            event_tsb_f = float(event_tsb)
+
+            if event_tsb_f < float(low):
+                form_status = "too_fatigued"
+            elif event_tsb_f > float(high):
+                form_status = "too_fresh"
+            else:
+                form_status = "target_range"
+
+        except Exception:
+            form_status = None
+
+    return {
+        "event_tsb": event_tsb,
+        "target_tsb_range": target_tsb_range,
+        "form_status": form_status
+    }
+
+
+
 
 def _score_ade_base_decision(
     operational_state,
@@ -56,6 +153,7 @@ def _score_ade_base_decision(
     nutrition_status,
     nutrition_conf,
     hrv_ratio=None,
+    event_form_status=None,
 ):
     score = 100
     penalties = []
@@ -142,7 +240,19 @@ def _score_ade_base_decision(
     # --------------------------------------------------
     if taper_state == "taper" and days_to_event is not None:
         if days_to_event <= 10 and load_trend == "increasing":
-            penalise(20, "Increasing load inside taper window")
+
+            if event_form_status == "too_fresh":
+                support("Freshness above event target; controlled taper sharpening may be appropriate")
+
+            elif event_form_status == "target_range":
+                penalise(8, "Load increasing while event TSB is already inside target range")
+
+            elif event_form_status == "too_fatigued":
+                penalise(20, "Event TSB below target and load increasing inside taper window")
+
+            else:
+                penalise(8, "Forecast load trend is increasing inside taper window")
+
         else:
             support("Taper context present")
 
@@ -312,6 +422,29 @@ def run_adaptive_decision_engine(context):
         # ✅ DIRECT — no mapping
         training_bias = next_a.get("training_bias", "mixed")
 
+        estimated = estimate_event_ctl_atl_from_calendar_ewma(
+        context=context,
+        event_date=next_a.get("dt")
+        )
+
+        if estimated.get("ctl") is not None and estimated.get("atl") is not None:
+            next_a["icu_ctl"] = estimated["ctl"]
+            next_a["icu_atl"] = estimated["atl"]
+            next_a["event_state_source"] = "calendar_ewma_sunrise"
+
+    # --------------------------------------------------
+    # 🎯 EVENT FORM CONTEXT FOR TAPER GOVERNANCE
+    # --------------------------------------------------
+    event_form_context = _resolve_event_form_context(
+        context=context,
+        training_bias=training_bias,
+        target_event=next_a
+    )
+
+    event_tsb = event_form_context.get("event_tsb")
+    target_tsb_range = event_form_context.get("target_tsb_range")
+    event_form_status = event_form_context.get("form_status")
+
     # --------------------------------------------------
     # Nutrition = supplementary signal only (graded)
     # --------------------------------------------------
@@ -351,7 +484,10 @@ def run_adaptive_decision_engine(context):
             "exists": bool(next_a),
             "days_to_event": days_to_event,
             "taper_state": taper_state,
-            "event_demand": training_bias
+            "event_demand": training_bias,
+            "event_tsb": event_tsb,
+            "target_tsb_range": target_tsb_range,
+            "form_status": event_form_status
         },
         "version": ADE_VERSION
     }
@@ -360,24 +496,69 @@ def run_adaptive_decision_engine(context):
     # Taper governance hint
     # --------------------------------------------------
     if taper_state == "taper" and days_to_event is not None and days_to_event <= 10:
-        if load_trend == "increasing":
+
+        if load_trend == "increasing" and event_form_status == "too_fresh":
+            decision["taper_governance"] = {
+                "state": "taper_sharpening_required",
+                "required_phase": "taper",
+                "form_status": event_form_status,
+                "event_tsb": event_tsb,
+                "target_tsb_range": target_tsb_range,
+                "reason": "Event TSB is above target; controlled sharpening may be appropriate",
+                "recommended_adjustment": "keep controlled race-specific load, but avoid excess endurance volume"
+            }
+
+        elif load_trend == "increasing" and event_form_status == "target_range":
+            decision["taper_governance"] = {
+                "state": "taper_load_risk",
+                "required_phase": "taper",
+                "form_status": event_form_status,
+                "event_tsb": event_tsb,
+                "target_tsb_range": target_tsb_range,
+                "reason": "Event TSB is already inside target range and planned load is increasing",
+                "recommended_adjustment": "keep short race-specific openers only; avoid adding fatigue"
+            }
+
+        elif load_trend == "increasing" and event_form_status == "too_fatigued":
             decision["taper_governance"] = {
                 "state": "taper_load_conflict",
                 "required_phase": "taper",
-                "reason": "Increasing planned load inside A-race taper window",
-                "recommended_adjustment": "reduce planned load and preserve freshness"
+                "form_status": event_form_status,
+                "event_tsb": event_tsb,
+                "target_tsb_range": target_tsb_range,
+                "reason": "Event TSB is below target and planned load is increasing inside taper window",
+                "recommended_adjustment": "reduce planned load and prioritise recovery"
             }
+
+        elif event_form_status == "too_fresh":
+            decision["taper_governance"] = {
+                "state": "freshness_above_target",
+                "required_phase": "taper",
+                "form_status": event_form_status,
+                "event_tsb": event_tsb,
+                "target_tsb_range": target_tsb_range,
+                "reason": "Event TSB is above target range",
+                "recommended_adjustment": "retain controlled openers rather than further unloading"
+            }
+
         else:
             decision["taper_governance"] = {
                 "state": "taper_context_active",
                 "required_phase": "taper",
+                "form_status": event_form_status,
+                "event_tsb": event_tsb,
+                "target_tsb_range": target_tsb_range,
                 "reason": "A-race taper window active",
                 "recommended_adjustment": "maintain reduced load and freshness"
             }
+
     else:
         decision["taper_governance"] = {
             "state": "none",
             "required_phase": None,
+            "form_status": None,
+            "event_tsb": None,
+            "target_tsb_range": None,
             "reason": None,
             "recommended_adjustment": None
         }
@@ -395,6 +576,7 @@ def run_adaptive_decision_engine(context):
         nutrition_status=nutrition_status,
         nutrition_conf=nutrition_conf,
         hrv_ratio=hrv_ratio,
+        event_form_status=event_form_status,
     )
 
     context["adaptive_decision"] = decision

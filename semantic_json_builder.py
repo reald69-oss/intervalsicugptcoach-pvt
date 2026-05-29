@@ -30,6 +30,7 @@ from audit_core.tier3_trail_execution import (
 from coach_trail_rules import TRAIL_DEFAULTS
 from audit_core.tier3_future_forecast import run_future_forecast
 from audit_core.tier2_actions import build_future_projected_weeks
+from audit_core.event_readiness import estimate_event_ctl_atl_from_calendar_ewma
 
 # ---------------------------------------------------------
 # Helpers
@@ -2759,182 +2760,6 @@ def build_semantic_json(context):
                 )
             }
         }
-        def estimate_event_ctl_atl_from_calendar_ewma(context, event_date):
-            """
-            Estimate target-event SUNRISE CTL / ATL using calendar-derived daily EWMA.
-
-            Rules:
-            - Event readiness must use SUNRISE state, not Intervals race-day sunset state.
-            - Seed from the latest valid calendar CTL/ATL row strictly BEFORE the event date.
-            - If no seeded calendar physiology exists, fall back to current authoritative CTL/ATL.
-            - Apply planned load on intervening days only.
-            - Do NOT apply target event day load.
-            - Advance one final zero-load EWMA step into event-day sunrise.
-
-            Daily EWMA:
-                CTL = CTL + (load - CTL) / 42
-                ATL = ATL + (load - ATL) / 7
-            """
-
-            calendar = context.get("calendar") or []
-
-            try:
-                target_day = pd.to_datetime(event_date).date()
-            except Exception:
-                return {"ctl": None, "atl": None}
-
-            rows = []
-
-            for ev in calendar:
-                if not isinstance(ev, dict):
-                    continue
-
-                date_raw = ev.get("start_date_local") or ev.get("date")
-                if not date_raw:
-                    continue
-
-                try:
-                    day = pd.to_datetime(str(date_raw)[:10], errors="coerce").date()
-                except Exception:
-                    continue
-
-                # Rows after the target event cannot affect its sunrise state
-                if day >= target_day:
-                    continue
-
-                ctl = pd.to_numeric(ev.get("icu_ctl"), errors="coerce")
-                atl = pd.to_numeric(ev.get("icu_atl"), errors="coerce")
-                load = pd.to_numeric(
-                    ev.get("icu_training_load")
-                    if ev.get("icu_training_load") is not None
-                    else ev.get("tss"),
-                    errors="coerce"
-                )
-
-                rows.append({
-                    "date": day,
-                    "ctl": None if pd.isna(ctl) else float(ctl),
-                    "atl": None if pd.isna(atl) else float(atl),
-                    "load": 0.0 if pd.isna(load) else float(load),
-                })
-
-            df = pd.DataFrame(rows).sort_values("date") if rows else pd.DataFrame(
-                columns=["date", "ctl", "atl", "load"]
-            )
-
-            # ---------------------------------------------------------
-            # 1. Resolve seed:
-            #    latest Intervals calendar CTL/ATL strictly before event
-            # ---------------------------------------------------------
-            state_rows = df[
-                df["ctl"].notna() &
-                df["atl"].notna()
-            ].copy()
-
-            if not state_rows.empty:
-                seed = state_rows.sort_values("date").iloc[-1]
-
-                seed_day = seed["date"]
-                ctl = float(seed["ctl"])
-                atl = float(seed["atl"])
-
-                debug(
-                    context,
-                    f"[EVENT-SUNRISE] Calendar seed → "
-                    f"event={target_day} seed_day={seed_day} "
-                    f"ctl={ctl:.2f} atl={atl:.2f}"
-                )
-
-            else:
-                # -----------------------------------------------------
-                # No seeded calendar physiology
-                # → fallback to current authoritative CTL / ATL
-                # -----------------------------------------------------
-                ctl = (
-                    context.get("ctl")
-                    or ((context.get("wellness_summary") or {}).get("ctl"))
-                )
-
-                atl = (
-                    context.get("atl")
-                    or ((context.get("wellness_summary") or {}).get("atl"))
-                )
-
-                try:
-                    ctl = float(ctl)
-                    atl = float(atl)
-                except Exception:
-                    debug(
-                        context,
-                        f"[EVENT-SUNRISE] No usable CTL/ATL seed for event={target_day}"
-                    )
-                    return {"ctl": None, "atl": None}
-
-                today_raw = context.get("athlete_today")
-                if today_raw is None:
-                    return {"ctl": None, "atl": None}
-
-                try:
-                    seed_day = pd.to_datetime(today_raw).date()
-                except Exception:
-                    return {"ctl": None, "atl": None}
-
-                debug(
-                    context,
-                    f"[EVENT-SUNRISE] Current-state fallback seed → "
-                    f"event={target_day} seed_day={seed_day} "
-                    f"ctl={ctl:.2f} atl={atl:.2f}"
-                )
-
-            # ---------------------------------------------------------
-            # 2. Aggregate planned load AFTER seed and BEFORE event
-            # ---------------------------------------------------------
-            if not df.empty:
-                load_by_day = (
-                    df[
-                        (df["date"] > seed_day) &
-                        (df["date"] < target_day)
-                    ]
-                    .groupby("date", as_index=True)["load"]
-                    .sum()
-                    .to_dict()
-                )
-            else:
-                load_by_day = {}
-
-            # ---------------------------------------------------------
-            # 3. Walk from seed sunset → event-day sunrise
-            #
-            #    seed_day CTL/ATL = seeded sunset state
-            #    next day load step = that day's sunset state
-            #    event day forced zero = sunrise readiness state
-            # ---------------------------------------------------------
-            current_day = seed_day
-
-            while current_day < target_day:
-                current_day = current_day + timedelta(days=1)
-
-                # Intervening planned load applies.
-                # Event day itself must use zero load: SUNRISE, not sunset.
-                daily_load = (
-                    0.0
-                    if current_day == target_day
-                    else float(load_by_day.get(current_day, 0.0))
-                )
-
-                ctl = ctl + ((daily_load - ctl) / 42.0)
-                atl = atl + ((daily_load - atl) / 7.0)
-
-            debug(
-                context,
-                f"[EVENT-SUNRISE] Result → "
-                f"event={target_day} ctl={ctl:.2f} atl={atl:.2f}"
-            )
-
-            return {
-                "ctl": round(ctl, 2),
-                "atl": round(atl, 2),
-            }
 
         # ---------------------------------------------------------
         # 🎯 EVENT TARGETS (COMPRESSED FOR LLM) + RACE CLASSIFICATION
@@ -5413,6 +5238,21 @@ def build_semantic_json(context):
 
         forecast_load_trend = forecast_block.get("load_trend")
         forecast_fatigue_class = forecast_block.get("fatigue_class")
+        ade_action = next(
+            (
+                a for a in semantic.get("actions", [])
+                if isinstance(a, dict) and a.get("type") == "adaptive_summary"
+            ),
+            {}
+        )
+
+        taper_governance = ade_action.get("taper_governance") or {}
+        taper_governance_state = taper_governance.get("state")
+
+        allows_taper_sharpening = taper_governance_state in {
+            "taper_sharpening_required",
+            "freshness_above_target",
+        }
 
         projected_block = next((b for b in summaries if b.get("is_projected")), None)
         projected_phase = (
@@ -5495,7 +5335,18 @@ def build_semantic_json(context):
             alignment = "unknown"
 
         elif required_phase in {"recovery", "taper"}:
-            alignment = "misaligned" if planned_pattern == "increasing" else "aligned"
+
+            # Taper exception:
+            # if athlete is too fresh and ADE says sharpening is required,
+            # increasing load is not automatically misaligned.
+            if planned_pattern == "increasing" and allows_taper_sharpening:
+                alignment = "aligned_with_sharpening"
+
+            elif planned_pattern == "increasing":
+                alignment = "misaligned"
+
+            else:
+                alignment = "aligned"
 
         else:  # build / base / peak
             alignment = "misaligned" if planned_pattern == "reduced" else "aligned"
@@ -5536,12 +5387,20 @@ def build_semantic_json(context):
         # -------------------------
         # HARD RULE (PHASE = SHOULD, ALWAYS APPLIED)
         # -------------------------
-        if phase in {"recovery", "taper"}:
-            decision = (
-                f"{base_guidance} — prioritise taper freshness"
-                if phase == "taper"
-                else f"{base_guidance} — prioritise recovery"
-            )
+        if phase == "taper":
+
+            if allows_taper_sharpening:
+                decision = (
+                    f"{base_guidance} — keep controlled race-specific sharpening "
+                    "and avoid excess endurance volume"
+                )
+            else:
+                decision = f"{base_guidance} — prioritise taper freshness and maintain low load"
+
+            phase_override = True
+
+        elif phase == "recovery":
+            decision = f"{base_guidance} — prioritise recovery"
 
             if "neutral" in future_title:
                 decision += " and maintain low load"
@@ -5588,21 +5447,34 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
 
     if semantic.get("actions"):
-        ade_action = semantic["actions"][0]  # first is always ADE
+        ade_action = next(
+            (
+                a for a in semantic["actions"]
+                if isinstance(a, dict) and a.get("type") == "adaptive_summary"
+            ),
+            None
+        )
 
-        ade_action["phase_constraint"] = phase
-        ade_action["phase_alignment"] = alignment
+        if ade_action:
+            ade_action["phase_constraint"] = phase
+            ade_action["phase_alignment"] = alignment
 
-        if phase_override:
-            ade_action["resolution"] = "overridden_by_phase"
+            if alignment == "aligned_with_sharpening":
+                ade_action["resolution"] = "honoured_with_sharpening"
+                semantic.pop("conflict", None)
 
-            semantic["conflict"] = {
-                "metrics_state": ade.get("operational_state"),
-                "phase_requirement": phase,
-                "resolution": "override"
-            }
-        else:
-            ade_action["resolution"] = "honoured"
+            elif phase_override:
+                ade_action["resolution"] = "overridden_by_phase"
+
+                semantic["conflict"] = {
+                    "metrics_state": ade.get("operational_state"),
+                    "phase_requirement": phase,
+                    "resolution": "override"
+                }
+
+            else:
+                ade_action["resolution"] = "honoured"
+                semantic.pop("conflict", None)
 
     # ---------------------------------------------------------
     # 🎯 EVENT READINESS GOVERNANCE SYNC
@@ -5630,11 +5502,17 @@ def build_semantic_json(context):
 
         has_event = bool(event_targets.get("exists")) and bool(next_event.get("name"))
 
-        has_taper_conflict = (
-            taper_governance.get("state") == "taper_load_conflict"
-            or adaptive_summary.get("resolution") == "overridden_by_phase"
-            or decision_context.get("phase_override") is True
-        )
+        taper_state = taper_governance.get("state")
+
+        has_taper_conflict = taper_state in {
+            "taper_load_conflict",
+            "taper_load_risk",
+        }
+
+        has_taper_sharpening = taper_state in {
+            "taper_sharpening_required",
+            "freshness_above_target",
+        }
 
         if has_event:
 
@@ -5677,16 +5555,22 @@ def build_semantic_json(context):
                 else:
                     form_status = "target_range"
 
-            if has_taper_conflict:
-                governance_status = "taper_misaligned"
-                readiness_label = "CONDITIONALLY_READY"
-                readiness_modifier = "plan_risk"
+                if has_taper_conflict:
+                    governance_status = "taper_misaligned"
+                    readiness_label = "CONDITIONALLY_READY"
+                    readiness_modifier = "plan_risk"
 
-                reason = taper_governance.get("reason")
-                if reason:
-                    limiting_factors.insert(0, reason)
-                else:
-                    limiting_factors.insert(0, "Taper load conflict")
+                    reason = taper_governance.get("reason")
+                    limiting_factors.insert(0, reason or "Taper load conflict")
+
+                elif has_taper_sharpening:
+                    governance_status = "sharpening_required"
+                    readiness_label = "READY_WITH_SHARPENING"
+                    readiness_modifier = "freshness_above_target"
+
+                    reason = taper_governance.get("reason")
+                    if reason:
+                        limiting_factors.insert(0, reason)
 
             durability_state = (
                 semantic.get("performance_intelligence", {})
@@ -5722,8 +5606,8 @@ def build_semantic_json(context):
                     x for x in limiting_factors if x
                 ])),
                 "display_rule": (
-                    "If readiness_label is CONDITIONALLY_READY, UI must not display plain READY. "
-                    "Show race score unchanged, but qualify readiness with governance status."
+                    "If readiness_label is READY_WITH_SHARPENING, UI must not display plain READY. "
+                    "Show race score unchanged, but qualify readiness as ready with controlled sharpening."
                 )
             }
 
