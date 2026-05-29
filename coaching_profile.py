@@ -391,7 +391,7 @@ RENDERER_PROFILES = {
                 "physiology_reserve",
                 "performance_intelligence",
                 "adaptation_progression"
-            ]
+            ],
             "required_sections": [
                 "Athlete Context",
                 "Adaptive Decision Engine",
