@@ -5604,6 +5604,144 @@ def build_semantic_json(context):
         else:
             ade_action["resolution"] = "honoured"
 
+    # ---------------------------------------------------------
+    # 🎯 EVENT READINESS GOVERNANCE SYNC
+    # ---------------------------------------------------------
+    # Adds display-safe event readiness governance.
+    # Does not recompute race score.
+    # Prevents UI showing plain READY when ADE has taper conflict.
+    # ---------------------------------------------------------
+
+    try:
+        event_targets = semantic.get("event_targets") or {}
+        next_event = event_targets.get("next_event") or {}
+
+        actions = semantic.get("actions") or []
+        adaptive_summary = next(
+            (
+                a for a in actions
+                if isinstance(a, dict) and a.get("type") == "adaptive_summary"
+            ),
+            {}
+        )
+
+        taper_governance = adaptive_summary.get("taper_governance") or {}
+        decision_context = semantic.get("decision_context") or {}
+
+        has_event = bool(event_targets.get("exists")) and bool(next_event.get("name"))
+
+        has_taper_conflict = (
+            taper_governance.get("state") == "taper_load_conflict"
+            or adaptive_summary.get("resolution") == "overridden_by_phase"
+            or decision_context.get("phase_override") is True
+        )
+
+        if has_event:
+
+            governance_status = "aligned"
+            readiness_label = "READY"
+            readiness_modifier = None
+            limiting_factors = []
+
+            tsb_target = (
+                next_event.get("race_profile", {})
+                .get("targets", {})
+                .get("tsb")
+            )
+
+            event_ctl = next_event.get("icu_ctl")
+            event_atl = next_event.get("icu_atl")
+
+            event_tsb = None
+            try:
+                if event_ctl is not None and event_atl is not None:
+                    event_tsb = round(float(event_ctl) - float(event_atl), 2)
+            except Exception:
+                event_tsb = None
+
+            form_status = None
+
+            if (
+                isinstance(tsb_target, list)
+                and len(tsb_target) == 2
+                and event_tsb is not None
+            ):
+                low, high = tsb_target
+
+                if event_tsb < low:
+                    form_status = "too_fatigued"
+                    limiting_factors.append("TSB below event target")
+                elif event_tsb > high:
+                    form_status = "too_fresh"
+                    limiting_factors.append("TSB above event target")
+                else:
+                    form_status = "target_range"
+
+            if has_taper_conflict:
+                governance_status = "taper_misaligned"
+                readiness_label = "CONDITIONALLY_READY"
+                readiness_modifier = "plan_risk"
+
+                reason = taper_governance.get("reason")
+                if reason:
+                    limiting_factors.insert(0, reason)
+                else:
+                    limiting_factors.insert(0, "Taper load conflict")
+
+            durability_state = (
+                semantic.get("performance_intelligence", {})
+                .get("acute", {})
+                .get("durability", {})
+                .get("state", {})
+            )
+
+            if isinstance(durability_state, dict):
+                dur_value = durability_state.get("value")
+                if dur_value in ("drifting", "declining"):
+                    limiting_factors.append("Durability drift")
+
+            next_event["readiness_governance"] = {
+                "status": governance_status,
+                "readiness_label": readiness_label,
+                "readiness_modifier": readiness_modifier,
+                "form_status": form_status,
+                "event_tsb": event_tsb,
+                "target_tsb_range": tsb_target,
+                "phase_required": (
+                    adaptive_summary.get("phase_constraint")
+                    or decision_context.get("required_phase")
+                    or next_event.get("taper_state")
+                ),
+                "phase_alignment": (
+                    adaptive_summary.get("phase_alignment")
+                    or decision_context.get("alignment")
+                ),
+                "resolution": adaptive_summary.get("resolution"),
+                "taper_governance": taper_governance or None,
+                "limiting_factors": list(dict.fromkeys([
+                    x for x in limiting_factors if x
+                ])),
+                "display_rule": (
+                    "If readiness_label is CONDITIONALLY_READY, UI must not display plain READY. "
+                    "Show race score unchanged, but qualify readiness with governance status."
+                )
+            }
+
+            event_targets["next_event"] = next_event
+            semantic["event_targets"] = event_targets
+
+            debug(
+                context,
+                "[EVENT_READINESS_GOVERNANCE] "
+                f"{next_event.get('name')} → "
+                f"{next_event['readiness_governance']['readiness_label']} / "
+                f"{next_event['readiness_governance']['status']}"
+            )
+
+    except Exception as e:
+        debug(context, f"[EVENT_READINESS_GOVERNANCE] ⚠️ failed: {e}")
+
+
     # --------------------------------------------------
     # 🔥 Outliers (365d)
     # --------------------------------------------------
