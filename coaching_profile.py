@@ -375,7 +375,9 @@ RENDERER_PROFILES = {
 
     "weekly_overview": {
         "framing": {
-            "intent": "bento_weekly_overview"
+            "intent": "bento_weekly_overview",
+            "purpose": "Compact ChatGPT weekly dashboard. Summarise, do not expand into full report.",
+            "required_opening": "One-line state summary combining physiology + governance."
         },
 
         "layout": {
@@ -388,24 +390,42 @@ RENDERER_PROFILES = {
                 "physiology_reserve",
                 "performance_intelligence",
                 "adaptation_progression"
+            ],
+            "required_sections": [
+                "Adaptive Decision Engine",
+                "Weekly Load",
+                "Physiology",
+                "Adaptation",
+                "Decision / Event Focus"
             ]
         },
 
         "card_rules": {
             "adaptive_decision_engine": [
-                "Use actions[0] where type == adaptive_summary.",
-                "Use training_guidance as the final coaching directive.",
+                "This card MUST be rendered first.",
+                "Use actions item where type == adaptive_summary; do not assume actions[0] unless it matches adaptive_summary.",
+                "Use training_guidance as the final coaching directive when present.",
                 "Do not replace the card title with taper/override text.",
                 "Card title must remain: ADAPTIVE DECISION ENGINE.",
-                "If actions[0].resolution == overridden_by_phase, show phase override state clearly inside the card.",
+                "MUST render ADE score from adaptive_summary.ade_base_score.value and adaptive_summary.ade_base_score.label.",
+                "Preferred score format: '62 / 100 — CAUTION'.",
+                "Do not recompute ADE score.",
+                "MUST render operational_state.",
+                "MUST render resolution.",
+                "MUST render phase_constraint or decision_context.required_phase.",
+                "MUST render phase_alignment or decision_context.alignment.",
+                "MUST render forecast_context and load_trend when present.",
+                "If resolution == overridden_by_phase, show phase override state clearly inside the card.",
                 "If taper_governance.state == taper_load_conflict, show conflict reason and recommended adjustment.",
-                "Render ADE score from actions[0].ade_base_score only. Do not recompute.",
-                "Show both physiology state and plan governance: e.g. LOAD ACCEPTING + TAPER MISALIGNED."
+                "Show both truths: physiology state and plan governance, e.g. LOAD ACCEPTING + TAPER MISALIGNED.",
+                "Do not present adaptive_summary.directive as fully honoured when resolution == overridden_by_phase."
             ],
 
             "training_load": [
                 "Use training_volume and metrics_groups.load.",
                 "Show weekly hours, total TSS, distance.",
+                "Show CTL / ATL / TSB if present from training_volume.",
+                "Show ACWR, StressTolerance, Strain, Monotony and FatigueTrend when present.",
                 "Show load_pattern label/status if present.",
                 "Show compact 7d daily_load trajectory if present.",
                 "Do not list all events in overview mode."
@@ -414,29 +434,78 @@ RENDERER_PROFILES = {
             "physiology_reserve": [
                 "Use wellness.physiology_state and wellness summary fields.",
                 "Show HRV ratio, sleep score, resting HR delta if present.",
+                "Use performance_intelligence.training_state.signals if needed for HRV/ATL/CTL context.",
                 "Use insight_view only for critical/watch/positive summary counts or short labels.",
-                "Do not render HRV series."
+                "Do not render HRV series.",
+                "Mention heat/external load only if performance_intelligence.external_load_context is present."
             ],
 
             "performance_intelligence": [
                 "Use performance_intelligence.training_state as the headline.",
                 "Show readiness_signal, operational_state, load_recovery_state.",
                 "Show external_load_context if present: heat/load/cardiac drift.",
-                "Do not render full WDRM/ISDM/NDLI tables in overview mode."
+                "Do not render full WDRM/ISDM/NDLI tables in overview mode.",
+                "If durability drift is present, mention it as a limiter."
             ],
 
             "adaptation_progression": [
                 "Use energy_system_progression.",
                 "Show dominant sport, adaptation_state/system_state, and system_guidance.",
+                "Show key direction only: threshold, VO2, sprint, durability, repeatability if present.",
                 "Keep message short; truncate only visually, not in data."
+            ],
+
+            "decision_event_focus": [
+                "Use event_targets.next_event when present.",
+                "Show next A/B/C event name, date, days_to_event, event_demand or race_type.",
+                "Use training_guidance as the final action line.",
+                "If taper_governance.recommended_adjustment exists, show it as the action.",
+                "End with reflection question only if actions contains type == reflection."
             ]
         },
 
+        "required_fields": {
+            "adaptive_decision_engine": [
+                "adaptive_summary.ade_base_score.value",
+                "adaptive_summary.ade_base_score.label",
+                "adaptive_summary.operational_state",
+                "adaptive_summary.resolution",
+                "adaptive_summary.phase_constraint",
+                "adaptive_summary.phase_alignment",
+                "adaptive_summary.forecast_context",
+                "adaptive_summary.load_trend",
+                "training_guidance"
+            ],
+            "taper_conflict_if_present": [
+                "adaptive_summary.taper_governance.state",
+                "adaptive_summary.taper_governance.reason",
+                "adaptive_summary.taper_governance.recommended_adjustment"
+            ]
+        },
+
+        "preferred_markdown_shape": [
+            "Opening one-line summary.",
+            "## 🎯 Adaptive Decision Engine",
+            "ADE score table including score, state, resolution, required phase, alignment, forecast trend.",
+            "Final guidance line using training_guidance.",
+            "Conflict line if taper_governance exists.",
+            "## 🧭 Weekly Load",
+            "Compact load table.",
+            "## 🫀 Physiology",
+            "Compact physiology table.",
+            "## 📈 Adaptation",
+            "Compact adaptation table.",
+            "## 🎯 Decision / Event Focus",
+            "Action and next event."
+        ],
+
         "override_rules": [
             "If decision_context.phase_override is true, training_guidance is the final directive.",
-            "If actions[0].resolution == overridden_by_phase, do not present ADE directive as fully honoured.",
-            "Precedence: training_guidance > actions[0].taper_governance > actions[0].directive.",
-            "Positive readiness must be qualified when plan governance is misaligned."
+            "If adaptive_summary.resolution == overridden_by_phase, do not present ADE directive as fully honoured.",
+            "Precedence for final directive: training_guidance > adaptive_summary.taper_governance.recommended_adjustment > adaptive_summary.directive.",
+            "Positive readiness must be qualified when plan governance is misaligned.",
+            "If physiology is load_accepting but phase_alignment is misaligned, state both clearly.",
+            "If taper_governance.state == taper_load_conflict, the overview must say the plan is misaligned with taper freshness."
         ],
 
         "section_handling": {
@@ -453,8 +522,19 @@ RENDERER_PROFILES = {
             "actions": "summary",
             "training_guidance": "headline",
             "decision_context": "headline",
-            "future_forecast": "summary"
-        }
+            "future_forecast": "summary",
+            "event_targets": "summary"
+        },
+
+        "forbidden_behaviour": [
+            "Do not omit ADE score.",
+            "Do not render a full event list.",
+            "Do not render full zones.",
+            "Do not render full phase tables.",
+            "Do not render full PI metric tables.",
+            "Do not say the plan is simply fine when resolution == overridden_by_phase.",
+            "Do not use actions[0] blindly if adaptive_summary is elsewhere in actions."
+        ]
     },
 
     # ==============================================================
