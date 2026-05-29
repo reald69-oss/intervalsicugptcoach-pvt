@@ -682,6 +682,17 @@ def apply_report_recency_governance(semantic: dict) -> dict:
     semantic["planned_summary_by_iso_week"] = {}
     semantic["current_ISO_weekly_microcycle"] = None
 
+    # STRICT: historical reports must not expose live race readiness
+    semantic["event_targets"] = {
+        "exists": False,
+        "historical_context": True,
+        "guidance_validity": "historical_block_review",
+        "note": (
+            "Event readiness suppressed for historical weekly block. "
+            "Use a current weekly report for live race-readiness guidance."
+        )
+    }
+
     # Downgrade ADE current directive semantics
     actions = semantic.get("actions", [])
     if isinstance(actions, list):
@@ -693,10 +704,37 @@ def apply_report_recency_governance(semantic: dict) -> dict:
                 action["directive"] = "Historical block review — not current coaching guidance"
                 action["resolution"] = "historical_only"
 
+                # STRICT: suppress live target-event/taper guidance inside ADE too
+                action["target_event_at_time"] = action.get("target_event")
+                action["taper_governance_at_time"] = action.get("taper_governance")
+
+                action["target_event"] = {
+                    "exists": False,
+                    "historical_context": True,
+                    "guidance_validity": "historical_block_review",
+                    "note": (
+                        "Target-event guidance suppressed for historical weekly block. "
+                        "Use a current weekly report for live event guidance."
+                    )
+                }
+
+                action["taper_governance"] = {
+                    "state": "historical_only",
+                    "historical_context": True,
+                    "guidance_validity": "historical_block_review",
+                    "required_phase": None,
+                    "form_status": None,
+                    "event_tsb": None,
+                    "target_tsb_range": None,
+                    "reason": None,
+                    "recommended_adjustment": None
+                }
+
                 action["recency_note"] = (
                     f"This weekly block ended {staleness_days} days before report generation. "
                     "ADE describes the historical block state only and must not be used as today's training directive."
                 )
+
 
     # Replace training_guidance
     semantic["training_guidance"] = (
