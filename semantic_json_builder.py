@@ -5765,7 +5765,7 @@ def apply_report_type_contract(semantic: dict) -> dict:
 
     # ── Renderer instructions (DATA ONLY)
     filtered["renderer_instructions"] = build_system_prompt_from_header(
-        report_type,
+        contract_key,
         REPORT_HEADERS.get(report_type, {})
     )
 
