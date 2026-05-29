@@ -5460,9 +5460,29 @@ def build_semantic_json(context):
         # -------------------------
         # Recovery gating (PHASE ONLY)
         # -------------------------
+        # Required phase priority
+        # 1. A-race taper window
+        # 2. Recovery / deload projected phase
+        # 3. Projected current phase
+        # -------------------------
 
-        if projected_phase in {"recovery", "deload", "taper"}:
+        target_event = ade.get("target_event", {}) if isinstance(ade, dict) else {}
+        taper_state = target_event.get("taper_state")
+        days_to_event = target_event.get("days_to_event")
+
+        if (
+            taper_state == "taper"
+            and days_to_event is not None
+            and days_to_event <= 10
+        ):
+            required_phase = "taper"
+
+        elif projected_phase in {"recovery", "deload"}:
             required_phase = "recovery"
+
+        elif projected_phase == "taper":
+            required_phase = "taper"
+
         else:
             required_phase = current_phase or "build"
 
@@ -5474,7 +5494,7 @@ def build_semantic_json(context):
         if planned_pattern == "unknown":
             alignment = "unknown"
 
-        elif required_phase == "recovery":
+        elif required_phase in {"recovery", "taper"}:
             alignment = "misaligned" if planned_pattern == "increasing" else "aligned"
 
         else:  # build / base / peak
@@ -5516,8 +5536,12 @@ def build_semantic_json(context):
         # -------------------------
         # HARD RULE (PHASE = SHOULD, ALWAYS APPLIED)
         # -------------------------
-        if phase == "recovery":
-            decision = f"{base_guidance} — prioritise recovery"
+        if phase in {"recovery", "taper"}:
+            decision = (
+                f"{base_guidance} — prioritise taper freshness"
+                if phase == "taper"
+                else f"{base_guidance} — prioritise recovery"
+            )
 
             if "neutral" in future_title:
                 decision += " and maintain low load"

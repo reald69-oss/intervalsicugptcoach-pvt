@@ -356,6 +356,32 @@ def run_adaptive_decision_engine(context):
         "version": ADE_VERSION
     }
 
+    # --------------------------------------------------
+    # Taper governance hint
+    # --------------------------------------------------
+    if taper_state == "taper" and days_to_event is not None and days_to_event <= 10:
+        if load_trend == "increasing":
+            decision["taper_governance"] = {
+                "state": "taper_load_conflict",
+                "required_phase": "taper",
+                "reason": "Increasing planned load inside A-race taper window",
+                "recommended_adjustment": "reduce planned load and preserve freshness"
+            }
+        else:
+            decision["taper_governance"] = {
+                "state": "taper_context_active",
+                "required_phase": "taper",
+                "reason": "A-race taper window active",
+                "recommended_adjustment": "maintain reduced load and freshness"
+            }
+    else:
+        decision["taper_governance"] = {
+            "state": "none",
+            "required_phase": None,
+            "reason": None,
+            "recommended_adjustment": None
+        }
+
     hrv_ratio = (training_state.get("signals") or {}).get("hrv_ratio")
 
     decision["ade_base_score"] = _score_ade_base_decision(
