@@ -703,6 +703,8 @@ def apply_report_recency_governance(semantic: dict) -> dict:
                 action["directive_at_time"] = action.get("directive")
                 action["directive"] = "Historical block review — not current coaching guidance"
                 action["resolution"] = "historical_only"
+                action["phase_constraint"] = None
+                action["phase_alignment"] = "historical_only"
 
                 # STRICT: suppress live target-event/taper guidance inside ADE too
                 action["target_event_at_time"] = action.get("target_event")
