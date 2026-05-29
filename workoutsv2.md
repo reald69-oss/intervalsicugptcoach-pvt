@@ -2622,3 +2622,584 @@ Duration: 0m
 ```text
 - OFF
 ```
+
+# 25. FRIEL-ALIGNED WORKOUT LIBRARY ADDENDUM
+
+This addendum keeps the Friel-style physiological families while preserving strict Intervals.icu syntax:
+
+- AE = aerobic endurance / aerobic threshold
+- ME = muscular endurance / tempo / threshold / sweet spot
+- AnE = anaerobic endurance / VO2 / race-like surges
+- MF = muscular force / force reps / hill force
+- NM = neuromuscular speed / cadence / jumps
+
+Rules:
+
+- Use `Type` exactly as written.
+- Use only the interval text inside the workout description when writing to calendar.
+- Do not pass estimated TSS.
+- Do not mix intensity anchors inside a single interval.
+- Do not infer missing recovery.
+- Total duration must equal the sum of listed intervals.
+
+---
+
+# FRIEL AE — AEROBIC ENDURANCE
+
+---
+
+## FRIEL-AE-001 Recovery Ride HR
+
+Type: Ride
+Duration: 60m
+
+```text
+- Recovery 60m 65-80% LTHR
+```
+
+---
+
+## FRIEL-AE-002 Aerobic Threshold Ride
+
+Type: Ride
+Duration: 120m
+
+```text
+- Warmup 15m 55%
+- Aerobic threshold 90m 65-75%
+- Cooldown 15m 50%
+```
+
+---
+
+## FRIEL-AE-003 Intensive Endurance
+
+Type: Ride
+Duration: 95m
+
+```text
+- Warmup 15m 55%
+- Intensive endurance 60m 76-90%
+- Cooldown 20m 50%
+```
+
+---
+
+## FRIEL-AE-004 Aerobic Pacing
+
+Type: Ride
+Duration: 120m
+
+```text
+- Warmup 13m ramp 50%-60% 70-100rpm
+- Aerobic pacing 99m 56-75%
+- Cooldown 8m 50% 70-100rpm
+```
+
+---
+
+## FRIEL-AE-005 Aerobic Threshold HR
+
+Type: Ride
+Duration: 120m
+
+```text
+- Warmup 15m 60% LTHR 70-100rpm
+- Aerobic threshold 90m 81-85% LTHR
+- Cooldown 15m 60% HR 90-100rpm
+```
+
+---
+
+# FRIEL ME — MUSCULAR ENDURANCE
+
+---
+
+## FRIEL-ME-001 Threshold Intervals
+
+Type: Ride
+Duration: 105m
+
+```text
+- Warmup 15m ramp 50%-75%
+
+Main Set 5x
+- Threshold 12m 91-105%
+- Recovery 3m 55%
+
+- Cooldown 15m 50%
+```
+
+---
+
+## FRIEL-ME-002 Cruise Intervals
+
+Type: Ride
+Duration: 63m
+
+```text
+- Warmup 15m ramp 50%-75%
+
+Main Set 5x
+- Cruise 6m 95-100%
+- Recovery 1m30s 55%
+
+- Cooldown 10m30s 50%
+```
+
+---
+
+## FRIEL-ME-003 Sweet Spot Intervals
+
+Type: Ride
+Duration: 85m
+
+```text
+- Warmup 15m ramp 50%-75%
+
+Main Set 2x
+- Sweet spot 20m 88-97%
+- Recovery 5m 55%
+
+- Cooldown 20m 50%
+```
+
+---
+
+## FRIEL-ME-004 Tempo Zone 3 Intervals
+
+Type: Ride
+Duration: 105m
+
+```text
+- Warmup 10m 55%
+
+Main Set 4x
+- Tempo 15m 76-90%
+- Recovery 5m 55%
+
+- Cooldown 15m 50%
+```
+
+---
+
+## FRIEL-ME-005 Sweet Spot Twenty Minute Repeats
+
+Type: Ride
+Duration: 85m
+
+```text
+- Warmup 15m 55%
+
+Main Set 2x
+- Sweet spot 20m 88-97%
+- Recovery 5m 55%
+
+- Cooldown 20m 50%
+```
+
+---
+
+# FRIEL ANE — ANAEROBIC ENDURANCE / VO2
+
+---
+
+## FRIEL-ANE-001 Group Ride Simulation
+
+Type: Ride
+Duration: 120m
+
+```text
+- Warmup 20m 55%
+- Endurance 20m 65%
+
+Main Set 8x
+- Race surge 1m 120%
+- Recovery 4m 65%
+
+- Endurance 30m 65-75%
+- Cooldown 10m 50%
+```
+
+---
+
+## FRIEL-ANE-002 VO2max Intervals
+
+Type: Ride
+Duration: 72m
+
+```text
+- Warmup 20m 55%
+
+Main Set 8x
+- VO2 2m 106-120%
+- Recovery 2m 55%
+
+- Cooldown 20m 50%
+```
+
+---
+
+## FRIEL-ANE-003 Pyramid Intervals
+
+Type: Ride
+Duration: 80m
+
+```text
+- Warmup 20m ramp 50%-75%
+- Hard 1m 106-120% 105rpm
+- Recovery 1m 55% 105rpm
+- Hard 2m 106-120% 105rpm
+- Recovery 2m 55% 105rpm
+- Hard 3m 106-120% 105rpm
+- Recovery 3m 55% 105rpm
+- Hard 4m 106-120% 105rpm
+- Recovery 4m 55% 105rpm
+- Hard 4m 106-120% 105rpm
+- Recovery 4m 55% 105rpm
+- Hard 3m 106-120% 105rpm
+- Recovery 3m 55% 105rpm
+- Hard 2m 106-120% 105rpm
+- Recovery 2m 55% 105rpm
+- Hard 1m 106-120% 105rpm
+- Recovery 1m 55% 105rpm
+- Cooldown 20m 50%
+```
+
+---
+
+## FRIEL-ANE-004 Hill Intervals
+
+Type: Ride
+Duration: 55m
+
+```text
+- Warmup 20m ramp 50%-75%
+
+Main Set 5x
+- Hill interval 1m30s 106-120% 95-105rpm
+- Recovery 1m30s 55%
+
+- Cooldown 20m 50%
+```
+
+---
+
+## FRIEL-ANE-005 VO2max Three Minute Repeats
+
+Type: Ride
+Duration: 80m
+
+```text
+- Warmup 20m 55%
+
+Main Set 8x
+- VO2 3m 106-120%
+- Recovery 3m 55%
+
+- Cooldown 12m 50%
+```
+
+---
+
+# FRIEL MF — MUSCULAR FORCE
+
+---
+
+## FRIEL-MF-001 Flat Force Reps
+
+Type: Ride
+Duration: 45m
+
+```text
+- Warmup 15m 55%
+
+Main Set 4x
+- Force rep 5s 200% 50-70rpm
+- Recovery 4m25s 50%
+
+- Cooldown 12m 50%
+```
+
+---
+
+## FRIEL-MF-002 Hill Force Reps
+
+Type: Ride
+Duration: 45m
+
+```text
+- Warmup 15m 55%
+
+Main Set 3x
+- Hill force 6s 200% 50-70rpm
+- Recovery 5m24s 50%
+
+- Cooldown 13m30s 50%
+```
+
+---
+
+## FRIEL-MF-003 Hill Repeats 70rpm
+
+Type: Ride
+Duration: 60m
+
+```text
+- Warmup 15m 55%
+
+Main Set 8x
+- Hill repeat 25s 106-120% 70rpm
+- Recovery 4m 50%
+
+- Cooldown 9m40s 50%
+```
+
+---
+
+## FRIEL-MF-004 Force Reps Three Sets
+
+Type: Ride
+Duration: 60m
+
+```text
+- Warmup 12m 55%
+
+Set One 3x
+- Force rep 30s 200% 50-70rpm
+- Recovery 3m 50%
+
+- Set recovery 3m 50%
+
+Set Two 3x
+- Force rep 30s 200% 50-70rpm
+- Recovery 3m 50%
+
+- Set recovery 3m 50%
+
+Set Three 3x
+- Force rep 30s 200% 50-70rpm
+- Recovery 3m 50%
+
+- Cooldown 10m30s 50%
+```
+
+---
+
+# FRIEL NM — NEUROMUSCULAR SKILLS
+
+---
+
+## FRIEL-NM-001 High Cadence Drill
+
+Type: Ride
+Duration: 50m
+
+```text
+- Warmup 15m 55% 90rpm
+
+Main Set 3x
+- Spin up 10s 55% 90rpm
+- High cadence 3m 55% 110-150rpm
+- Recovery 5m 55% 90rpm
+
+- Cooldown 10m30s 50%
+```
+
+---
+
+## FRIEL-NM-002 Hill Sprints
+
+Type: Ride
+Duration: 45m
+
+```text
+- Warmup 20m 55%
+
+Main Set 9x
+- Hill sprint 7s 300%
+- Recovery 1m53s 50%
+
+- Cooldown 7m 50%
+```
+
+---
+
+## FRIEL-NM-003 Jumps
+
+Type: Ride
+Duration: 45m
+
+```text
+- Warmup 15m 55%
+
+Main Set 10x
+- Jump 5s 150% 120rpm
+- Recovery 1m25s 50%
+
+- Endurance 10m 65%
+- Cooldown 5m 50%
+```
+
+---
+
+## FRIEL-NM-004 Cadence And Jump Skills
+
+Type: Ride
+Duration: 60m
+
+```text
+- Warmup 15m 55% 90rpm
+
+Main Set 4x
+- High cadence 2m 60% 110-120rpm
+- Recovery 3m 55% 90rpm
+
+Main Set 6x
+- Jump 8s 150% 120rpm
+- Recovery 1m52s 50%
+
+- Endurance 8m 65%
+- Cooldown 5m 50%
+```
+
+# 26. RUN WORKOUT LIBRARY ADDENDUM — NORWEGIAN SINGLES METHOD
+
+This addendum adds strict Intervals.icu-safe run workouts based on Norwegian-style single-session subthreshold training.
+
+Use cases:
+
+- Threshold development without double-threshold loading
+- Controlled subthreshold work
+- Build and specialty phases
+- Run-focused athletes with reliable pace zones
+- Athletes needing lower-risk threshold exposure than maximal interval sessions
+
+Selection rules:
+
+- Prefer Pace-based versions for Run unless the user explicitly asks for HR-based workouts.
+- Use HR-based aerobic runs only when the user asks for heart-rate based prescription.
+- Do not mix HR and Pace anchors in one workout.
+- Do not pass estimated TSS. Intervals.icu calculates load from the prescription.
+- Total duration must equal the sum of listed intervals.
+
+---
+
+# NORWEGIAN SUBTHRESHOLD RUN WORKOUTS
+
+---
+
+## RUN-NOR-SUB-001 Subthreshold 2x10
+
+Type: Run
+Duration: 68m
+
+```text
+- Warmup 22m 60-70% Pace
+
+Main Set 2x
+- Subthreshold 10m 92-95% Pace
+- Easy jog 2m 60-70% Pace
+
+- Cooldown 22m 60-70% Pace
+```
+
+---
+
+## RUN-NOR-SUB-002 Subthreshold 3x6
+
+Type: Run
+Duration: 65m
+
+```text
+- Warmup 22m 60-70% Pace
+
+Main Set 3x
+- Subthreshold 6m 94-97.5% Pace
+- Easy jog 1m 60-70% Pace
+
+- Cooldown 22m 60-70% Pace
+```
+
+---
+
+## RUN-NOR-SUB-003 Subthreshold 4x5
+
+Type: Run
+Duration: 68m
+
+```text
+- Warmup 22m 60-70% Pace
+
+Main Set 4x
+- Subthreshold 5m 94-97.5% Pace
+- Easy jog 1m 60-70% Pace
+
+- Cooldown 22m 60-70% Pace
+```
+
+---
+
+## RUN-NOR-SUB-004 Subthreshold 7x3
+
+Type: Run
+Duration: 72m
+
+```text
+- Warmup 22m 60-70% Pace
+
+Main Set 7x
+- Subthreshold 3m 96-100.5% Pace
+- Easy jog 1m 60-70% Pace
+
+- Cooldown 22m 60-70% Pace
+```
+
+---
+
+# NORWEGIAN AEROBIC SUPPORT RUNS
+
+---
+
+## RUN-NOR-AE-001 Easy Run HR
+
+Type: Run
+Duration: 40m
+
+```text
+- Easy run 40m 60-70% HR
+```
+
+---
+
+## RUN-NOR-AE-002 Easy Run Pace
+
+Type: Run
+Duration: 40m
+
+```text
+- Easy run 40m 74% Pace
+```
+
+---
+
+## RUN-NOR-AE-003 Long Run HR
+
+Type: Run
+Duration: 90m
+
+```text
+- Long run 90m 60-70% HR
+```
+
+---
+
+## RUN-NOR-AE-004 Long Run Pace
+
+Type: Run
+Duration: 90m
+
+```text
+- Long run 90m 74% Pace
+```
+
