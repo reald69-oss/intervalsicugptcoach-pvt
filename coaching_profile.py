@@ -73,6 +73,36 @@ REPORT_CONTRACT = {
         "decision_context",
     ],
 
+    "weekly_overview": [
+        "meta",
+
+        # 🧭 TRAINING LOAD / LOAD STATE
+        "training_volume",
+        "metrics_groups",
+        "daily_load",
+
+        # 🫀 PHYSIOLOGY
+        "wellness",
+        "insight_view",
+
+        # ⚙️ PERFORMANCE INTELLIGENCE
+        "performance_intelligence",
+
+        # 📈 ADAPTATION / ESPE
+        "energy_system_progression",
+
+        # 🎯 ADE / GOVERNANCE
+        "actions",
+        "training_guidance",
+        "decision_context",
+        "event_targets",
+        "phase_alignment",
+
+        # 🔮 CURRENT PLAN CONTEXT
+        "current_ISO_weekly_microcycle",
+        "future_forecast",
+    ],
+
     "season": [
         "meta",
 
@@ -217,6 +247,33 @@ PRUNE_RULES = {
         ],
     },
 
+    "weekly_overview": {
+        "meta": [
+            "methodology",
+            "planned_events",
+            "phases_summary",
+            "events",
+        ],
+        "meta.athlete": [
+            "profiles",
+        ],
+        "meta.athlete.context": [
+            "platforms",
+            "wellness_features",
+            "equipment_summary",
+            "activity_scope",
+            "training_environment",
+        ],
+        "wellness": [
+            "hrv_series",
+            "daily",
+        ],
+        "performance_intelligence": [
+            "acute",
+            "chronic",
+        ],
+    },
+
     "season": {
         "wellness": [
             "hrv_series"
@@ -311,6 +368,90 @@ RENDERER_PROFILES = {
             "source": "semantic_states_only",   # no derivation
         }
     },
+
+    "weekly_overview": {
+        "framing": {
+            "intent": "bento_weekly_overview"
+        },
+
+        "layout": {
+            "style": "compact_dashboard",
+            "columns": 2,
+            "max_cards": 5,
+            "card_order": [
+                "adaptive_decision_engine",
+                "training_load",
+                "physiology_reserve",
+                "performance_intelligence",
+                "adaptation_progression"
+            ]
+        },
+
+        "card_rules": {
+            "adaptive_decision_engine": [
+                "Use actions[0] where type == adaptive_summary.",
+                "Use training_guidance as the final coaching directive.",
+                "Do not replace the card title with taper/override text.",
+                "Card title must remain: ADAPTIVE DECISION ENGINE.",
+                "If actions[0].resolution == overridden_by_phase, show phase override state clearly inside the card.",
+                "If taper_governance.state == taper_load_conflict, show conflict reason and recommended adjustment.",
+                "Render ADE score from actions[0].ade_base_score only. Do not recompute.",
+                "Show both physiology state and plan governance: e.g. LOAD ACCEPTING + TAPER MISALIGNED."
+            ],
+
+            "training_load": [
+                "Use training_volume and metrics_groups.load.",
+                "Show weekly hours, total TSS, distance.",
+                "Show load_pattern label/status if present.",
+                "Show compact 7d daily_load trajectory if present.",
+                "Do not list all events in overview mode."
+            ],
+
+            "physiology_reserve": [
+                "Use wellness.physiology_state and wellness summary fields.",
+                "Show HRV ratio, sleep score, resting HR delta if present.",
+                "Use insight_view only for critical/watch/positive summary counts or short labels.",
+                "Do not render HRV series."
+            ],
+
+            "performance_intelligence": [
+                "Use performance_intelligence.training_state as the headline.",
+                "Show readiness_signal, operational_state, load_recovery_state.",
+                "Show external_load_context if present: heat/load/cardiac drift.",
+                "Do not render full WDRM/ISDM/NDLI tables in overview mode."
+            ],
+
+            "adaptation_progression": [
+                "Use energy_system_progression.",
+                "Show dominant sport, adaptation_state/system_state, and system_guidance.",
+                "Keep message short; truncate only visually, not in data."
+            ]
+        },
+
+        "override_rules": [
+            "If decision_context.phase_override is true, training_guidance is the final directive.",
+            "If actions[0].resolution == overridden_by_phase, do not present ADE directive as fully honoured.",
+            "Precedence: training_guidance > actions[0].taper_governance > actions[0].directive.",
+            "Positive readiness must be qualified when plan governance is misaligned."
+        ],
+
+        "section_handling": {
+            "events": "forbid",
+            "planned_events_7d": "forbid",
+            "phases": "forbid",
+            "phases_summary": "forbid",
+            "zones": "forbid",
+            "daily_load": "compact_timeline",
+            "metrics_groups": "summary",
+            "wellness": "summary",
+            "performance_intelligence": "summary",
+            "energy_system_progression": "summary",
+            "actions": "summary",
+            "training_guidance": "headline",
+            "decision_context": "headline",
+            "future_forecast": "summary"
+        }
+    }
 
     # ==============================================================
     # Weekly report (FULL DETAIL, SESSION-LEVEL)

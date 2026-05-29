@@ -5728,11 +5728,12 @@ def apply_report_type_contract(semantic: dict) -> dict:
     report_type = semantic.get("meta", {}).get("report_type", "weekly")
     render_mode = semantic.get("meta", {}).get("render_mode", "full+metrics")
 
-    contract_key = (
-        f"{report_type}_lite"
-        if render_mode == "lite"
-        else report_type
-    )
+    if render_mode == "overview":
+        contract_key = f"{report_type}_overview"
+    elif render_mode == "lite":
+        contract_key = f"{report_type}_lite"
+    else:
+        contract_key = report_type
 
     # ── Enrich meta
     semantic["meta"]["report_header"] = REPORT_HEADERS.get(report_type, {})
