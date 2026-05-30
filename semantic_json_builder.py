@@ -2169,6 +2169,9 @@ def build_semantic_json(context):
             val = row.get("paired_event_id")
             ev["paired_event_id"] = str(int(val)) if pd.notna(val) else None
 
+            val = row.get("compliance")
+            ev["compliance"] = round(float(val), 2) if pd.notna(val) else None
+
             # ---------------------------------------------------------
             # 4️⃣ IF (icu_intensity ONLY — canonical)
             # ---------------------------------------------------------
