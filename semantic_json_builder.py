@@ -1525,11 +1525,30 @@ def build_semantic_json(context):
             df_ref = pd.DataFrame(context["wellness"])
 
     else:
-        df_master = context.get("df_master")
-        if isinstance(df_master, pd.DataFrame) and not df_master.empty:
-            df_ref = df_master
-        elif isinstance(context.get("activities_full"), list) and len(context["activities_full"]) > 0:
-            df_ref = pd.DataFrame(context["activities_full"])
+        # Weekly report:
+        # - FULL 7d is for execution/events
+        # - LIGHT 90d is for athlete sport identity / dominant sport
+        df_light_90d = context.get("_df_light_90d")
+        df_light = context.get("df_light")
+
+        if isinstance(df_light_90d, pd.DataFrame) and not df_light_90d.empty:
+            df_ref = df_light_90d
+            debug(context, f"[SEMANTIC] Weekly profile sport source → _df_light_90d rows={len(df_ref)}")
+
+        elif isinstance(df_light, pd.DataFrame) and not df_light.empty:
+            df_ref = df_light
+            debug(context, f"[SEMANTIC] Weekly profile sport source → df_light rows={len(df_ref)}")
+
+        elif isinstance(context.get("activities_light"), list) and len(context["activities_light"]) > 0:
+            df_ref = pd.DataFrame(context["activities_light"])
+            debug(context, f"[SEMANTIC] Weekly profile sport source → activities_light rows={len(df_ref)}")
+
+        else:
+            df_master = context.get("df_master")
+            if isinstance(df_master, pd.DataFrame) and not df_master.empty:
+                df_ref = df_master
+            elif isinstance(context.get("activities_full"), list) and len(context["activities_full"]) > 0:
+                df_ref = pd.DataFrame(context["activities_full"])
 
 
     # --- Fallback: preserved df_scope_full (Railway safe)
@@ -1947,10 +1966,17 @@ def build_semantic_json(context):
     # -----------------------------------------------------
     # 🧭 Resolve active (dominant) profile
     # -----------------------------------------------------
+    if dominant_sport_label == "excluded":
+        dominant_sport_label = None
+
     if dominant_sport_label and dominant_sport_label in sport_profiles:
         active_profile_key = dominant_sport_label
+    elif "ride" in sport_profiles:
+        active_profile_key = "ride"
+    elif "run" in sport_profiles:
+        active_profile_key = "run"
     elif sport_profiles:
-        active_profile_key = list(sport_profiles.keys())[0]
+        active_profile_key = next((k for k in sport_profiles.keys() if k != "excluded"), None)
     else:
         active_profile_key = None
 
