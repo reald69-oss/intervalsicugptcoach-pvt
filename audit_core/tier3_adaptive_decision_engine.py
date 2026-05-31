@@ -214,8 +214,7 @@ def _score_ade_base_decision(
     if load_trend == "increasing":
 
         if taper_state == "taper":
-            # Taper-specific penalty is handled below in Event / taper context
-            support("Load trend increasing inside taper context")
+            pass  # handled below by Event / taper context
 
         elif operational_state == "recovery_priority":
             penalise(8, "Forecast load trend is increasing despite recovery priority")
