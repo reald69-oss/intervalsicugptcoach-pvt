@@ -3637,7 +3637,19 @@ def build_semantic_json(context):
 
 
 
-        semantic["performance_intelligence"]["acute"] = wrap_pi_block(acute_pi, "7d")
+        # -----------------------------------------------------
+        # Window labelling
+        # -----------------------------------------------------
+        # Normal weekly PI = 7d FULL.
+        # Weekly fallback PI = 90d LIGHT but still placed in acute
+        # for dashboard compatibility.
+        acute_window = (
+            "90d"
+            if pi.get("_source_window") == "90d_light_fallback"
+            else "7d"
+        )
+
+        semantic["performance_intelligence"]["acute"] = wrap_pi_block(acute_pi, acute_window)
         semantic["performance_intelligence"]["chronic"] = wrap_pi_block(chronic_pi, "90d")
        
         # -----------------------------------------------------

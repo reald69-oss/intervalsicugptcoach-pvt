@@ -42,8 +42,35 @@ def compute_performance_intelligence(context, contract_type="weekly"):
 
     if contract_type in ("season", "summary"):
         result = _compute_season(context, df_light, df_full)
+
     else:
-        result = _compute_weekly(context, df_full)
+        acute = _compute_weekly(context, df_full)
+
+        acute_has_signal = any([
+            acute.get("durability", {}).get("state") is not None,
+            acute.get("anaerobic_repeatability", {}).get("mean_depletion_pct_7d") is not None,
+            (acute.get("neural_density", {}).get("rolling_joules_above_ftp_7d") or 0) > 0,
+            acute.get("neural_density", {}).get("mean_efficiency_factor_7d") is not None,
+            acute.get("neural_density", {}).get("mean_variability_index_7d") is not None,
+        ])
+
+        if not acute_has_signal and df_light is not None and not df_light.empty:
+            season_like = _compute_season(context, df_light, df_full)
+            chronic = season_like.get("chronic_state") or {}
+
+            result = {
+                **chronic,
+                "_source_window": "90d_light_fallback",
+                "_fallback_used": True,
+                "_fallback_reason": "7d_full_low_signal",
+            }
+
+        else:
+            result = {
+                **acute,
+                "_source_window": "7d_full",
+                "_fallback_used": False,
+            }
 
     # ✅ Make result visible to interpreter
     context["performance_intelligence"] = result

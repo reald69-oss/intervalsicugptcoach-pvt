@@ -1369,7 +1369,7 @@ REPORT_RESOLUTION = {
         "TSB": "authoritative",
         "zones": "authoritative",
         "derived_metrics": "full",
-        "performance_intelligence": "acute_full_7d",
+        "performance_intelligence": "acute_full_7d or 90d_light_fallback",
         "energy_system_progression": "full",
         "insights": "tactical",
     },
@@ -1391,7 +1391,7 @@ REPORT_RESOLUTION = {
         "TSB": "icu_only",
         "zones": "not_applicable",
         "derived_metrics": "wellness_only",
-        "performance_intelligence": "acute_full_7d",
+        "performance_intelligence": "acute_full_7d or 90d_light_fallback",
         "insights": "recovery",
     },
 
