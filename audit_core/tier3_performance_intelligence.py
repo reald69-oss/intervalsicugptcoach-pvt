@@ -54,23 +54,18 @@ def compute_performance_intelligence(context, contract_type="weekly"):
             acute.get("neural_density", {}).get("mean_variability_index_7d") is not None,
         ])
 
+        chronic_context = {}
+
         if not acute_has_signal and df_light is not None and not df_light.empty:
             season_like = _compute_season(context, df_light, df_full)
-            chronic = season_like.get("chronic_state") or {}
+            chronic_context = season_like.get("chronic_state") or {}
 
-            result = {
-                **chronic,
-                "_source_window": "90d_light_fallback",
-                "_fallback_used": True,
-                "_fallback_reason": "7d_full_low_signal",
-            }
-
-        else:
-            result = {
-                **acute,
-                "_source_window": "7d_full",
-                "_fallback_used": False,
-            }
+        result = {
+            **acute,
+            "chronic_context": chronic_context,
+            "acute_context_window": "7d_full",
+            "chronic_context_window": "90d_light" if chronic_context else None,
+        }
 
     # ✅ Make result visible to interpreter
     context["performance_intelligence"] = result

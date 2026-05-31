@@ -3500,8 +3500,22 @@ def build_semantic_json(context):
     acute_pi = {}
     chronic_pi = {}
 
+    # Weekly + chronic fallback
+    if "chronic_context" in pi:
+
+        acute_pi = copy.deepcopy({
+            k: v for k, v in pi.items()
+            if k not in (
+                "chronic_context",
+                "acute_context_window",
+                "chronic_context_window",
+            )
+        })
+
+        chronic_pi = copy.deepcopy(pi.get("chronic_context", {}))
+
     # Weekly structure
-    if "anaerobic_repeatability" in pi:
+    elif "anaerobic_repeatability" in pi:
         acute_pi = copy.deepcopy(pi)
 
     # Season structure
@@ -3636,20 +3650,12 @@ def build_semantic_json(context):
             return wrapped
 
 
-
         # -----------------------------------------------------
         # Window labelling
         # -----------------------------------------------------
-        # Normal weekly PI = 7d FULL.
-        # Weekly fallback PI = 90d LIGHT but still placed in acute
-        # for dashboard compatibility.
-        acute_window = (
-            "90d"
-            if pi.get("_source_window") == "90d_light_fallback"
-            else "7d"
-        )
-
-        semantic["performance_intelligence"]["acute"] = wrap_pi_block(acute_pi, acute_window)
+        # Acute always means 7d FULL.
+        # Chronic is 90d LIGHT, only populated when acute has no useful signal.
+        semantic["performance_intelligence"]["acute"] = wrap_pi_block(acute_pi, "7d")
         semantic["performance_intelligence"]["chronic"] = wrap_pi_block(chronic_pi, "90d")
        
         # -----------------------------------------------------
@@ -3676,7 +3682,6 @@ def build_semantic_json(context):
                 context,
                 f"[SEMANTIC] Injected load_distribution → rest_days={load_dist.get('rest_days')}"
             )
-
         # -----------------------------------------------------
         # External Load Context (SCIENCE-ALIGNED)
         # -----------------------------------------------------
