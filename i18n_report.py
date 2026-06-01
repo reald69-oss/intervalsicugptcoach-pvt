@@ -17,31 +17,40 @@ def normalise_lang(lang):
     return lang if lang in SUPPORTED_LANGS else "en"
 
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 def load_catalog(lang):
     lang = normalise_lang(lang)
 
     if lang == "en":
         return {}
 
-    path = os.path.join(I18N_DIR, f"{lang}.json")
+    filename = f"{lang}.json"
 
-    logger.info("[I18N] dir=%s", I18N_DIR)
-    logger.info("[I18N] path=%s exists=%s", path, os.path.exists(path))
+    candidates = [
+        os.path.join(BASE_DIR, "i18n", filename),
+        os.path.join(os.getcwd(), "i18n", filename),
+        os.path.join("/app", "i18n", filename),
+    ]
 
-    if not os.path.exists(path):
-        return {}
+    try:
+        logger.info("[I18N] __file__=%s", __file__)
+        logger.info("[I18N] cwd=%s", os.getcwd())
+        logger.info("[I18N] /app files=%s", os.listdir("/app"))
+    except Exception as e:
+        logger.info("[I18N] listing failed=%s", e)
 
-    with open(path, "r", encoding="utf-8") as f:
-        catalog = json.load(f)
+    for path in candidates:
+        logger.info("[I18N] trying path=%s exists=%s", path, os.path.exists(path))
 
-    logger.info(
-        "[I18N] lang=%s entries=%s title_lookup=%s",
-        lang,
-        len(catalog),
-        catalog.get("Weekly Training Report")
-    )
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                catalog = json.load(f)
 
-    return catalog
+            logger.info("[I18N] loaded=%s entries=%s", path, len(catalog))
+            return catalog
+
+    return {}
 
 
 def translate_report_values(obj, lang="en"):
