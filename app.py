@@ -671,7 +671,7 @@ import requests
 @app.get("/test_translate")
 def test_translate():
     r = requests.post(
-        "http://libretranslate:5000/translate",
+        "http://libretranslate.railway.internal:5000/translate",
         json={
             "q": "Weekly Training Report",
             "source": "en",
