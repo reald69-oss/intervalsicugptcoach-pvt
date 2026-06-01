@@ -19,7 +19,7 @@ Thumbs.db
 *.json
 !/i18n/
 !/i18n/*.json
-!railways.json
+!railway.json
 *.toml
 /docs/devandtest.md 
 /report.py
