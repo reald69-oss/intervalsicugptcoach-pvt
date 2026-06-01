@@ -666,22 +666,22 @@ def _run_full_audit(
 # ============================================================
 # 🛰️ ENDPOINTS
 # ============================================================
-import httpx
+import requests
 
 @app.get("/test_translate")
-async def test_translate():
+def test_translate():
+    r = requests.post(
+        "http://libretranslate:5000/translate",
+        json={
+            "q": "Weekly Training Report",
+            "source": "en",
+            "target": "fr",
+            "format": "text"
+        },
+        timeout=30
+    )
 
-    async with httpx.AsyncClient(timeout=30) as client:
-        r = await client.post(
-            "http://libretranslate:5000/translate",
-            json={
-                "q": "Weekly Training Report",
-                "source": "en",
-                "target": "fr",
-                "format": "text"
-            }
-        )
-
+    r.raise_for_status()
     return r.json()
 
 
