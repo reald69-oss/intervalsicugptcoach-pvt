@@ -1,0 +1,20 @@
+# Keep Docker build context sane, but do NOT inherit .gitignore JSON exclusion
+
+.git
+.gitignore
+.env
+.env.*
+__pycache__/
+*.pyc
+
+reports/
+docs/
+archive/
+
+# Optional local junk
+.vscode/
+.vscodium/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
