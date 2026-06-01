@@ -17,6 +17,8 @@ Thumbs.db
 *.tmp
 *.js
 *.json
+!/i18n/
+!/i18n/*.json
 *.toml
 /docs/devandtest.md 
 /report.py
