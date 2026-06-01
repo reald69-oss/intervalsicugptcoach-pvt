@@ -1,12 +1,10 @@
-import json
-import os
 import copy
 import logging
+from i18n_catalogs import CATALOGS
 
 logger = logging.getLogger("app.i18n")
 
 SUPPORTED_LANGS = {"en", "fr", "de", "it", "es", "pt"}
-I18N_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "i18n")
 
 
 def normalise_lang(lang):
@@ -20,17 +18,15 @@ def load_catalog(lang):
     if lang == "en":
         return {}
 
-    path = os.path.join(I18N_DIR, f"{lang}.json")
+    catalog = CATALOGS.get(lang, {})
 
-    logger.info("[I18N] path=%s exists=%s", path, os.path.exists(path))
+    logger.info(
+        "[I18N] lang=%s catalog_entries=%s title_lookup=%s",
+        lang,
+        len(catalog),
+        catalog.get("Weekly Training Report")
+    )
 
-    if not os.path.exists(path):
-        return {}
-
-    with open(path, "r", encoding="utf-8") as f:
-        catalog = json.load(f)
-
-    logger.info("[I18N] lang=%s catalog_entries=%s", lang, len(catalog))
     return catalog
 
 
