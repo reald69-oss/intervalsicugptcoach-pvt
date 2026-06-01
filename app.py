@@ -666,6 +666,25 @@ def _run_full_audit(
 # ============================================================
 # 🛰️ ENDPOINTS
 # ============================================================
+import httpx
+
+@app.get("/test_translate")
+async def test_translate():
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        r = await client.post(
+            "http://libretranslate:5000/translate",
+            json={
+                "q": "Weekly Training Report",
+                "source": "en",
+                "target": "fr",
+                "format": "text"
+            }
+        )
+
+    return r.json()
+
+
 @app.get("/")
 def root():
     return {"message": "Montis.icu Coach Railway API 🧠 Running"}
