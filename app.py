@@ -23,7 +23,7 @@ from audit_core.report_controller import run_report
 from audit_core.utils import debug
 from audit_core.tier0_pre_audit import expand_zones
 from audit_core.utils import set_time_context
-
+from i18n_report import normalise_lang, translate_report_values
 
 import logging
 
@@ -721,6 +721,11 @@ async def run_audit_with_data(
                 raise ValueError("Empty request body")
 
             data = json.loads(raw)
+
+            lang = normalise_lang(
+                data.get("lang") or request.query_params.get("lang")
+            )
+
             debug_counts["payload"] = {
                 "activities_light": len(data.get("activities_light", []) or []),
                 "activities_full": len(data.get("activities_full", []) or []),
@@ -1063,11 +1068,17 @@ async def run_audit_with_data(
 
                 semantic_graph = report.get("semantic_graph", {}) if isinstance(report, dict) else {}
 
+                semantic_graph = translate_report_values(
+                    semantic_graph,
+                    lang=lang
+                )
+
                 payload = {
                     "status": "ok",
                     "report_type": report_range,
                     "report_header": report_header,
                     "output_format": "semantic_json",
+                    "lang": lang,
                     "semantic_graph": semantic_graph,
                     "compliance": compliance,
                 }
