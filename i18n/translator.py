@@ -67,6 +67,18 @@ DO_NOT_TRANSLATE_KEYS = {
     "section_handling",
     "interpretation_rules",
     "stack_section_map",
+    "phase_required",
+    "phase_constraint",
+    "forecast_context",
+    "load_recovery_state",
+    "temporal_pattern",
+    "dominant_pattern",
+    "target_event",
+    "race_profile",
+    "targets",
+    "durability_bounds",
+    "readiness_governance",
+    "taper_governance",
 
     # ---------------------------------------------------------
     # Identity / links / technical IDs
@@ -192,11 +204,26 @@ DO_NOT_TRANSLATE_KEYS = {
 DO_NOT_TRANSLATE_PATH_CONTAINS = {
     "meta.athlete.identity.notes",
     "meta.athlete.profiles",
+    "event_targets",
 }
+
+
+ACTIVE_TRANSLATION_LANGS = {"fr"}
+
 
 def normalise_lang(lang):
     lang = (lang or "en").lower().strip()
     return lang if lang in SUPPORTED_LANGS else "en"
+
+
+def is_blocked_path(path: str | None) -> bool:
+    if not path:
+        return False
+
+    return any(
+        protected in path
+        for protected in DO_NOT_TRANSLATE_PATH_CONTAINS
+    )
 
 
 def looks_technical(value: str) -> bool:
@@ -220,11 +247,9 @@ def looks_technical(value: str) -> bool:
     if re.match(r"^[+-]?\d+(\.\d+)?$", v):
         return True
 
-    # Preserve likely IDs/codes with no spaces
     if " " not in v and re.match(r"^[A-Za-z0-9_\-:.]+$", v) and len(v) >= 8:
         return True
 
-    # Preserve screaming enum-like values with underscores
     if "_" in v and v.upper() == v:
         return True
 
@@ -255,27 +280,28 @@ def translate_text(value: str, lang: str) -> str:
     return translated or value
 
 
-def should_translate(key, value: str, path: str | None = None) -> bool:
+def should_translate(key, value: str, path: str | None = None, lang: str = "fr") -> bool:
     if not isinstance(value, str):
         return False
 
+    # Hard stop before controlled terms
     if key in DO_NOT_TRANSLATE_KEYS:
+        return False
+
+    if is_blocked_path(path):
         return False
 
     if looks_technical(value):
         return False
 
-    controlled = CONTROLLED_TERMS.get("fr", {})
+    controlled = CONTROLLED_TERMS.get(lang, {})
 
-    # Controlled terms are safe even if key is not explicitly allowed.
-    if value in controlled:
+    # Controlled terms are only safe on user-facing keys
+    if value in controlled and key in TRANSLATABLE_KEYS:
         return True
 
     if key in TRANSLATABLE_KEYS:
         return True
-
-    if path and any(p in path for p in DO_NOT_TRANSLATE_PATH_CONTAINS):
-        return False
 
     return False
 
@@ -286,26 +312,48 @@ def translate_semantic_graph(obj, lang="en", key=None, path=""):
     if lang == "en":
         return obj
 
+    if lang not in ACTIVE_TRANSLATION_LANGS:
+        logger.info(
+            "[I18N] lang=%s accepted but translation not active; returning English",
+            lang,
+        )
+        return obj
+
     try:
         init_cache()
     except Exception as e:
         logger.warning("[I18N] Cache init failed: %s", e)
 
     def walk(value, current_key=None, current_path=""):
+        # Hard stop: preserve entire protected subtree
+        if current_key in DO_NOT_TRANSLATE_KEYS:
+            return value
+
+        if is_blocked_path(current_path):
+            return value
+
         if isinstance(value, dict):
             return {
-                k: walk(v, current_key=k, current_path=f"{current_path}.{k}" if current_path else k)
+                k: walk(
+                    v,
+                    current_key=k,
+                    current_path=f"{current_path}.{k}" if current_path else k,
+                )
                 for k, v in value.items()
             }
 
         if isinstance(value, list):
             return [
-                walk(v, current_key=current_key, current_path=current_path)
+                walk(
+                    v,
+                    current_key=current_key,
+                    current_path=current_path,
+                )
                 for v in value
             ]
 
         if isinstance(value, str):
-            if not should_translate(current_key, value, current_path):
+            if not should_translate(current_key, value, current_path, lang=lang):
                 return value
 
             return translate_text(value, lang)
