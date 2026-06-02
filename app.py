@@ -24,7 +24,7 @@ from audit_core.utils import debug
 from audit_core.tier0_pre_audit import expand_zones
 from audit_core.utils import set_time_context
 from i18n.translator import normalise_lang, translate_semantic_graph
-from i18n.cache_sqlite import init_cache
+
 import logging
 
 logging.basicConfig(
@@ -45,13 +45,6 @@ else:
 app = FastAPI(title="Montis.icu GPT Coach Railway API", version="2.0")
 
 
-@app.on_event("startup")
-async def startup_i18n_cache():
-    try:
-        init_cache()
-        logger.info("[I18N] SQLite cache initialised")
-    except Exception as e:
-        logger.warning("[I18N] SQLite cache init failed: %s", e)
 # ============================================================
 # 🧹 SANITIZER
 # ============================================================

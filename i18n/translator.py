@@ -5,11 +5,6 @@ import copy
 import logging
 
 from i18n.controlled_terms import CONTROLLED_TERMS
-from i18n.cache_sqlite import (
-    init_cache,
-    get_cached_translation,
-    set_cached_translation,
-)
 
 logger = logging.getLogger("app.i18n")
 
@@ -260,13 +255,7 @@ def translate_text(value: str, lang: str) -> str:
     if value in controlled:
         return controlled[value]
 
-    cached = get_cached_translation(value, lang)
-
-    if cached:
-        return cached
-
     return value
-
 
 def should_translate(key, value: str, path: str | None = None, lang: str = "fr") -> bool:
     if not isinstance(value, str):
@@ -306,11 +295,6 @@ def translate_semantic_graph(obj, lang="en", key=None, path=""):
             lang,
         )
         return obj
-
-    try:
-        init_cache()
-    except Exception as e:
-        logger.warning("[I18N] Cache init failed: %s", e)
 
     def walk(value, current_key=None, current_path=""):
         # Hard stop: preserve entire protected subtree
