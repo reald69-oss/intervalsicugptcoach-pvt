@@ -10,7 +10,6 @@ from i18n.cache_sqlite import (
     get_cached_translation,
     set_cached_translation,
 )
-from i18n.provider_argos import translate_with_argos
 
 logger = logging.getLogger("app.i18n")
 
@@ -267,17 +266,7 @@ def translate_text(value: str, lang: str) -> str:
     if cached:
         return cached
 
-    translated = translate_with_argos(value, lang)
-
-    if translated and translated != value:
-        set_cached_translation(
-            text=value,
-            lang=lang,
-            translated=translated,
-            provider="argos",
-        )
-
-    return translated or value
+    return value
 
 
 def should_translate(key, value: str, path: str | None = None, lang: str = "fr") -> bool:
