@@ -2155,7 +2155,7 @@ COACH_PROFILE = {
             "interpretation": "Carbohydrate availability (≈3–10 g/kg depending on training load; IOC/ACSM guidelines) determines glycogen replenishment and endurance capacity.",
             "coaching_implication": "Align carbohydrate intake with training demand (IOC/ACSM) to maintain glycogen availability, recovery, and performance capacity.",
             "related_metrics": ["HRV", "SleepQuality", "TrainingLoad"]
-},
+        },
 
         "FatIntake": {
             "framework": "Energy Balance (Endocrine support)",
