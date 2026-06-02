@@ -9,11 +9,16 @@ CONTROLLED_TERMS = {
         "Cycling Power Zones": "Zones de puissance cycliste",
         "Cycling Heart Rate Zones": "Zones de fréquence cardiaque cycliste",
         "Combined Intensity Distribution": "Répartition combinée de l’intensité",
+        "Run Pace Zones": "Zones d’allure de course à pied",
+        "Swim Pace Zones": "Zones d’allure de natation",
         "Coaching Directive": "Directive d’entraînement",
 
-        # Common directives
+        # Common directives / labels
         "Maintain training structure": "Maintenir la structure d’entraînement",
         "Training load and recovery signals aligned.": "La charge d’entraînement et les signaux de récupération sont alignés.",
+        "Planned structured session": "Séance structurée planifiée",
+        "Neutral load": "Charge neutre",
+        "Neutral — balanced load": "Neutre — charge équilibrée",
 
         # States / flags
         "BALANCED LOAD": "CHARGE ÉQUILIBRÉE",
@@ -62,14 +67,19 @@ CONTROLLED_TERMS = {
         "Taper": "Affûtage",
         "Transition": "Transition",
 
-        # Training systems
+        # Training systems / zones
+        "Active Recovery": "Récupération active",
         "Endurance": "Endurance",
         "Tempo": "Tempo",
         "Threshold": "Seuil",
         "VO2 Max": "VO₂ max",
-        "Anaerobic": "Anaérobie",
+        "VO₂ max": "VO₂ max",
         "Aerobic": "Aérobie",
+        "Aerobic Capacity": "Capacité aérobie",
+        "Anaerobic": "Anaérobie",
         "Neuromuscular": "Neuromusculaire",
+        "SubThreshold": "Sous-seuil",
+        "SuperThreshold": "Sur-seuil",
 
         # Colours / severity
         "green": "vert",

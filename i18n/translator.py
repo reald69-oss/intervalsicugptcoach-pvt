@@ -104,8 +104,45 @@ DO_NOT_TRANSLATE_KEYS = {
     "name",
     "athlete_name",
     "event_name",
+    "notes",
+    "type",
+    "types",
+    "category",
+    "priority",
+    "status",
+    "classification",
+    "semantic_state",
+    "metric_confidence",
+    "confidence",
+    "thermal_source_confidence",
+    "fatigue_class",
+    "load_trend",
+    "taper_state",
+    "form_status",
+    "readiness_label",
+    "readiness_modifier",
+    "training_bias",
+    "race_type",
+    "adaptation_focus",
+    "risk_flag",
+    "nutrition_status",
+    "nutrition_confidence",
+    "operational_state",
+    "adaptation_state",
+    "system_state",
+    "system_status",
+    "system_status_timeline",
+    "adaptation_bias",
+    "curve_profile",
+    "curve_quality",
+    "model_quality",
+    
 }
 
+DO_NOT_TRANSLATE_PATH_CONTAINS = {
+    "meta.athlete.identity.notes",
+    "meta.athlete.profiles",
+}
 
 def normalise_lang(lang):
     lang = (lang or "en").lower().strip()
@@ -186,6 +223,9 @@ def should_translate(key, value: str, path: str | None = None) -> bool:
 
     if key in TRANSLATABLE_KEYS:
         return True
+
+    if path and any(p in path for p in DO_NOT_TRANSLATE_PATH_CONTAINS):
+        return False
 
     return False
 
