@@ -17,13 +17,6 @@ SUPPORTED_LANGS = {"en", "fr", "de", "it", "es", "pt", "nl"}
 
 
 TRANSLATABLE_KEYS = {
-    "title",
-    "subtitle",
-    "scope",
-    "intended_use",
-    "label",
-    "display_label",
-    "display_name",
     "description",
     "summary",
     "meaning",
@@ -33,7 +26,6 @@ TRANSLATABLE_KEYS = {
     "recommended_adjustment",
     "reason",
     "message",
-    "directive",
     "guidance",
     "training_guidance",
     "readiness_signal",
@@ -41,9 +33,7 @@ TRANSLATABLE_KEYS = {
     "system_guidance",
     "question",
     "descriptor",
-    "basis",
     "note",
-    "notes",
     "warning",
     "verdict",
     "headline",
@@ -141,6 +131,15 @@ DO_NOT_TRANSLATE_KEYS = {
     "state_key",
     "risk_flag",
     "resolution",
+    "title",
+    "subtitle",
+    "scope",
+    "intended_use",
+    "label",
+    "display_label",
+    "display_name",
+    "state_label",
+    "day_of_week",
 
     # ---------------------------------------------------------
     # Phase fields MUST remain stable for UI/code branching

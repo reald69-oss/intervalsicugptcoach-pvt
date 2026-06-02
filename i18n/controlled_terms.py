@@ -19,6 +19,9 @@ CONTROLLED_TERMS = {
         "Planned structured session": "Séance structurée planifiée",
         "Neutral load": "Charge neutre",
         "Neutral — balanced load": "Neutre — charge équilibrée",
+        "Detailed analysis of the last 7 days of training activity": "Analyse détaillée des 7 derniers jours d’entraînement",
+        "Detailed analysis of the last 7 days of training activities": "Analyse détaillée des 7 derniers jours d’entraînement",
+        
 
         # States / flags
         "BALANCED LOAD": "CHARGE ÉQUILIBRÉE",
