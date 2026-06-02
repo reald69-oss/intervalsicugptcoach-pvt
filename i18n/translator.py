@@ -52,7 +52,9 @@ TRANSLATABLE_KEYS = {
 
 
 DO_NOT_TRANSLATE_KEYS = {
-    # Internal instructions / contracts
+    # ---------------------------------------------------------
+    # Internal instructions / renderer contracts
+    # ---------------------------------------------------------
     "renderer_instructions",
     "hard_rules",
     "list_rules",
@@ -62,49 +64,61 @@ DO_NOT_TRANSLATE_KEYS = {
     "preferred_markdown_shape",
     "contract",
     "report_contract",
+    "section_handling",
+    "interpretation_rules",
+    "stack_section_map",
 
-    # Identity / technical
+    # ---------------------------------------------------------
+    # Identity / links / technical IDs
+    # ---------------------------------------------------------
     "id",
     "uid",
     "athlete_id",
     "event_id",
     "activity_id",
     "paired_event_id",
+    "paired_activity_id",
     "activity_link",
     "url",
     "website",
     "email",
+    "profile_image",
 
-    # Usually semantic contract values
+    # ---------------------------------------------------------
+    # Names are risky:
+    # athlete names, race names, activity names, workout names
+    # ---------------------------------------------------------
+    "name",
+    "athlete_name",
+    "event_name",
+    "firstname",
+    "lastname",
+
+    # ---------------------------------------------------------
+    # Athlete/user notes should not be machine translated
+    # because they may contain embedded render instructions
+    # ---------------------------------------------------------
+    "notes",
+
+    # ---------------------------------------------------------
+    # Stable semantic contract / metadata
+    # ---------------------------------------------------------
     "key",
     "source",
     "framework",
     "formula",
     "methodology",
     "version",
-
-    # Preserve stable machine-readable fields
-    "type",
-    "category",
-    "status",
-    "classification",
-    "semantic_state",
-    "operational_state",
-    "adaptation_state",
-    "risk_flag",
-    "phase_alignment",
-    "resolution",
+    "model",
+    "method",
+    "mode",
+    "basis",
+    "scope",
     "context_window",
-    "load_order",
-    "tiz_order",
-    "gap_model",
-    "pace_units",
 
-    # Names are risky: activity names / athlete names / race names
-    "name",
-    "athlete_name",
-    "event_name",
-    "notes",
+    # ---------------------------------------------------------
+    # Core machine-readable classification fields
+    # ---------------------------------------------------------
     "type",
     "types",
     "category",
@@ -112,31 +126,67 @@ DO_NOT_TRANSLATE_KEYS = {
     "status",
     "classification",
     "semantic_state",
-    "metric_confidence",
-    "confidence",
-    "thermal_source_confidence",
+    "state",
+    "state_key",
+    "risk_flag",
+    "resolution",
+
+    # ---------------------------------------------------------
+    # Phase fields MUST remain stable for UI/code branching
+    # ---------------------------------------------------------
+    "phase",
+    "required_phase",
+    "phase_context",
+    "phase_alignment",
+    "last_phase",
+    "current_phase",
+    "taper_state",
+
+    # ---------------------------------------------------------
+    # Forecast / readiness / event governance enums
+    # ---------------------------------------------------------
     "fatigue_class",
     "load_trend",
-    "taper_state",
     "form_status",
     "readiness_label",
     "readiness_modifier",
     "training_bias",
     "race_type",
-    "adaptation_focus",
-    "risk_flag",
-    "nutrition_status",
-    "nutrition_confidence",
+    "event_demand",
+
+    # ---------------------------------------------------------
+    # ADE / PI / ESPE machine states
+    # ---------------------------------------------------------
     "operational_state",
     "adaptation_state",
+    "adaptation_focus",
     "system_state",
     "system_status",
     "system_status_timeline",
     "adaptation_bias",
+    "dominant_shift",
     "curve_profile",
     "curve_quality",
     "model_quality",
-    
+    "nutrition_status",
+    "nutrition_confidence",
+
+    # ---------------------------------------------------------
+    # Confidence fields should stay contract-stable
+    # ---------------------------------------------------------
+    "metric_confidence",
+    "confidence",
+    "thermal_source_confidence",
+
+    # ---------------------------------------------------------
+    # Ordering / unit / model constants
+    # ---------------------------------------------------------
+    "load_order",
+    "tiz_order",
+    "gap_model",
+    "pace_units",
+    "pace_load_type",
+    "mmp_model",
 }
 
 DO_NOT_TRANSLATE_PATH_CONTAINS = {

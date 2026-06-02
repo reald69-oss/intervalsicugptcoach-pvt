@@ -59,14 +59,6 @@ CONTROLLED_TERMS = {
         "Race": "Course",
         "Rest Day": "Jour de repos",
 
-        # Phases
-        "Recovery": "Récupération",
-        "Base": "Base",
-        "Build": "Développement",
-        "Peak": "Pic de forme",
-        "Taper": "Affûtage",
-        "Transition": "Transition",
-
         # Training systems / zones
         "Active Recovery": "Récupération active",
         "Endurance": "Endurance",
