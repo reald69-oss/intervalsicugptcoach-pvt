@@ -14,7 +14,7 @@ from i18n.provider_argos import translate_with_argos
 
 logger = logging.getLogger("app.i18n")
 
-SUPPORTED_LANGS = {"en", "fr", "de", "it", "es", "pt"}
+SUPPORTED_LANGS = {"en", "fr", "de", "it", "es", "pt", "nl"}
 
 
 TRANSLATABLE_KEYS = {
