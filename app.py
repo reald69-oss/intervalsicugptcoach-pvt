@@ -675,24 +675,6 @@ def _run_full_audit(
 # ============================================================
 # 🛰️ ENDPOINTS
 # ============================================================
-import requests
-
-@app.get("/test_translate")
-def test_translate():
-    r = requests.post(
-        "http://libretranslate.railway.internal:5000/translate",
-        json={
-            "q": "Weekly Training Report",
-            "source": "en",
-            "target": "fr",
-            "format": "text"
-        },
-        timeout=30
-    )
-
-    r.raise_for_status()
-    return r.json()
-
 
 @app.get("/")
 def root():
