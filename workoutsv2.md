@@ -711,54 +711,49 @@ Rules:
 - Exclude NOTE/HOLIDAY/SICK/INJURED
 
 ---
-
 # 22. CALENDAR UPDATE / DELETE RULES
 
-# A. UPDATE / REPLACE (STRICT ATOMIC MODE)
+# A. MOVE / UPDATE EXISTING EVENT
 
-## PRIORITY 1 — ID MATCH
+Move, reschedule, rename, retime, edit, change, update, or modify an existing event is ALWAYS an UPDATE.
 
-If event ID exists:
-
-- MUST match by ID ONLY
-- MUST ignore fuzzy matching
-
----
-
-## PRIORITY 2 — STRUCTURAL MATCH
-
-If no ID:
-
-Must match:
-- same date
-- same sport/type
-- strong title similarity
-
-Similarity:
-- ≥70%
-- OR keyword-equivalent
-
----
-
-## MANDATORY DELETE FIRST
-
-Replacement ALWAYS means:
+Workflow:
 
 ```text
-DELETE → VERIFY → CREATE
+READ CALENDAR → FIND EXACT EVENT → UPDATE BY ID
 ```
 
-If delete fails:
-- ABORT
-- DO NOT create replacement
-
-NO fallback creation.
-
-NO duplicates.
+Rules:
+- If exactly one matching event is found and it has an ID, MUST update by ID.
+- MUST call calendar write/update with the existing event ID.
+- MUST NOT call delete for move/update/edit/rename/retime/change/modify.
+- MUST NOT delete and recreate.
+- MUST NOT use replacement workflow.
+- MUST preserve all existing fields unless explicitly changed.
+- If update by ID fails: ABORT.
+- DO NOT create a fallback event.
 
 ---
 
-# B. ADD MODE
+# B. REPLACE EXISTING EVENT WITHOUT ID
+
+Only use this when the user explicitly says replace/swap and no event ID is available after reading calendar.
+
+```text
+MATCH → DELETE → VERIFY DELETE → CREATE
+```
+
+Rules:
+- Match by same date + same sport/type + strong title similarity.
+- If no safe match exists: ABORT.
+- If delete fails: ABORT.
+- DO NOT create replacement.
+- NO fallback creation.
+- NO duplicates.
+
+---
+
+# C. ADD MODE
 
 If user says:
 
@@ -771,11 +766,15 @@ keep existing
 ```
 
 THEN:
-- DO NOT delete existing events
+- CREATE only.
+- DO NOT delete existing events.
+- DO NOT replace existing events.
 
 ---
 
-# C. DELETE SPECIFIC EVENT
+# D. DELETE SPECIFIC EVENT
+
+Delete ONLY when the user explicitly asks to delete/remove/cancel an event.
 
 Delete ONLY matching events.
 
@@ -783,7 +782,7 @@ NEVER delete entire day unless explicitly requested.
 
 ---
 
-# D. DELETE ALL EVENTS
+# E. DELETE ALL EVENTS
 
 ONLY if user explicitly says:
 
@@ -796,7 +795,12 @@ wipe
 
 ---
 
-# E. SAFETY RULE
+# F. SAFETY RULE
+
+NEVER perform date-only deletion unless explicitly requested.
+
+If ambiguous:
+- delete ONLY matching events.
 
 NEVER perform date-only deletion unless explicitly requested.
 
