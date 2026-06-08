@@ -946,6 +946,9 @@ async def run_audit_with_data(
             # ---------------------------------------------------------
             if report_range == "weekly" and not light_empty and full_empty:
 
+                start_s = str(start or "")
+                end_s = str(end or "")
+
                 last_date = None
 
                 try:
