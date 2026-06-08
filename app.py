@@ -954,31 +954,74 @@ async def run_audit_with_data(
                         for a in light
                         if a.get("start_date_local")
                     ]
+                    dates = [d for d in dates if pd.notna(d)]
                     if dates:
                         last_date = max(dates)
                 except Exception:
                     pass
 
                 if last_date is not None:
+                    last_date_d = last_date.date()
                     last_date_str = last_date.strftime("%Y-%m-%d")
-                    suggested_start = (last_date - pd.Timedelta(days=7)).strftime("%Y-%m-%d")
 
-                    msg = (
-                        f"No weekly period activities detected, weekly detailed data could not be retrieved. "
-                        f"Last activity I see is {last_date_str}. "
-                        f"'Run a weekly report starting {suggested_start}'."
-                        f"or 'run a weekly demo report' for an example"
-                    )
+                    start_d = pd.to_datetime(start_s).date()
+                    end_d = pd.to_datetime(end_s).date()
+
+                    try:
+                        today_d = pd.to_datetime(context.get("athlete_today")).date()
+                    except Exception:
+                        today_d = pd.Timestamp.utcnow().date()
+
+                    last_7_start_d = today_d - pd.Timedelta(days=6)
+                    last_activity_in_last_7 = last_date_d >= last_7_start_d
+                    last_activity_before_requested = last_date_d < start_d
+                    requested_is_current_window = start_d <= today_d <= end_d
+
+                    suggested_start = (last_date_d - pd.Timedelta(days=6)).strftime("%Y-%m-%d")
+
+                    msg_parts = [
+                        (
+                            f"No completed activities were found in the requested weekly window "
+                            f"{start_s} → {end_s}."
+                        ),
+                        f"Last completed activity I can see is {last_date_str}."
+                    ]
+
+                    if last_activity_in_last_7:
+                        msg_parts.append(
+                            "If you want the latest completed 7-day weekly report, run: "
+                            "'run weekly report'."
+                        )
+                    else:
+                        msg_parts.append(
+                            "Your latest activity is outside the current 7-day window. "
+                            f"For a historical 7-day report around that activity, run: "
+                            f"'weekly report starting {suggested_start}'."
+                        )
+
+                    if last_activity_before_requested:
+                        msg_parts.append(
+                            "The requested week starts after your latest completed activity, "
+                            "so there is nothing to report yet for that period."
+                        )
+
+                    if requested_is_current_window:
+                        msg_parts.append(
+                            "If you specifically want the current ISO week, try again once an activity exists in this week."
+                        )
+
+                    msg = " ".join(msg_parts)
+
                 else:
-                    msg = ( 
-                        f"Detailed activity data could not be retrieved."
-                        f"'run a weekly demo report' for an example"
+                    msg = (
+                        "Detailed activity data could not be retrieved. "
+                        "Run 'weekly demo report' for an example."
                     )
 
                 raise AuditHalt(
                     msg,
                     code="FULL_DATA_UNAVAILABLE",
-                    severity="info"   # ← NEW TYPE
+                    severity="info"
                 )
 
             # Abort only if NO activity data at all
