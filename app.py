@@ -1609,28 +1609,36 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
         if start and end:
             period_str = f"{start} → {end}"
 
-    # 🔥 ALWAYS LOG FIRST
-    sys.stderr.write("\n🛑 AUDIT HALTED\n")
-    sys.stderr.write(f"Code: {code}\n")
-    sys.stderr.write(f"Severity: {severity}\n")
-    sys.stderr.write(f"Report: {report_range}\n")
+    # ✅ severity-aware logging
+    label = "AUDIT INFO" if severity == "info" else "AUDIT HALTED"
+    log_fn = logger.info if severity == "info" else logger.error
 
-    if athlete_name or athlete_id:
-        sys.stderr.write(f"Athlete: {athlete_name} ({athlete_id})\n")
-
-    if period_str:
-        sys.stderr.write(f"Period: {period_str}\n")
-
-    sys.stderr.write(str(e) + "\n")
-    sys.stderr.flush()
-
-    logger.info(
-        "[HALT] report_type=%s athlete=%s code=%s message=%s",
+    log_fn(
+        "[%s] report_type=%s athlete=%s code=%s severity=%s period=%s message=%s",
+        label,
         report_range,
         athlete_name,
         code,
+        severity,
+        period_str,
         str(e)
     )
+
+    # ✅ only hard/soft writes to stderr
+    if severity != "info":
+        sys.stderr.write(f"\n🛑 {label}\n")
+        sys.stderr.write(f"Code: {code}\n")
+        sys.stderr.write(f"Severity: {severity}\n")
+        sys.stderr.write(f"Report: {report_range}\n")
+
+        if athlete_name or athlete_id:
+            sys.stderr.write(f"Athlete: {athlete_name} ({athlete_id})\n")
+
+        if period_str:
+            sys.stderr.write(f"Period: {period_str}\n")
+
+        sys.stderr.write(str(e) + "\n")
+        sys.stderr.flush()
 
     if context and context.get("debug_counts"):
         logger.info(
@@ -1638,8 +1646,6 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
             report_range,
             context.get("debug_counts")
         )
-
-    # ✅ NOW HANDLE SEVERITY
 
     if severity == "info":
         return JSONResponse(
@@ -1654,7 +1660,6 @@ def handle_audit_halt(e, report_range, buffer=None, header=None, context=None):
             debug_counts=context.get("debug_counts") if context else None
         )
 
-    # hard
     halt_payload = e.to_dict()
 
     return JSONResponse({
