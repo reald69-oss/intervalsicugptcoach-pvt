@@ -168,3 +168,5 @@ Coached Athletes → getCoachedAthletesV1 → params: none → list coached athl
 ---
 
 Send Message → sendChatMessageV1 → body: content*, (chat_id | to_athlete_id | to_activity_id)* → send message to chat/athlete/activity
+
+Terrain Execution Analysis (TEA) → Use getActivityTerrainExecutionV1 → params: acticityID? → get terrain execution analysis

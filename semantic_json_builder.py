@@ -4609,9 +4609,19 @@ def build_semantic_json(context):
                             break
 
                     if date_col:
-                        ctl_src = df_tmp[[date_col, "CTL", "ATL", "TSB"]].copy()
+                        required = [date_col, "CTL", "ATL", "TSB"]
+                        missing = [c for c in required if c not in df_tmp.columns]
+
+                        if missing:
+                            debug(
+                                context,
+                                f"[PHASES] ⚠️ Skipping {key}: missing={missing}"
+                            )
+                            continue
+
+                        ctl_src = df_tmp[required].copy()
                         ctl_src.rename(columns={date_col: "date"}, inplace=True)
-                    break
+                        break
 
             # -----------------------------------------------------
             # Aggregate by ISO week
@@ -4631,7 +4641,6 @@ def build_semantic_json(context):
                     .last()[["year_week", "CTL", "ATL", "TSB"]]
                 )
 
-                df_ctl.columns = ["week", "ctl", "atl", "tsb"]
                 df_ctl.columns = ["week", "ctl", "atl", "tsb"]
                 df_weeks = df_weeks.merge(df_ctl, on="week", how="left")
 
