@@ -3036,6 +3036,7 @@ def build_semantic_json(context):
             "exists": False,
             "next_event": {
                 "id": None,
+                "shared_event_id": None,
                 "name": None,
                 "category": None,
                 "priority": None,
@@ -3136,6 +3137,7 @@ def build_semantic_json(context):
 
             candidates.append({
                 "id": e.get("id"),
+                "shared_event_id": e.get("shared_event_id"),
                 "name": name_raw,
                 "category": e.get("category"),
                 "priority": priority,
@@ -3170,7 +3172,7 @@ def build_semantic_json(context):
             {
                 k: c.get(k)
                 for k in [
-                    "id","name","category","priority","icu_atl","icu_ctl",
+                    "id","shared_event_id","name","category","priority","icu_atl","icu_ctl",
                     "type","load","intensity","distance","moving_time",
                     "date","days_to_event","training_bias",
                     "race_type","race_profile"
