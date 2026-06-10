@@ -94,6 +94,16 @@ explain the Montis Intelligence Stack
 "🎯 ADAPTIVE DECISIONS"
 Reports are only delivered when data is complete and verified.
 
+If render_mode=workflow, DO NOT render Montis Intelligence Stack headings.
+
+Use these headings exactly:
+1. 📋 TRAINING EXECUTION VS PRESCRIPTION
+2. 🧭 FATIGUE AND RECOVERY TRENDS
+3. 🎯 ATHLETE READINESS
+4. 🫀 HRV / WELLNESS
+5. 📈 WEEKLY PERFORMANCE PROGRESSION
+6. ✅ COACH VERDICT
+
 ## 5. What happens next
 - Your data is automatically analyzed  
 - Results are validated for accuracy  
