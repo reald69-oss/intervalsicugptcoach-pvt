@@ -350,7 +350,9 @@ def build_system_prompt_from_header(report_type: str, header: dict) -> str:
     #-----------------------------------------------------------------
     overview_contract_block = ""
 
-    if report_type == "weekly_overview":
+    overview_contract_block = ""
+
+    if report_type in ("weekly_overview", "weekly_workflow"):
         layout = report_profile.get("layout", {})
         card_rules = report_profile.get("card_rules", {})
         required_fields = report_profile.get("required_fields", {})

@@ -103,6 +103,40 @@ REPORT_CONTRACT = {
         "future_forecast",
     ],
 
+    "weekly_workflow": [
+        "meta",
+
+        # 1. Training execution vs prescription
+        "training_volume",
+        "events",
+        "planned_events_7d",
+        "current_ISO_weekly_microcycle",
+        "planned_summary_by_iso_week",
+
+        # 2. Fatigue and recovery trends
+        "metrics_groups",
+        "daily_load",
+        "future_forecast",
+
+        # 3. Athlete readiness
+        "actions",
+        "training_guidance",
+        "decision_context",
+        "phase_alignment",
+        "event_targets",
+
+        # 4. HRV / wellness
+        "wellness",
+        "insight_view",
+
+        # 5. Weekly performance progression
+        "performance_intelligence",
+        "energy_system_progression",
+        "physiology",
+        "zones",
+        "phases_summary",
+    ],
+
     "season": [
         "meta",
 
@@ -274,6 +308,31 @@ PRUNE_RULES = {
         ],
     },
 
+    "weekly_workflow": {
+        "meta": [
+            "methodology",
+            "planned_events",
+        ],
+        "wellness": [
+            "hrv_series",
+            "daily",
+        ],
+        "meta.athlete": [
+            "profiles",
+        ],
+        "meta.athlete.context": [
+            "platforms",
+            "wellness_features",
+            "equipment_summary",
+            "activity_scope",
+            "training_environment",
+        ],
+        "performance_intelligence": [
+            "acute",
+            "chronic",
+        ],
+    },
+
     "season": {
         "wellness": [
             "hrv_series"
@@ -372,6 +431,169 @@ RENDERER_PROFILES = {
     # ==============================================================
     # Weekly OVERVIEW CONTRACT
     # ==============================================================
+
+    "weekly_workflow": {
+        "framing": {
+            "intent": "weekly_workflow_review",
+            "purpose": (
+                "Render the weekly report around the athlete workflow: "
+                "execution vs prescription, fatigue/recovery trends, readiness, "
+                "HRV/wellness, and weekly performance progression."
+            ),
+            "required_opening": (
+                "One-line verdict covering execution, recovery, readiness, and progression."
+            ),
+        },
+
+        "layout": {
+            "style": "workflow_review",
+            "required_sections": [
+                "Training Execution vs Prescription",
+                "Fatigue and Recovery Trends",
+                "Athlete Readiness",
+                "HRV / Wellness",
+                "Weekly Performance Progression",
+                "Coach Verdict",
+            ],
+        },
+
+        "stack_structure": {
+            "execution_vs_prescription": [
+                "training_volume",
+                "events",
+                "planned_events_7d",
+                "current_ISO_weekly_microcycle",
+                "planned_summary_by_iso_week",
+            ],
+            "fatigue_recovery_trends": [
+                "metrics_groups.load",
+                "metrics_groups.capacity",
+                "metrics_groups.variability",
+                "daily_load",
+                "future_forecast",
+            ],
+            "athlete_readiness": [
+                "actions",
+                "training_guidance",
+                "decision_context",
+                "phase_alignment",
+                "event_targets",
+            ],
+            "hrv_wellness": [
+                "wellness",
+                "insight_view",
+            ],
+            "weekly_performance_progression": [
+                "performance_intelligence",
+                "energy_system_progression",
+                "physiology",
+                "zones",
+                "phases_summary",
+            ],
+        },
+
+        "stack_labels": {
+            "execution_vs_prescription": "📋 TRAINING EXECUTION VS PRESCRIPTION",
+            "fatigue_recovery_trends": "🧭 FATIGUE AND RECOVERY TRENDS",
+            "athlete_readiness": "🎯 ATHLETE READINESS",
+            "hrv_wellness": "🫀 HRV / WELLNESS",
+            "weekly_performance_progression": "📈 WEEKLY PERFORMANCE PROGRESSION",
+        },
+
+        "interpretation_rules": [
+            "Render exactly one workflow report.",
+            "Use the five workflow headings exactly as defined in stack_labels.",
+            "Do not render generic Montis stack headings in this profile.",
+            "Start with a one-line verdict covering execution, fatigue, readiness, wellness, and progression.",
+            "Training Execution vs Prescription MUST compare completed events against planned_events_7d when both exist.",
+            "If planned_events_7d is missing, state that prescription comparison is unavailable; do not infer it.",
+            "Fatigue and Recovery Trends MUST use metrics_groups.load, metrics_groups.capacity, daily_load, and future_forecast where present.",
+            "Athlete Readiness MUST use adaptive_summary from actions, training_guidance, decision_context, phase_alignment, and event_targets.",
+            "Do not use actions[0] blindly; find the action where type == adaptive_summary.",
+            "HRV / Wellness MUST use wellness.physiology_state, HRV ratio/trend, resting HR delta, sleep, and insight_view where present.",
+            "Weekly Performance Progression MUST use performance_intelligence and energy_system_progression as the primary sources.",
+            "Do not recompute ADE score, CTL, ATL, TSB, ACWR, HRV ratio, or ESPE deltas.",
+            "When phase governance conflicts with apparent readiness, state both truths clearly.",
+            "Final Coach Verdict MUST classify the week as Productive, High Strain, Under-Recovered, or Misaligned.",
+        ],
+
+        "section_handling": {
+            "meta": "summary",
+            "training_volume": "summary",
+            "events": "summary",
+            "planned_events_7d": "summary",
+            "current_ISO_weekly_microcycle": "summary",
+            "planned_summary_by_iso_week": "summary",
+
+            "metrics_groups": "summary",
+            "daily_load": "compact_timeline",
+            "future_forecast": "summary",
+
+            "actions": "summary",
+            "training_guidance": "headline",
+            "decision_context": "headline",
+            "phase_alignment": "headline",
+            "event_targets": "summary",
+
+            "wellness": "summary",
+            "insight_view": "summary",
+
+            "performance_intelligence": "summary",
+            "energy_system_progression": "summary",
+            "physiology": "summary",
+            "zones": "summary",
+            "phases_summary": "summary",
+
+            "phases": "forbid",
+            "insights": "forbid",
+            "wbal_summary": "forbid",
+        },
+
+        "preferred_markdown_shape": [
+            "Opening one-line verdict.",
+            "## 📋 Training Execution vs Prescription",
+            "Compact comparison: completed load, planned load, missed/extra sessions, prescription alignment.",
+            "## 🧭 Fatigue and Recovery Trends",
+            "Compact load/fatigue table plus daily_load timeline.",
+            "## 🎯 Athlete Readiness",
+            "ADE score, operational state, phase alignment, event readiness, final guidance.",
+            "## 🫀 HRV / Wellness",
+            "HRV, resting HR, sleep, physiology state, wellness signal interpretation.",
+            "## 📈 Weekly Performance Progression",
+            "Performance intelligence, durability, neural density, W′/anaerobic signal, ESPE progression.",
+            "## ✅ Coach Verdict",
+            "One short verdict with next action.",
+        ],
+
+        "closing_note": {
+            "required": True,
+            "verdict_rule": (
+                "State whether the week matched the intended prescription and whether the athlete is ready to progress."
+            ),
+            "classification_required": [
+                "Productive",
+                "High Strain",
+                "Under-Recovered",
+                "Misaligned",
+            ],
+            "focus": "workflow_alignment",
+            "anchor_metrics": [
+                "events",
+                "planned_events_7d",
+                "ACWR",
+                "FatigueTrend",
+                "wellness.physiology_state",
+                "performance_intelligence.training_state",
+                "energy_system_progression",
+                "actions",
+                "phase_alignment",
+            ],
+            "intent_rule": (
+                "Assess whether execution, fatigue, wellness, and progression support the next training decision."
+            ),
+            "max_sentences": 4,
+        },
+    },
 
     "weekly_overview": {
         "framing": {
