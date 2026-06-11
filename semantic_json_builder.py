@@ -1556,7 +1556,42 @@ def build_semantic_json(context):
         df_ref = context["_df_scope_full"]
     
     # --- Compute report period from reference dataset ---
-    if report_type in ("season", "summary") and context.get("window_start") and context.get("window_end"):
+    if report_type == "weekly":
+        # 🔒 Weekly report period must always be the 7-day report window.
+        # Do NOT derive it from df_ref, because df_ref may be 105d light history
+        # used for sport identity / phase context.
+        if context.get("start") and context.get("end"):
+            context["period"] = {
+                "start": pd.to_datetime(context["start"]).strftime("%Y-%m-%d"),
+                "end": pd.to_datetime(context["end"]).strftime("%Y-%m-%d"),
+            }
+            debug(
+                context,
+                f"[SEMANTIC] Weekly period locked from context start/end → "
+                f"{context['period']['start']} → {context['period']['end']}"
+            )
+
+        elif context.get("range", {}).get("full_start") and context.get("range", {}).get("full_end"):
+            context["period"] = {
+                "start": pd.to_datetime(context["range"]["full_start"]).strftime("%Y-%m-%d"),
+                "end": pd.to_datetime(context["range"]["full_end"]).strftime("%Y-%m-%d"),
+            }
+            debug(
+                context,
+                f"[SEMANTIC] Weekly period locked from full range → "
+                f"{context['period']['start']} → {context['period']['end']}"
+            )
+
+        else:
+            start_date = today - pd.Timedelta(days=6)
+            end_date = today
+            context["period"] = {
+                "start": start_date.strftime("%Y-%m-%d"),
+                "end": end_date.strftime("%Y-%m-%d"),
+            }
+            debug(context, "[SEMANTIC] Weekly period defaulted to last 7 days")
+
+    elif report_type in ("season", "summary") and context.get("window_start") and context.get("window_end"):
         # 🔒 Controller-defined window is authoritative
         context["period"] = {
             "start": pd.to_datetime(context["window_start"]).strftime("%Y-%m-%d"),
@@ -1588,7 +1623,7 @@ def build_semantic_json(context):
             "start": start_date.strftime("%Y-%m-%d"),
             "end": end_date.strftime("%Y-%m-%d"),
         }
-        debug(context, "[SEMANTIC] Defaulted weekly period to last 7 days")
+        debug(context, "[SEMANTIC] Defaulted report period to fallback window")
 
 
 
