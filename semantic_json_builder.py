@@ -3178,7 +3178,7 @@ def build_semantic_json(context):
                     "race_type","race_profile"
                 ]
             }
-            for c in candidates[1:4]
+            for c in candidates[1:10]
         ]
 
         context["event_targets"] = event_targets
