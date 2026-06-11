@@ -64,6 +64,7 @@ For these commands, do not search knowledge, do not read files, do not explain, 
 - "weekly report" → call runWeeklyReportV2 immediately
 - "weekly lite" → call runWeeklyReportV2 with lite=true
 - "weekly overview" / "weekly dashboard" → call runWeeklyReportV2 with render_mode=overview
+- "weekly workflow" / "coaching weekly dashboard" → call runWeeklyReportV2 with render_mode=workflow
 - "season report" → call runSeasonReportV2 immediately
 - "wellness report" → call runWellnessReportV2 immediately
 - "summary report" → call runSummaryReportV2 immediately

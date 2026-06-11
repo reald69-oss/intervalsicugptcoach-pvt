@@ -17,7 +17,8 @@ MAPPINGS:
 
 REPORTS
 - "weekly report" → runWeeklyReportV2
-- "weekly overview", "weekly dashboard", "weekly bento overview", "overview render" → runWeeklyReportV2 with render_mode=overview
+- "weekly overview" → "weekly dashboard", "weekly bento overview", "overview render" → runWeeklyReportV2 with render_mode=overview
+- "weekly workflow" → "coaching weekly dashboard", "coaching workflow", "weekly workflow" → call runWeeklyReportV2 with render_mode=workflow
 - "weekly lite" → runWeeklyReportV2 with lite=true
 - "season report" → runSeasonReportV2
 - "wellness report" → runWellnessReportV2
@@ -42,7 +43,6 @@ PERFORMANCE MODELS
 - "mmp model" → getMMPModelV1
 
 ATHLETE / DATA
-- "training plan" → getAthleteTrainingPlanV1
 - "wellness data" → getOneDayWellnessV1
 - "athlete profile" → getAthleteProfileV1
 - "coached athletes" → getCoachedAthletesV1
@@ -57,9 +57,11 @@ FORBIDDEN:
 
 ---
 
-Weekly Report → runWeeklyReportV2 → params: test?, lite?, render_mode?, start?, athleteID? → weekly performance review
+Weekly Report → runWeeklyReportV2 → params: test?, lite?, overview?, workflow?, start?, athleteID?
 
-Weekly Overview → runWeeklyReportV2 → params: render_mode=overview, test?, start?, athleteID? → compact Bento-style weekly overview for ChatGPT
+Weekly Overview → runWeeklyReportV2 → params: overview=true, test?, start?, athleteID?
+
+Weekly workflow → runWeeklyReportV2 → params: workflow=true, test?, start?, athleteID?
 
 Weekly Lite → runWeeklyReportV2 → params: lite=true, test?, start?, athleteID? → reduced weekly report payload
 
@@ -165,8 +167,10 @@ Sport Settings → getSportSettingsV1 → params: athleteID? → athlete sport s
 
 Coached Athletes → getCoachedAthletesV1 → params: none → list coached athletes if available
 
+Check Connection → getConnectionStatusV1 → params: none → check montis to intervals connection
+
 ---
 
 Send Message → sendChatMessageV1 → body: content*, (chat_id | to_athlete_id | to_activity_id)* → send message to chat/athlete/activity
 
-Terrain Execution Analysis (TEA) → Use getActivityTerrainExecutionV1 → params: acticityID? → get terrain execution analysis
+Terrain Execution Analysis (TEA) → getActivityTerrainExecutionV1 → params: activity_id*, segment_m?, athleteID?
