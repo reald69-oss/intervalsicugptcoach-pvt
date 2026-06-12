@@ -964,57 +964,64 @@ async def run_audit_with_data(
                     pass
 
                 if last_date is not None:
-                    last_date_d = last_date.date()
-                    last_date_str = last_date.strftime("%Y-%m-%d")
+                    last_date = pd.to_datetime(last_date, errors="coerce")
 
-                    start_d = pd.to_datetime(start_s).date()
-                    end_d = pd.to_datetime(end_s).date()
+                    if pd.isna(last_date):
+                        last_date_d = None
+                        last_date_str = None
+                    else:
+                        last_date_d = last_date.date()
+                        last_date_str = last_date.strftime("%Y-%m-%d")
+
+                    start_d = pd.to_datetime(start_s, errors="coerce").date()
+                    end_d = pd.to_datetime(end_s, errors="coerce").date()
 
                     try:
-                        today_d = pd.to_datetime(context.get("athlete_today")).date()
+                        today_d = pd.to_datetime(context.get("athlete_today"), errors="coerce").date()
                     except Exception:
                         today_d = pd.Timestamp.utcnow().date()
 
-                    last_7_start_d = today_d - pd.Timedelta(days=6)
-                    last_activity_in_last_7 = last_date_d >= last_7_start_d
-                    last_activity_before_requested = last_date_d < start_d
-                    requested_is_current_window = start_d <= today_d <= end_d
+                    if last_date_d is not None:
+                        last_7_start_d = today_d - pd.Timedelta(days=6)
 
-                    suggested_start = (last_date_d - pd.Timedelta(days=6)).strftime("%Y-%m-%d")
+                        last_activity_in_last_7 = last_date_d >= last_7_start_d
+                        last_activity_before_requested = last_date_d < start_d
+                        requested_is_current_window = start_d <= today_d <= end_d
 
-                    msg_parts = [
-                        (
-                            f"No completed activities were found in the requested weekly window "
-                            f"{start_s} → {end_s}."
-                        ),
-                        f"Last completed activity I can see is {last_date_str}."
-                    ]
+                        suggested_start = (pd.Timestamp(last_date_d) - pd.Timedelta(days=6)).strftime("%Y-%m-%d")
 
-                    if last_activity_in_last_7:
-                        msg_parts.append(
-                            "If you want the latest completed 7-day weekly report, run: "
-                            "'run weekly report'."
-                        )
-                    else:
-                        msg_parts.append(
-                            "Your latest activity is outside the current 7-day window. "
-                            f"For a historical 7-day report around that activity, run: "
-                            f"'weekly report starting {suggested_start}'."
-                        )
+                        msg_parts = [
+                            (
+                                f"No completed activities were found in the requested weekly window "
+                                f"{start_s} → {end_s}."
+                            ),
+                            f"Last completed activity I can see is {last_date_str}."
+                        ]
 
-                    if last_activity_before_requested:
-                        msg_parts.append(
-                            "The requested week starts after your latest completed activity, "
-                            "so there is nothing to report yet for that period."
-                        )
+                        if last_activity_in_last_7:
+                            msg_parts.append(
+                                "If you want the latest completed 7-day weekly report, run: "
+                                "'run weekly report'."
+                            )
+                        else:
+                            msg_parts.append(
+                                "Your latest activity is outside the current 7-day window. "
+                                f"For a historical 7-day report around that activity, run: "
+                                f"'weekly report starting {suggested_start}'."
+                            )
 
-                    if requested_is_current_window:
-                        msg_parts.append(
-                            "If you specifically want the current ISO week, try again once an activity exists in this week."
-                        )
+                        if last_activity_before_requested:
+                            msg_parts.append(
+                                "The requested week starts after your latest completed activity, "
+                                "so there is nothing to report yet for that period."
+                            )
 
-                    msg = " ".join(msg_parts)
+                        if requested_is_current_window:
+                            msg_parts.append(
+                                "If you specifically want the current ISO week, try again once an activity exists in this week."
+                            )
 
+                        msg = " ".join(msg_parts)
                 else:
                     msg = (
                         "Detailed activity data could not be retrieved. "
