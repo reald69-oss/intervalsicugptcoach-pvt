@@ -963,65 +963,83 @@ async def run_audit_with_data(
                 except Exception:
                     pass
 
-                if last_date is not None:
+                if last_date is not None and pd.notna(last_date):
                     last_date = pd.to_datetime(last_date, errors="coerce")
 
                     if pd.isna(last_date):
-                        last_date_d = None
-                        last_date_str = None
+                        msg = (
+                            "Detailed activity data could not be retrieved. "
+                            "The latest activity date could not be parsed safely. "
+                            "Run 'weekly demo report' for an example."
+                        )
                     else:
                         last_date_d = last_date.date()
                         last_date_str = last_date.strftime("%Y-%m-%d")
 
-                    start_d = pd.to_datetime(start_s, errors="coerce").date()
-                    end_d = pd.to_datetime(end_s, errors="coerce").date()
+                        start_ts = pd.to_datetime(start_s, errors="coerce")
+                        end_ts = pd.to_datetime(end_s, errors="coerce")
 
-                    try:
-                        today_d = pd.to_datetime(context.get("athlete_today"), errors="coerce").date()
-                    except Exception:
-                        today_d = pd.Timestamp.utcnow().date()
-
-                    if last_date_d is not None:
-                        last_7_start_d = today_d - pd.Timedelta(days=6)
-
-                        last_activity_in_last_7 = last_date_d >= last_7_start_d
-                        last_activity_before_requested = last_date_d < start_d
-                        requested_is_current_window = start_d <= today_d <= end_d
-
-                        suggested_start = (pd.Timestamp(last_date_d) - pd.Timedelta(days=6)).strftime("%Y-%m-%d")
-
-                        msg_parts = [
-                            (
-                                f"No completed activities were found in the requested weekly window "
-                                f"{start_s} → {end_s}."
-                            ),
-                            f"Last completed activity I can see is {last_date_str}."
-                        ]
-
-                        if last_activity_in_last_7:
-                            msg_parts.append(
-                                "If you want the latest completed 7-day weekly report, run: "
-                                "'run weekly report'."
+                        if pd.isna(start_ts) or pd.isna(end_ts):
+                            msg = (
+                                "Detailed activity data could not be retrieved. "
+                                f"Last completed activity I can see is {last_date_str}, "
+                                "but the requested report window could not be parsed safely."
                             )
                         else:
-                            msg_parts.append(
-                                "Your latest activity is outside the current 7-day window. "
-                                f"For a historical 7-day report around that activity, run: "
-                                f"'weekly report starting {suggested_start}'."
-                            )
+                            start_d = start_ts.date()
+                            end_d = end_ts.date()
 
-                        if last_activity_before_requested:
-                            msg_parts.append(
-                                "The requested week starts after your latest completed activity, "
-                                "so there is nothing to report yet for that period."
-                            )
+                            try:
+                                today_ts = pd.to_datetime(
+                                    prefetch_context.get("athlete_today"),
+                                    errors="coerce"
+                                )
+                                today_d = today_ts.date() if pd.notna(today_ts) else pd.Timestamp.utcnow().date()
+                            except Exception:
+                                today_d = pd.Timestamp.utcnow().date()
 
-                        if requested_is_current_window:
-                            msg_parts.append(
-                                "If you specifically want the current ISO week, try again once an activity exists in this week."
-                            )
+                            last_7_start_d = today_d - pd.Timedelta(days=6)
 
-                        msg = " ".join(msg_parts)
+                            last_activity_in_last_7 = last_date_d >= last_7_start_d
+                            last_activity_before_requested = last_date_d < start_d
+                            requested_is_current_window = start_d <= today_d <= end_d
+
+                            suggested_start = (
+                                pd.Timestamp(last_date_d) - pd.Timedelta(days=6)
+                            ).strftime("%Y-%m-%d")
+
+                            msg_parts = [
+                                (
+                                    f"No completed activities were found in the requested weekly window "
+                                    f"{start_s} → {end_s}."
+                                ),
+                                f"Last completed activity I can see is {last_date_str}."
+                            ]
+
+                            if last_activity_in_last_7:
+                                msg_parts.append(
+                                    "If you want the latest completed 7-day weekly report, run: "
+                                    "'run weekly report'."
+                                )
+                            else:
+                                msg_parts.append(
+                                    "Your latest activity is outside the current 7-day window. "
+                                    f"For a historical 7-day report around that activity, run: "
+                                    f"'weekly report starting {suggested_start}'."
+                                )
+
+                            if last_activity_before_requested:
+                                msg_parts.append(
+                                    "The requested week starts after your latest completed activity, "
+                                    "so there is nothing to report yet for that period."
+                                )
+
+                            if requested_is_current_window:
+                                msg_parts.append(
+                                    "If you specifically want the current ISO week, try again once an activity exists in this week."
+                                )
+
+                            msg = " ".join(msg_parts)
                 else:
                     msg = (
                         "Detailed activity data could not be retrieved. "
