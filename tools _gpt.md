@@ -8,22 +8,34 @@ CRITICAL:
   - runWellnessReportV2
   - runSummaryReportV2
 - Any other use of "run" is INVALID
-- "weekly overview" is NOT a separate function.
-- It MUST call runWeeklyReportV2 with render_mode=overview.
-- Do NOT combine lite=true with render_mode=overview.
-- If the user asks for a visual/compact/dashboard/Bento-style weekly report, prefer render_mode=overview.
+- Do NOT combine lite=true with overview=true.
+- If the user asks for a visual/compact/dashboard/Bento-style weekly report, call runWeeklyReportV2 with overview=true.
+- Schema triggers are hints, not permission gates.
+- If a tool is listed in this file, the GPT must treat it as available.
+- Only say a tool is unavailable if missing, or inaccessible unless an attempted tool call returns an explicit error.
+- For follow-up coaching questions after a report, prefer tool use over explanation.
 
 MAPPINGS:
 
 REPORTS
 - "weekly report" → runWeeklyReportV2
-- "weekly overview" → "weekly dashboard", "weekly bento overview", "overview render" → runWeeklyReportV2 with render_mode=overview
-- "weekly workflow" → "coaching weekly dashboard", "coaching workflow", "weekly workflow" → call runWeeklyReportV2 with render_mode=workflow
+- "weekly overview" / "weekly dashboard" → call runWeeklyReportV2 with overview=true
+- "weekly workflow" / "coaching weekly dashboard" → call runWeeklyReportV2 with workflow=true
 - "weekly lite" → runWeeklyReportV2 with lite=true
 - "season report" → runSeasonReportV2
 - "wellness report" → runWellnessReportV2
 - "summary report" → runSummaryReportV2
 - "data quality" → runDataQualityReportV1
+
+CONNECTION
+
+- "check connection"
+- "check connection status"
+- "am I connected"
+- "connection status"
+- "verify connection"
+
+→ getConnectionStatusV1 immediately
 
 CALENDAR
 - "planned events", "calendar", "schedule" → readCalendarV1
@@ -34,13 +46,93 @@ ACTIVITY
 - "activity", "analyse activity", "{id}", "{date}" → getOneDayFullActivityV1
 - "list activities", "range activities" → listActivitiesLight
 
+ACTIVITY ANALYSIS / DEEP-DIVE ROUTING
+
+The GPT MUST NOT say activity tools are unavailable if these tools are in the mapping.
+
+If the user asks about:
+- "HR drift"
+- "heart-rate drift"
+- "decoupling"
+- "durability"
+- "fade"
+- "why did I fade"
+- "why did HR rise"
+- "why did power drop"
+- "execution analysis"
+- "session analysis"
+- "analyse my week’s sessions"
+- "which activity caused this"
+- "which workout showed drift"
+- "high drift sessions"
+- "durability breakdown"
+- "fatigue resistance"
+- "interval analysis"
+
+Then use this workflow:
+
+1. Call listActivitiesLight for the relevant date range.
+   - If the request follows a weekly report, use that weekly report period.
+   - If no date range is obvious, use the last 7 days.
+   - Request useful fields if possible:
+     id,name,type,start_date_local,moving_time,distance,icu_training_load,icu_intensity,average_heartrate,icu_weighted_avg_watts,decoupling,icu_variability_index,icu_joules_above_ftp,icu_max_wbal_depletion
+
+2. Identify the most relevant activities:
+   - highest decoupling
+   - longest endurance sessions
+   - highest load
+   - high intensity / high VI sessions
+   - sessions matching the user’s sport or question
+
+3. Call getOneDayFullActivityV1 for the top relevant activity.
+   - If several activities are relevant, fetch up to 3 one at a time.
+   - Prefer activities with decoupling, long duration, or high training load.
+
+4. Analyse icu_intervals using:
+   - sequence + density, not averages
+   - rising decoupling = durability breakdown
+   - wp >> w = stochastic effort / variability
+   - j_af + wbal drop = anaerobic strain
+   - clustered WORK intervals = high neural load
+   - HR rising while power/pace falls = fatigue resistance limitation
+   - HR rising while power/pace stable = cardiovascular drift / heat / fueling / hydration / durability cost
+
+5. Return a plain-language explanation:
+   - which activity caused the signal
+   - when drift began
+   - likely cause
+   - whether it is aerobic durability, fueling/heat, pacing, fatigue, or stochastic execution
+   - what to do next
+
+Do not answer from memory first.
+Do not explain that activity retrieval is required.
+Call the tools first.
+Only say a tool is unavailable if the tool call itself fails or the runtime returns an explicit tool error.
+
+
 PERFORMANCE MODELS
 - "power curves" → getPowerCurvesExtV1
 - "activity power curve", "ride power curve", "activity mmp", "fatigued power curve" → getActivityPowerCurveV1
 - "hr curves" → getHRCurvesV1
 - "power hr curve" → getPowerHRCurveV1
+- "activity HR curve", "ride HR curve", "single activity HR" → getActivityHRCurveV1
 - "pace curves" → getPaceCurvesExtV1
+- "activity pace curve", "GAP curve", "single activity pace" → getActivityPaceCurveV1
+- "activity segments", "ride segments", "climb segments" → getActivitySegmentsV1
+- "terrain execution", "TEA analysis", "terrain analysis", "route execution" → getActivityTerrainExecutionV1
 - "mmp model" → getMMPModelV1
+
+MODEL FOLLOW-UP ROUTING
+
+Use these tools when the user asks for a specific physiological or execution model after a report or activity analysis:
+
+- "fresh vs fatigued", "fatigued power", "late-ride power drop", "fatigue resistance", "durability curve" → getActivityPowerCurveV1
+- "HR drift", "cardiac drift", "aerobic decoupling", "power vs HR", "heart-rate response" → getPowerHRCurveV1 for a date range OR getActivityHRCurveV1 for a single activity
+- "pace fade", "GAP fade", "terrain-normalized pace", "grade adjusted pace" → getActivityPaceCurveV1 with gap=true
+- "climbs", "segments", "where did I lose time", "where did I struggle" → getActivitySegmentsV1
+- "terrain execution", "route struggle", "trail execution", "climb execution" → getActivityTerrainExecutionV1
+
+If a report identified a signal and no activity_id is known, first call listActivitiesLight before selecting a model tool.
 
 ATHLETE / DATA
 - "wellness data" → getOneDayWellnessV1
