@@ -3,11 +3,10 @@
 CRITICAL:
 - "run" is NOT a callable MCP tool.
 - MCP tool names are snake_case.
-- "weekly overview" is NOT a separate tool.
-- It MUST call run_weekly with overview=true.
-- "weekly workflow" is NOT a separate tool.
-- It MUST call run_weekly with workflow=true.
 - Do NOT combine lite=true with overview=true.
+- If an MCP tool exists in this guide, treat it as available.
+- Never claim a tool is unavailable unless an actual MCP tool call returns an error.
+- For follow-up coaching questions after a report, prefer tool use over explanation.
 
 MAPPINGS:
 
@@ -31,6 +30,63 @@ ACTIVITY
 - "list activities", "range activities" → get_activities
 - "search activities", "find activity", "find ride", "find run", "#tag" → search_activities
 
+ACTIVITY ANALYSIS / DEEP-DIVE ROUTING
+
+The MCP client MUST NOT assume activity tools are unavailable if they exist in the tool list.
+
+If the user asks about:
+- "HR drift"
+- "heart-rate drift"
+- "decoupling"
+- "durability"
+- "fade"
+- "why did I fade"
+- "why did HR rise"
+- "why did power drop"
+- "execution analysis"
+- "session analysis"
+- "analyse my week’s sessions"
+- "which activity caused this"
+- "which workout showed drift"
+- "high drift sessions"
+- "durability breakdown"
+- "fatigue resistance"
+- "interval analysis"
+- "why did this happen"
+- "explain this signal"
+- "explain this recommendation"
+- "which session drove this"
+
+Then use this workflow:
+
+1. Call get_activities for the relevant date range.
+   - If the request follows a weekly report, use that weekly report period.
+   - If no date range is obvious, use the last 7 days.
+
+2. Identify the most relevant activities.
+
+3. Call get_activity for the selected activity.
+
+4. If required, call:
+   - get_activity_power_curve
+   - get_activity_hr_curve
+   - get_activity_pace_curve
+   - get_activity_segments
+   - get_activity_interval_stats
+   - get_activity_power_histogram
+   - get_activity_pace_histogram
+   - get_activity_hr_histogram
+   - get_activity_gap_histogram
+   - get_activity_map
+   - get_activity_best_efforts_multi
+   - analyze_activity_terrain_execution (for RUN types)
+
+5. Explain the findings using returned activity data.
+
+Do not answer from memory first.
+Call tools first.
+Only state a tool is unavailable if an actual MCP tool call returns an error.
+
 PERFORMANCE MODELS
 - "power curves" → get_power_curves
 - "activity power curve", "ride power curve", "activity mmp", "fatigued power curve" → get_activity_power_curve
@@ -40,6 +96,15 @@ PERFORMANCE MODELS
 - "power hr curve" → get_power_hr_curve
 - "pace curves" → get_pace_curves
 - "mmp model" → get_mmp_model
+- "activity segments", "ride segments", "climb segments" → get_activity_segments
+- "terrain execution", "TEA analysis", "terrain analysis", "route execution" → analyze_activity_terrain_execution
+- "activity interval stats", "interval execution", "segment analysis", "climb analysis" → get_activity_interval_stats
+- "power histogram", "power distribution", "time in zone" → get_activity_power_histogram
+- "pace histogram", "pace distribution" → get_activity_pace_histogram
+- "hr histogram", "heart rate distribution" → get_activity_hr_histogram
+- "gap histogram", "gap distribution" → get_activity_gap_histogram
+- "activity map", "route map", "show route" → get_activity_map
+- "best efforts", "peak efforts", "best power efforts" → get_activity_best_efforts_multi
 
 ATHLETE / DATA
 - "training plan" → get_training_plan
