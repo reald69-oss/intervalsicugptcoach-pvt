@@ -845,7 +845,7 @@ async def run_audit_with_data(
                         "data_quality": audit
                     },
                     "compliance": {},
-                    "instructions": "Render the semantic_graph into a full report. You MUST strictly follow renderer_instructions. Do not modify structure, headings, formatting, or section order. Do not simplify or reinterpret. Treat renderer_instructions as a strict contract.",
+                    "instructions": "This is a strict rendering task, not a report-writing task. Render the semantic_graph exactly using renderer_instructions. You MUST strictly follow renderer_instructions. Do not modify structure, headings, formatting, or section order. Do not interpret, summarize, or improve the output. Do not apply any default report templates. Output must be a direct execution of the provided structure.",
                     "logs": ""
                 })
 
@@ -1157,7 +1157,7 @@ async def run_audit_with_data(
                     "semantic_graph": semantic_graph,
                     "requires_render": True,
                     "compliance": compliance,
-                    "instructions": "Use renderer_instructions inside semantic_graph to render a full coaching report."
+                    "instructions": "This is a strict rendering task, not a report-writing task. Render the semantic_graph exactly using renderer_instructions. You MUST strictly follow renderer_instructions. Do not modify structure, headings, formatting, or section order. Do not interpret, summarize, or improve the output. Do not apply any default report templates. Output must be a direct execution of the provided structure."
                 }
 
                 clean = sanitize(payload)
