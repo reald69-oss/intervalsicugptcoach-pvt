@@ -845,7 +845,7 @@ async def run_audit_with_data(
                         "data_quality": audit
                     },
                     "compliance": {},
-                    "instructions": "Use renderer_instructions inside semantic_graph to render a full coaching report.",
+                    "instructions": "Render the semantic_graph into a full report. You MUST strictly follow renderer_instructions. Do not modify structure, headings, formatting, or section order. Do not simplify or reinterpret. Treat renderer_instructions as a strict contract.",
                     "logs": ""
                 })
 
