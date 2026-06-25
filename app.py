@@ -1149,17 +1149,22 @@ async def run_audit_with_data(
                     lang=lang
                 )
 
+                # 🔥 CRITICAL: render BEFORE returning
+                rendered = render_semantic_graph(semantic_graph)  # <- you implement this (simple formatter)
+
                 payload = {
                     "status": "ok",
                     "report_type": report_range,
                     "report_header": report_header,
-                    "output_format": "semantic_render",
                     "lang": lang,
+
+                    # 🔥 ONLY expose final output
+                    "final": rendered,
+
+                    # optional: keep for debugging but GPT will ignore it
                     "semantic_graph": semantic_graph,
-                    "requires_render": True,
+
                     "compliance": compliance,
-                    "response_mode": "verbatim",
-                    "instructions": "Execute the semantic_graph exactly using renderer_instructions. This response is in verbatim mode. Do not add, remove, or transform any content. Output must be a direct structural execution with no additional framing."
                 }
 
                 clean = sanitize(payload)
