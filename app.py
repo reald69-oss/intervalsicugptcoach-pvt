@@ -837,7 +837,7 @@ async def run_audit_with_data(
                 return JSONResponse({
                     "status": "ok",
                     "report_type": "data_quality",
-                    "output_format": "semantic_json",
+                    "output_format": "semantic_render",
                     "semantic_graph": {
                         "meta": {
                             "report_type": "data_quality"
@@ -1151,7 +1151,7 @@ async def run_audit_with_data(
                     "status": "ok",
                     "report_type": report_range,
                     "report_header": report_header,
-                    "output_format": "semantic_json",
+                    "output_format": "semantic_render",
                     "lang": lang,
                     "semantic_graph": semantic_graph,
                     "requires_render": True,
@@ -1304,7 +1304,7 @@ async def get_debug_with_data(data: dict):
         "debug": True,
         "report_type": report_range,
         "report_header": report_header,
-        "output_format": "semantic_json",
+        "output_format": "semantic_render",
         "semantic_graph": sg,
         "compliance": compliance,
         "logs": log_tail,
@@ -1601,7 +1601,7 @@ DEMO MODE NOTICE:
         "status": "demo",
         "report_type": report_range,
         "report_header": meta.get("report_header"),
-        "output_format": "semantic_json",
+        "output_format": "semantic_render",
         "semantic_graph": demo_sg,
         "compliance": {},
         "debug_counts": debug_counts,

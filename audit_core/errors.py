@@ -31,7 +31,7 @@ class AuditHalt(Exception):
             "status": "ok",
             "message": self._friendly_message(),
             "report_type": report_type,
-            "output_format": "semantic_json",
+            "output_format": "semantic_render",
             "semantic_graph": {
                 "meta": {
                     "note": "insufficient_data"
