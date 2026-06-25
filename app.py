@@ -1148,17 +1148,13 @@ async def run_audit_with_data(
                     semantic_graph,
                     lang=lang
                 )
-
-                # 🔥 CRITICAL: render BEFORE returning
-                rendered = render_semantic_graph(semantic_graph)  # <- you implement this (simple formatter)
-
                 payload = {
                     "status": "ok",
                     "report_type": report_range,
                     "report_header": report_header,
                     "lang": lang,
 
-                    "final": render_semantic_graph(semantic_graph),
+                    "semantic_graph": semantic_graph,
 
                     "compliance": compliance,
                 }
