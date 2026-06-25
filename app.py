@@ -845,6 +845,7 @@ async def run_audit_with_data(
                         "data_quality": audit
                     },
                     "compliance": {},
+                    "instructions": "Render the semantic_graph into a full coaching report following the Montis render contract.",
                     "logs": ""
                 })
 
