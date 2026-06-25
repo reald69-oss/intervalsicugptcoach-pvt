@@ -1158,11 +1158,7 @@ async def run_audit_with_data(
                     "report_header": report_header,
                     "lang": lang,
 
-                    # 🔥 ONLY expose final output
-                    "final": rendered,
-
-                    # optional: keep for debugging but GPT will ignore it
-                    "semantic_graph": semantic_graph,
+                    "final": render_semantic_graph(semantic_graph),
 
                     "compliance": compliance,
                 }
