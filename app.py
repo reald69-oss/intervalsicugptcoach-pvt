@@ -1154,6 +1154,7 @@ async def run_audit_with_data(
                     "output_format": "semantic_json",
                     "lang": lang,
                     "semantic_graph": semantic_graph,
+                    "requires_render": True,
                     "compliance": compliance,
                 }
 

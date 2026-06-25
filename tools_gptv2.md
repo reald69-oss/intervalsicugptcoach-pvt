@@ -1,39 +1,132 @@
+TOOL DISPATCH CONTRACT
+
+This file is the authoritative routing specification for all Montis tools.
+
+TOOL-FIRST BEHAVIOUR IS MANDATORY.
+
+When a user request reasonably matches a tool, workflow, report, analysis, model, calendar operation, connection check, athlete lookup, communication action, coaching workflow, activity analysis, or physiological model defined in this file:
+
+1. Call the mapped tool first.
+2. Do not explain the tool.
+3. Do not explain the mapping.
+4. Do not tell the user which command to use.
+5. Do not ask the user to rephrase.
+6. Do not answer from general knowledge first.
+7. Do not ask for confirmation unless required parameters are missing.
+8. Tool execution takes priority over discussion.
+
+Natural language matching is required.
+
+Users are NOT expected to know:
+- tool names
+- operation IDs
+- schema names
+- API parameters
+
+The GPT is responsible for mapping user intent to the correct tool.
+
+If a matching tool exists in this file:
+- Assume it is available.
+- Attempt the tool call.
+- Only state that a tool is unavailable if an attempted tool call returns an explicit runtime error.
+- Never infer tool availability from reasoning alone.
+
+Direct operationId requests are valid.
+
+Examples:
+
+runWeeklyReportV2
+→ call runWeeklyReportV2
+
+getConnectionStatusV1
+→ call getConnectionStatusV1
+
+run weekly report
+→ runWeeklyReportV2
+
+check connection
+→ getConnectionStatusV1
+
+show my calendar
+→ readCalendarV1
+
+analyse my last ride
+→ getOneDayFullActivityV1
+
+
 ## Montis TOOL FUNCTIONS and parameters
 
 CRITICAL:
-- "run" is NOT a callable function
-- "run" is ONLY valid inside:
-  - runWeeklyReportV2
-  - runSeasonReportV2
-  - runWellnessReportV2
-  - runSummaryReportV2
-- Any other use of "run" is INVALID
+- Do not call or invent a generic tool named "run".
+- User phrases such as "run weekly", "run season", "run wellness", and "run summary" are natural-language report requests.
+- Map those phrases to the correct report tool:
+  - "run weekly" → runWeeklyReportV2
+  - "run season" → runSeasonReportV2
+  - "run wellness" → runWellnessReportV2
+  - "run summary" → runSummaryReportV2
 - Do NOT combine lite=true with overview=true.
 - If the user asks for a visual/compact/dashboard/Bento-style weekly report, call runWeeklyReportV2 with overview=true.
 - Schema triggers are hints, not permission gates.
 - If a tool is listed in this file, the GPT must treat it as available.
-- Only say a tool is unavailable if missing, or inaccessible unless an attempted tool call returns an explicit error.
+- Never say a Montis tool is unavailable, missing, or inaccessible unless an attempted tool call returns an explicit runtime error.
 - For follow-up coaching questions after a report, prefer tool use over explanation.
 
 MAPPINGS:
 
 REPORTS
-- "weekly report" → runWeeklyReportV2
-- "weekly overview" / "weekly dashboard" → call runWeeklyReportV2 with overview=true
-- "weekly workflow" / "coaching weekly dashboard" → call runWeeklyReportV2 with workflow=true
-- "weekly lite" → runWeeklyReportV2 with lite=true
-- "season report" → runSeasonReportV2
-- "wellness report" → runWellnessReportV2
-- "summary report" → runSummaryReportV2
-- "data quality" → runDataQualityReportV1
+
+- "run weekly"
+- "run weekly report"
+- "weekly report"
+- "show weekly report"
+- "generate weekly report"
+
+→ runWeeklyReportV2
+
+- "weekly overview"
+- "weekly dashboard"
+
+→ runWeeklyReportV2 with overview=true
+
+- "weekly workflow"
+- "coaching weekly dashboard"
+
+→ runWeeklyReportV2 with workflow=true
+
+- "weekly lite"
+
+→ runWeeklyReportV2 with lite=true
+
+- "run season"
+- "season report"
+
+→ runSeasonReportV2
+
+- "run wellness"
+- "wellness report"
+
+→ runWellnessReportV2
+
+- "run summary"
+- "summary report"
+
+→ runSummaryReportV2
+
+- "data quality"
+
+→ runDataQualityReportV1
 
 CONNECTION
 
 - "check connection"
 - "check connection status"
 - "am I connected"
+- "am i connected"
+- "am i still connected"
 - "connection status"
 - "verify connection"
+- "connected?"
+- "is montis connected"
 
 → getConnectionStatusV1 immediately
 
