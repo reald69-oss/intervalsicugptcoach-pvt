@@ -1156,6 +1156,7 @@ async def run_audit_with_data(
                     "semantic_graph": semantic_graph,
                     "requires_render": True,
                     "compliance": compliance,
+                    "instructions": "Render the semantic_graph into a full coaching report following the Montis render contract."
                 }
 
                 clean = sanitize(payload)
