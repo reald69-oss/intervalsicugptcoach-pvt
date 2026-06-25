@@ -837,7 +837,7 @@ async def run_audit_with_data(
                 return JSONResponse({
                     "status": "ok",
                     "report_type": "data_quality",
-                    "output_format": "semantic_render",
+                    "output_format": "semantic_json",
                     "semantic_graph": {
                         "meta": {
                             "report_type": "data_quality"
@@ -845,8 +845,6 @@ async def run_audit_with_data(
                         "data_quality": audit
                     },
                     "compliance": {},
-                    "response_mode": "verbatim",
-                    "instructions": "This is a strict rendering task, not a report-writing task. Render the semantic_graph exactly using renderer_instructions. You MUST strictly follow renderer_instructions. Do not modify structure, headings, formatting, or section order. Do not interpret, summarize, or improve the output. Do not apply any default report templates. Output must be a direct execution of the provided structure.",
                     "logs": ""
                 })
 
@@ -1148,14 +1146,15 @@ async def run_audit_with_data(
                     semantic_graph,
                     lang=lang
                 )
+
                 payload = {
                     "status": "ok",
                     "report_type": report_range,
                     "report_header": report_header,
+                    "output_format": "semantic_json",
                     "lang": lang,
-
                     "semantic_graph": semantic_graph,
-
+                    "requires_render": True,
                     "compliance": compliance,
                 }
 
@@ -1305,7 +1304,7 @@ async def get_debug_with_data(data: dict):
         "debug": True,
         "report_type": report_range,
         "report_header": report_header,
-        "output_format": "semantic_render",
+        "output_format": "semantic_json",
         "semantic_graph": sg,
         "compliance": compliance,
         "logs": log_tail,
@@ -1602,7 +1601,7 @@ DEMO MODE NOTICE:
         "status": "demo",
         "report_type": report_range,
         "report_header": meta.get("report_header"),
-        "output_format": "semantic_render",
+        "output_format": "semantic_json",
         "semantic_graph": demo_sg,
         "compliance": {},
         "debug_counts": debug_counts,
