@@ -817,29 +817,53 @@ def build_insights(semantic):
 
         # --- Efficiency Factor ---
         if "Efficiency Factor" in adaptation:
-            ef_val = adaptation.get("Efficiency Factor")
-            ef_block = semantic_block_for_metric("EfficiencyFactor", ef_val, semantic)
-            insights["efficiency_factor"] = {
-                "value": ef_val,
-                "window": window,
-                "basis": "Power / HeartRate",
-                "classification": ef_block.get("classification"),
-                "interpretation": ef_block.get("interpretation"),
-                "coaching_implication": ef_block.get("coaching_implication"),
-            }
+            ef_obj = adaptation.get("Efficiency Factor")
+
+            if isinstance(ef_obj, dict):
+                ef_val = ef_obj.get("value")
+                ef_window = ef_obj.get("window")
+                ef_basis = ef_obj.get("basis")
+            else:
+                ef_val = ef_obj
+                ef_window = window
+                ef_basis = "Power / HeartRate"
+
+            if isinstance(ef_val, (int, float)):
+                ef_block = semantic_block_for_metric("EfficiencyFactor", ef_val, semantic)
+
+                insights["efficiency_factor"] = {
+                    "value": ef_val,
+                    "window": ef_window,
+                    "basis": ef_basis,
+                    "classification": ef_block.get("classification"),
+                    "interpretation": ef_block.get("interpretation"),
+                    "coaching_implication": ef_block.get("coaching_implication"),
+                }
 
         # --- Endurance Decay (cardiac drift / decoupling) ---
         if "Endurance Decay" in adaptation:
-            dec_val = adaptation.get("Endurance Decay")
-            dec_block = semantic_block_for_metric("EnduranceDecay", dec_val, semantic)
-            insights["endurance_decay"] = {
-                "value": dec_val,
-                "window": window,
-                "basis": "Cardiac drift / power–HR decoupling",
-                "classification": dec_block.get("classification"),
-                "interpretation": dec_block.get("interpretation"),
-                "coaching_implication": dec_block.get("coaching_implication"),
-            }
+            dec_obj = adaptation.get("Endurance Decay")
+
+            if isinstance(dec_obj, dict):
+                dec_val = dec_obj.get("value")
+                dec_window = dec_obj.get("window")
+                dec_basis = dec_obj.get("basis")
+            else:
+                dec_val = dec_obj
+                dec_window = window
+                dec_basis = "Cardiac drift / power–HR decoupling"
+
+            if isinstance(dec_val, (int, float)):
+                dec_block = semantic_block_for_metric("EnduranceDecay", dec_val, semantic)
+
+                insights["endurance_decay"] = {
+                    "value": dec_val,
+                    "window": dec_window,
+                    "basis": dec_basis,
+                    "classification": dec_block.get("classification"),
+                    "interpretation": dec_block.get("interpretation"),
+                    "coaching_implication": dec_block.get("coaching_implication"),
+                }
 
         trend = semantic.get("trend_metrics", {})
 
@@ -4049,31 +4073,99 @@ def build_semantic_json(context):
     # ---------------------------------------------------------
     adaptation = {}
 
-    pi = semantic.get("performance_intelligence", {})
-    chronic = pi.get("chronic", {})
+    pi = semantic.get("performance_intelligence", {}) or {}
+    report_type = semantic.get("meta", {}).get("report_type")
 
-    # ---- Efficiency Factor ----
-    neural = chronic.get("neural_density", {})
-    ef_metric = neural.get("mean_efficiency_factor_90d")
+    acute = pi.get("acute", {}) or {}
+    chronic = pi.get("chronic", {}) or {}
 
-    if isinstance(ef_metric, dict):
-        ef = ef_metric.get("value")
-        if ef is not None:
-            adaptation["Efficiency Factor"] = round(float(ef), 2)
+    def extract_metric_value(metric):
+        if isinstance(metric, dict):
+            return metric.get("value")
+        return metric
 
-    # ---- Endurance / Aerobic Decay ----
-    durability = chronic.get("durability", {})
-    dec_raw = durability.get("mean_decoupling_90d")
+    def add_adaptation_metric(key, value, window, basis, ndigits=2):
+        if value is None:
+            return
 
-    dec = None
+        try:
+            adaptation[key] = {
+                "value": round(float(value), ndigits),
+                "window": window,
+                "basis": basis
+            }
+        except Exception:
+            pass
 
-    if isinstance(dec_raw, dict):
-        dec = dec_raw.get("value")
+
+    # ---------------------------------------------------------
+    # Weekly reports should use acute 7d signals.
+    # Season / summary should use chronic 90d signals.
+    # ---------------------------------------------------------
+
+    if report_type == "weekly":
+
+        # ---- Efficiency Factor: 7d ----
+        ef_metric = (
+            acute
+            .get("neural_density", {})
+            .get("mean_efficiency_factor_7d")
+        )
+
+        add_adaptation_metric(
+            "Efficiency Factor",
+            extract_metric_value(ef_metric),
+            "7d",
+            "acute.neural_density.mean_efficiency_factor_7d",
+            ndigits=2
+        )
+
+        # ---- Endurance Decay: 7d ----
+        dec_metric = (
+            acute
+            .get("durability", {})
+            .get("mean_decoupling_7d")
+        )
+
+        add_adaptation_metric(
+            "Endurance Decay",
+            extract_metric_value(dec_metric),
+            "7d",
+            "acute.durability.mean_decoupling_7d",
+            ndigits=1
+        )
+
     else:
-        dec = dec_raw
 
-    if dec is not None:
-        adaptation["Endurance Decay"] = round(float(dec), 1)
+        # ---- Efficiency Factor: 90d ----
+        ef_metric = (
+            chronic
+            .get("neural_density", {})
+            .get("mean_efficiency_factor_90d")
+        )
+
+        add_adaptation_metric(
+            "Efficiency Factor",
+            extract_metric_value(ef_metric),
+            "90d",
+            "chronic.neural_density.mean_efficiency_factor_90d",
+            ndigits=2
+        )
+
+        # ---- Endurance Decay: 90d ----
+        dec_metric = (
+            chronic
+            .get("durability", {})
+            .get("mean_decoupling_90d")
+        )
+
+        add_adaptation_metric(
+            "Endurance Decay",
+            extract_metric_value(dec_metric),
+            "90d",
+            "chronic.durability.mean_decoupling_90d",
+            ndigits=1
+        )
 
     semantic["adaptation_metrics"] = adaptation
 
@@ -5941,6 +6033,10 @@ def build_insight_view(semantic):
             "interpretation": ins.get("interpretation"),
             "coaching_implication": ins.get("coaching_implication"),
         }
+
+        for extra_key in ("value", "window", "basis"):
+            if ins.get(extra_key) is not None:
+                entry[extra_key] = ins.get(extra_key)
 
         if color == "red":
             critical.append(entry)
