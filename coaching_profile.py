@@ -101,6 +101,7 @@ REPORT_CONTRACT = {
         # 🔮 CURRENT PLAN CONTEXT
         "current_ISO_weekly_microcycle",
         "future_forecast",
+        "future_actions"
     ],
 
     "weekly_workflow": [
@@ -302,10 +303,10 @@ PRUNE_RULES = {
             "hrv_series",
             "daily",
         ],
-        "performance_intelligence": [
-            "acute",
-            "chronic",
-        ],
+        #"performance_intelligence": [
+        #    "acute",
+        #   "chronic",
+        #],
     },
 
     "weekly_workflow": {
