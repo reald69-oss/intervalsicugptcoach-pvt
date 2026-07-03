@@ -661,7 +661,7 @@ def apply_report_recency_governance(semantic: dict) -> dict:
 
     staleness_days = (generated_date - report_end).days
 
-    is_current = staleness_days <= 3
+    is_current = staleness_days <= 8
 
     meta["recency"] = {
         "mode": "current" if is_current else "historical",
