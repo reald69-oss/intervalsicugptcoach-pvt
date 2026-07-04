@@ -2080,6 +2080,7 @@ def build_semantic_json(context):
             "city": athlete.get("city"),
             "timezone": athlete.get("timezone"),
             "profile_image": athlete.get("profile_medium"),
+            "email": athlete.get("email"),
             "notes": athlete.get("icu_notes"),
         },
 
