@@ -385,22 +385,52 @@ def rename_z8_to_ss(dist: dict):
 def resolve_planned_duration_minutes(e: dict):
     """
     Resolve planned duration from canonical schema fields.
-    Priority:
-    1) moving_time (seconds)
-    2) time_target (seconds)
-    3) end_date_local - start_date_local
-    """
-    if e.get("moving_time"):
-        return round(int(e["moving_time"]) / 60, 1)
 
-    if e.get("time_target"):
-        return round(int(e["time_target"]) / 60, 1)
+    Priority:
+    1) moving_time seconds
+    2) time_target seconds
+    3) duration_minutes explicit value
+    4) end_date_local - start_date_local ONLY for WORKOUT
+
+    Races may use explicit duration fields.
+    Races must NOT infer duration from calendar span.
+    Notes / holidays / availability markers must not create duration.
+    """
+
+    category = str(e.get("category") or "").upper()
+
+    if e.get("moving_time") not in (None, "", 0):
+        try:
+            return round(float(e["moving_time"]) / 60, 1)
+        except Exception:
+            pass
+
+    if e.get("time_target") not in (None, "", 0):
+        try:
+            return round(float(e["time_target"]) / 60, 1)
+        except Exception:
+            pass
+
+    if e.get("duration_minutes") not in (None, "", 0):
+        try:
+            return round(float(e["duration_minutes"]), 1)
+        except Exception:
+            pass
+
+    # Only workouts can infer duration from start/end.
+    # Race_A/B/C can have explicit duration, but not inferred all-day/multi-day span.
+    if category != "WORKOUT":
+        return None
 
     try:
         if e.get("start_date_local") and e.get("end_date_local"):
             start = pd.to_datetime(e["start_date_local"])
             end = pd.to_datetime(e["end_date_local"])
-            return round((end - start).total_seconds() / 60, 1)
+            mins = round((end - start).total_seconds() / 60, 1)
+
+            # Prevent accidental all-day / multi-day calendar spans.
+            if 0 < mins <= 480:
+                return mins
     except Exception:
         pass
 
