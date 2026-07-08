@@ -102,7 +102,8 @@ REPORT_CONTRACT = {
         "current_ISO_weekly_microcycle",
         "planned_summary_by_iso_week",
         "future_forecast",
-        "future_actions"
+        "future_actions",
+        "phases_future",
     ],
 
     "weekly_workflow": [
