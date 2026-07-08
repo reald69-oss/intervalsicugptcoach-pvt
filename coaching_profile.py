@@ -44,7 +44,7 @@ REPORT_CONTRACT = {
         "planned_summary_by_iso_week",
         "future_forecast",
         "future_actions",
-        #"phases",
+        "phases_future"
     ],
 
     "weekly_lite": [
@@ -840,7 +840,7 @@ RENDERER_PROFILES = {
                 "future_forecast",
                 "future_actions",
                 "training_guidance",
-                #"phases"
+                "future_phases"
             ]
         },
         "stack_labels": {
