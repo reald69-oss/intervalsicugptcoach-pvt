@@ -691,7 +691,8 @@ async def run_audit_with_data(
     demo: bool = Query(False),
     debug: bool = Query(False),
     lite: bool = Query(False),
-    overview: bool = Query(False)
+    overview: bool = Query(False),
+    workflow: bool = Query(False)
 ):
     #  Railway protection
     internal = request.headers.get("x-montis-internal")
