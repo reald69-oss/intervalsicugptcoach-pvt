@@ -119,6 +119,7 @@ REPORT_CONTRACT = {
         "metrics_groups",
         "daily_load",
         "future_forecast",
+        "phases_future",
 
         # 3. Athlete readiness
         "actions",
@@ -431,7 +432,7 @@ RENDERER_PROFILES = {
     },
 
     # ==============================================================
-    # Weekly OVERVIEW CONTRACT
+    # Weekly workflow CONTRACT
     # ==============================================================
 
     "weekly_workflow": {
@@ -473,6 +474,7 @@ RENDERER_PROFILES = {
                 "metrics_groups.variability",
                 "daily_load",
                 "future_forecast",
+                "phases_future",
             ],
             "athlete_readiness": [
                 "actions",

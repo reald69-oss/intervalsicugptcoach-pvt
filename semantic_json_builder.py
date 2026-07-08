@@ -6107,6 +6107,8 @@ def apply_report_type_contract(semantic: dict) -> dict:
         contract_key = f"{report_type}_overview"
     elif render_mode == "lite":
         contract_key = f"{report_type}_lite"
+    elif render_mode == "workflow":
+        contract_key = f"{report_type}_workflow"
     else:
         contract_key = report_type
 

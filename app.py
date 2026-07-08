@@ -1080,7 +1080,11 @@ async def run_audit_with_data(
                     report_range
                 )
 
-            if overview:
+            if workflow:
+                render_mode = "workflow"
+                lite = False
+                overview = False
+            elif overview:
                 render_mode = "overview"
                 lite = False
             elif lite:
